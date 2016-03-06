@@ -1,10 +1,49 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<!-- Website template by freewebsitetemplates.com -->
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Model Generator</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>3D Printer Evaluation Model Generator</title>
+	<link rel="stylesheet" href="static/css/style.css" type="text/css">
 </head>
 <body>
+	<div id="page">
+		<div id="header">
+			<div>
+				<a href="index" class="logo"><img src="static/images/logo.png" alt=""></a>
+				<ul id="navigation">
+					<li class="selected">
+						<a href="index">Home</a>
+					</li>
+					<li class="menu">
+						<a href="static/help.html">Help</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div id="body" class="home">
+			<div class="bodytext">
+				<h1>Printer Qualification Wizard</h1>
+				<p>This wizard will generate a series of parts which, when printed, can be used to determine the
+					minimum achievable feature size, as well as other important print characteristics.
+				</p>
+				<br/>
+				<p>Since we don't assume you have easy access to fancy metrology equipment, the wizard works
+				iteratively: Print a part, then return here and answer a few questions about how it turned
+				out, and the wizard will use that information to generate a new test part for you to print.
+				After a few iterations, your printer's capabilities will be known with several digits of precision.</p>
+				<br/>
+				<a class="button" id="startbutton" href="start">Get Started</a>
+			</div>
 
+			<img class="bigimage" src="static/images/part1.png" alt="">
+		</div>
+	</div>
+	<div id="footer">
+		<div>
+			<p>&copy; 2016 Ben Weiss; University of Washington</p>
+		</div>
+	</div>
 </body>
 </html>

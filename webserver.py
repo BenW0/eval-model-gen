@@ -6,35 +6,63 @@ for statically served content, as well as on files in the <template> folder for 
 
 Executing this module starts the web server. For a more user-friendly experience, execute main.py.
 
+A note on sessions:
+  This webapp doesn't use sessions. Instead, the "session" is entirely based on the state of the selection variables.
+  So, effectively, the "session id" is the json describing the test part being used.
+
 """
 
-import random
-import string
-
+import os
 import cherrypy
 
 
 class ModelChooserWeb(object):
     @cherrypy.expose
     def index(self):
-        return """<html>
-          <head></head>
-          <body>
-            <form method="get" action="generate">
-              <input type="text" value="8" name="length" />
-              <button type="submit">Give it now!</button>
-            </form>
-          </body>
-        </html>"""
+        return open('template/index.html')
+
+    @cherrypy.expose
+    def start(self):
+        return open('template/start.html')
 
     @cherrypy.expose
     def generate(self, length=8):
-        return ''.join(random.sample(string.hexdigits, int(length)))
+        return ''
+
+
+class ModelChooserEngine(object):
+    exposed = True
+
+    @cherrypy.tools.json_in()
+    @cherrypy.tools.json_out()
+    def POST(self):
+        data = cherrypy.request.json
+        # Make sure the json passed has
+        cherrypy.log("%f"%foo['col_min'])
+        return {"Status": "Testing!"}
 
 
 def start():
     """Starts the web server"""
-    cherrypy.quickstart(ModelChooserWeb())
+    cherrypy.config.update({'server.socket_port': 8081})
+    conf = {
+        '/': {
+            'tools.staticdir.root': os.path.abspath(os.getcwd())
+        },
+        '/engine': {
+            'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
+            'tools.response_headers.on': True,
+            'tools.response_headers.headers': [('Content-Type', 'text/plain')]
+        },
+        '/static': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': './public'
+        }
+    }
+
+    webapp = ModelChooserWeb()
+    webapp.engine = ModelChooserEngine()
+    cherrypy.quickstart(webapp, '/', conf)
 
 if __name__ == '__main__':
     start()

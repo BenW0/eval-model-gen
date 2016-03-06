@@ -1,0 +1,190 @@
+<!doctype html>
+<!-- Website template by freewebsitetemplates.com -->
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>3D Printer Evaluation Model Generator</title>
+    <link rel="stylesheet" href="static/external/jquery-ui-1.11.4.custom/jquery-ui.css" type="text/css">
+	<link rel="stylesheet" href="static/css/style.css" type="text/css">
+    <script src="static/external/jquery.js" type="text/javascript"></script>
+    <script src="static/external/jquery-ui-1.11.4.custom/jquery-ui.js" type="text/javascript"></script>
+	<script>
+		$(function() {
+			$.postJSON = function(url, data, callback) {
+				$.ajaxSetup({ scriptCharset:"utf-8", 
+								contentType:"application/json; charset=utf-8" });
+				var s = JSON.stringify(data)
+				$.post(url, s, callback, "json");
+			}
+			
+			$( "#layerheight" ).spinner();
+			$("#resolution").spinner();
+			var bGenD = $("#generate-default").button();
+			var bGenG = $("#generate-guided").button();
+			var bGenC = $("#generate-custom").button();
+			var bNext = $("#next").button();
+			$("#accordion").accordion({
+				heightStyle: "content"
+			});
+			$("#a-col-min").spinner();
+			$("#a-col-max").spinner();
+			$("#a-row-min").spinner();
+			$("#a-row-max").spinner();
+			
+			$("#progressbar").progressbar({value: false});
+			
+			bGenD.click(function(event) {
+				// Generate a generic test part...
+				$("#progress-area").css({"display": "block"})
+				$.postJSON("/engine", {"col_min": 0.1, "col_max": 1.0, "row_min": 0.1, "row_max": 1.0},
+					function(s) {
+						$("#message").text(s.Status);
+					});
+			});
+		});
+	</script>
+</head>
+<body>
+	<div id="page">
+		<div id="header">
+			<div>
+				<a href="index" class="logo"><img src="static/images/logo.png" alt=""></a>
+				<ul id="navigation">
+					<li class="selected">
+						<a href="index">Home</a>
+					</li>
+					<li class="menu">
+						<a href="static/help.html">Help</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div id="body" class="home">
+            <div class="bodytext" style="width:685px;">
+                <h1>Printer Qualification Wizard: Step 1</h1>
+                <h2>First Test Part</h2>
+                <p>The first
+                    test part is based on your printer's manufacturer's specifications, and covers a very wide
+                    range of feature sizes. Each successive part will zero in on your printer's capabilities
+                    based on the results of the previous test part.
+                </p>
+				<h4>Layer Height</h4>
+				<p>
+					What is the layer height you'll use? (This needs to be the same across all test prints)
+				</p>
+				<br/>
+				<div class="indent">
+					<p>
+						Layer Height:
+						<input class="inputbox" id="layerheight" name="layerheight" step="0.1" min="0" value="0.2">
+						<!--<input class="formfield" type="text" name="layerheight" value="0.2" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">-->
+						mm
+					</p>
+				</div>
+                <br/>
+				<div id="accordion">
+					<h3>Defaults</h3>
+					<div>
+						<p>Click the button to generate the first test part</p>
+						
+						<button class="button" id="generate-default">
+							<span class="ui-button-text">Generate Part</span>
+						</button>
+					</div>
+					<h3>Guided</h3>
+					<div>
+						<h4>Printer Resolution</h4>
+						<p>What is the resolution specified by your printer manufacturer? Different technologies have
+							different definitions of "resolution", which may or may not reflect reality, but don't worry,
+							we'll zoom in on the actual capabilities of your printer, we just need a first guess.
+						</p>
+						<br/>
+						<p>
+							If you have a...
+						</p>
+						<ul>
+							<li><b>Extrusion Printer:</b> Enter nozzle diamter</li>
+							<li><b>Powder Binding Printer:</b> Enter pixel size (round up to nearest 0.1mm)</li>
+							<li><b>Energy Beam-based Printer (SLA, SLS, EBM, etc):</b> Enter the laser line width</li>
+							<li><b>Patterning Photopolymerization Printer (DLP):</b> Enter the effective pixel size</li>
+							<li><b>PolyJet Printer:</b> This process does not work well with our tool. Not recommended.</li>
+							<li><b>Other Printers:</b> Estimate the minimum achievable line width, and round down.</li>
+						</ul>
+						<div class="indent">
+							<p>
+								Printer Resolution:
+								<input class="inputbox" id="resolution" name="resolution" value="0.4" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+								<!--<input class="formfield" type="text" name="printerres" value="0.4" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">-->
+								mm
+							</p>
+						</div>
+						<br/>
+						<button class="button" id="generate-guided">
+							<span class="ui-button-text">Generate Part</span>
+						</button>
+					</div>
+					
+					<h3>Custom</h3>
+					<div>
+						<h4>Layer Height</h4>
+						<p>
+							What is the layer height you'll use? (This needs to be the same across all test prints)
+						</p>
+						<br/>
+						<div class="indent">
+							<p>
+								Layer Height:
+								<input class="inputbox" id="layerheight" name="layerheight" step="0.1" min="0" value="0.2">
+								<!--<input class="formfield" type="text" name="layerheight" value="0.2" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">-->
+								mm
+							</p>
+						</div>
+						<h4>Column Settings</h4>
+						<p>Control the settings for the minimum and maximum columns and bars here</p>
+						<div class="indent">
+							<table>
+							<tr>
+								<td>Column Range:</td>
+								<td><input class="inputbox" id="a-col-min" name="a-col-min" value="0.1" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+								mm to  </td>
+								<td><input class="inputbox" id="a-col-max" name="a-col-max" value="1.0" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+								mm</td>
+							</tr>
+							<tr>
+								<td>Row Range:</td>
+								<td><input class="inputbox" id="a-row-min" name="a-row-min" value="0.1" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+								mm to  </td>
+								<td><input class="inputbox" id="a-row-max" name="a-row-max" value="1.0" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+								mm</td>
+							</tr>
+							</table>
+						</div>
+						<br/>
+						<button class="button" id="generate-custom">
+							<span class="ui-button-text">Generate Part</span>
+						</button>
+					</div>
+				</div>
+                <p>
+                </p>
+				<div id="progress-area">
+					<p id="message">Generating part...</p>
+					<div id="progressbar"></div>
+				</div>
+                <br/>
+                <button class="button" id="next">
+                    <span class="ui-button-text">Next</span>
+                </button>
+
+			</div>
+            <img class="bigimage" src="static/images/part1.png" style="width:250px">
+		</div>
+	</div>
+	<div id="footer">
+		<div>
+			<p>&copy; 2016 Ben Weiss; University of Washington</p>
+		</div>
+	</div>
+</body>
+</html>

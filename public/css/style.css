@@ -1,7 +1,7 @@
 /* Website template by freewebsitetemplates.com
  and heavily modified by Ben Weiss
 
- Color palette: http://www.colorcombos.com/color-schemes/128/ColorCombo128.html*/
+ Color palette: borrowed from jquery UI template "Redmond"*/
 html, body {
 	margin: 0;
 	padding: 0;
@@ -16,7 +16,7 @@ body #page {
 	padding: 0;
 	width: auto;
 	min-height: 100%;
-	background-color: #ECECEC;
+	background-color: #ffffff;
 }
 a {
 	text-decoration: none;
@@ -56,7 +56,7 @@ img {
 }
 /*----------------------------------------header-styles---------------------------------------*/
 #header {
-	background-color: #7D9C9F;
+	background-color: #5c9ccc;
 	margin: 0;
 	padding: 0;
 	position: relative;
@@ -98,7 +98,7 @@ img {
 	width: auto;
 }
 #header div ul li a {
-	color: #DFEFF0;
+	color: #ffffff;
 	font-family: lato-regular-webfont;
 	font-size: 22px;
 	font-weight: normal;
@@ -109,13 +109,13 @@ img {
 	text-transform: uppercase;
 }
 #header div ul li.selected a, #header div ul li.selected a:hover {
-	color: #BDD8DA;
+	color: #d8e7f3;
 }
 #header div ul li a:hover, #header div ul li.menu:hover ul li a {
-	color: #ECECEC;
+	color: #d8e7f3;
 }
 #header div ul li ul li a {
-	color: #ECECEC;
+	color: #ffffff;
 	font-family: lato-regular-webfont;
 	font-size: 22px;
 	font-weight: normal;
@@ -153,26 +153,14 @@ img {
 }
 /*----------------------------------------body-home-styles---------------------------------------*/
 #body.home {
-	margin: 0;
+	margin: 0 auto;
 	overflow: hidden;
-	padding: 0;
 	position: relative;
 	width: 100%;
-	padding-bottom: 80px;
-}
-
-#body.home div.body {
-
-	margin: 0;
-	max-width: none;
-	padding: 0;
-	width: 100%;
-}
-#body.home div.body div {
-	margin: 0 auto;
 	max-width: 960px;
 	overflow: hidden;
-	padding: 0;
+	padding: 7px 0 57px;
+	padding-bottom: 80px;
 }
 .bigimage {
 	/*display: block;*/
@@ -180,21 +168,39 @@ img {
 	left: 0;
 	margin: 0;
 	padding: 0;*/
+	display:block;
 	margin-top: 40px;
-	position: relative;
 	width: 375px;
-	border: medium solid #AD235E;
+	border: medium solid #469bdd;
 	box-shadow: 1px 1px 10px #BDD8DA;
 }
 .bodytext {
 	float: right;
 	margin: 0;
-	padding: 0 0 0 40px;
+	padding: 0 0 0 0px;
 	width: 560px;
+
+	color: #333333;
+	font-family: roboto-regular-webfont;
+	font-size: 14px;
+	font-weight: normal;
+	line-height: 24px;
+}
+.bodytext-bigger {
+	float: right;
+	margin: 0;
+	padding: 0 0 0 0px;
+	width: 685px;
+
+	color: #333333;
+	font-family: roboto-regular-webfont;
+	font-size: 14px;
+	font-weight: normal;
+	line-height: 24px;
 }
 .bodytext h1 {
-	color: #AD235E;
 	display: block;
+	color: #4297d7;
 	font-family: lato-bold-webfont;
 	font-size: 18px;
 	font-weight: normal;
@@ -206,7 +212,7 @@ img {
 	width: 560px;
 }
 .bodytext h2 {
-	color: #505050;
+	color: #444444;
 	display: block;
 	font-family: magra-bold-webfont;
 	font-size: 20px;
@@ -219,7 +225,7 @@ img {
 	width: 560px;
 }
 .bodytext h3 {
-	color: #7D9C9F;
+	color: #454545;
 	font-family: magra-bold-webfont;
 	font-size: 18px;
 	line-height: 18px;
@@ -228,29 +234,24 @@ img {
 	text-align: left;
 }
 .bodytext p {
-	color: #7D9C9F;
 	display: block;
-	font-family: roboto-regular-webfont;
-	font-size: 14px;
-	font-weight: normal;
-	line-height: 24px;
 	margin: 0;
 	padding: 0;
 	text-align: left;
 	width: 560px;
 }
 .bodytext a {
-	color: #7D9C9F;
+	color: #454545;
 	text-decoration: underline;
 }
 .bodytext a:hover {
 	color: #BDD8DA;
 }
 
-.bodytext .button {
+/*.bodytext .button {
 	background: none;
-	border: 2px solid #7D9C9F;
-	color: #7D9C9F;
+	border: 2px solid #c5c5c5;
+	color: #454545;
 	cursor: pointer;
 	display: block;
 	font-family: lato-bold-webfont;
@@ -265,23 +266,22 @@ img {
 	width: 141px;
 }
 .bodytext .button:hover {
-	background-color: #BDD8DA;
-	border: 2px solid #BDD8DA;
+	background-color: #f6f6f6;
+	border: 2px solid #c5c5c5;
 	text-decoration: none;
-	color: #AD235E;
+	color: #454545;
 	padding: 2px 0 2px;
 	width: 141px;
 }
 #startbutton {
     float: right;
-}
-#body.home div.body div div.bodytext div.indent {
+}*/
+.bodytext .indent {
     padding-left: 80px;
 }
-.formfield {
-	border: 1px solid #BDD8DA;
+.inputbox {
+	/*border: 1px solid #BDD8DA;
 	color: #7D9C9F;
-/*	display: block;*/
 	font-family: lato-regular-webfont;
 	font-size: 14px;
 	font-weight: normal;
@@ -290,89 +290,32 @@ img {
 	margin: 0 0 8px;
 	padding: 0 0 0 10px;
 	text-align: left;
-	width: 130px;
+	width: 130px;*/
+	width: 100px;
 }
-/*----------------------------------------body-styles---------------------------------------*/
-#body {
-	margin: 0;
-	overflow: auto;
-	padding: 0;
-	position: relative;
-	width: 100%;
-	text-decoration: none;
-}
-#body div {
-	margin: 0 auto;
-	max-width: 960px;
-	padding: 7px 0 57px;
-}
-#body div ul {
-	display: inline-block;
-	list-style: none outside none;
+.bodytext ul {
 	margin: 0;
 	overflow: hidden;
-	padding: 0 0 22px;
+	padding: 0 0 22px 16px;
 	width: 100%;
 }
-#body div ul li {
-	float: left;
+.bodytext ul li {
 	margin: 0 10px;
 	padding: 0;
-	width: 220px;
-}
-#body div ul li h1 {
-	color: #AD235E;
-	font-family: magra-bold-webfont;
-	font-size: 28px;
-	font-weight: normal;
-	line-height: 28px;
-	margin: 0;
-	padding: 87px 0 27px 30px;
-	text-align: left;
-	text-transform: capitalize;
-}
-#body div ul li p {
-	color: #B1B1B1;
-	font-family: roboto-regular-webfont;
-	font-size: 14px;
-	font-weight: normal;
-	line-height: 24px;
-	margin: 0;
-	padding: 0 0 0 30px;
-	text-align: left;
-	width: 190px;
-}
-#body div ul li p a {
-	color: #B1B1B1;
-	font-family: roboto-regular-webfont;
-	font-size: 14px;
-	font-weight: normal;
-	line-height: 24px;
-	margin: 0;
-	padding: 0;
-	text-decoration: underline;
-}
-#body div ul li img {
-	display: block;
-	margin: 0 auto 15px;
-	padding: 0;
-	width: auto;
-}
-#body div ul li h2 {
-	color: #B1B1B1;
-	font-family: lato-regular-webfont;
-	font-size: 20px;
-	font-weight: normal;
-	line-height: 24px;
-	margin: 0;
-	padding: 0;
-	text-align: center;
-	text-transform: uppercase;
 }
 
+.button {
+    float: right;
+    margin-bottom: 20px;
+}
+
+#progress-area {
+	display: none;
+	margin-top: 20px;
+}
 /*----------------------------------------footer-styles---------------------------------------*/
 #footer {
-	background-color: #7D9C9F;
+	background-color: #5c9ccc;
 	margin: 0;
 	padding: 0;
 	width: 100%;
@@ -388,7 +331,7 @@ img {
 	padding: 30px 0 0px;
 }
 #footer div p {
-	color: #ECECEC;
+	color: #ffffff;
 	display: block;
 	font-family: roboto-regular-webfont;
 	font-size: 12px;
