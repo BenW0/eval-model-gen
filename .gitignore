@@ -2,3 +2,5 @@
 .idea/
 *.stl
 *.pyc
+openscad/
+logs/

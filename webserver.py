@@ -14,6 +14,9 @@ A note on sessions:
 
 import os
 import cherrypy
+from modelparams import ModelParams as mp
+import modelgen
+
 
 
 class ModelChooserWeb(object):
@@ -37,8 +40,15 @@ class ModelChooserEngine(object):
     @cherrypy.tools.json_out()
     def POST(self):
         data = cherrypy.request.json
-        # Make sure the json passed has
-        cherrypy.log("%f"%foo['col_min'])
+        # Make sure the json passed has the required elements, and they are the correct format.
+        if not all(map(data.has_key, mp.JSON_FIELDS)):
+            cherrypy.log("JSON structure is missing a required field!")
+            return {"Status": "Error"}
+        if not all(map(lambda key : type(data[key]) is float or type(data[key]) is int, mp.JSON_FIELDS)):
+            cherrypy.log("JSON structure contains non-numeric data.")
+            return {"Status": "Error"}
+        cherrypy.log("Generating model: " + str(data))
+
         return {"Status": "Testing!"}
 
 

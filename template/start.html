@@ -1,5 +1,9 @@
 <!doctype html>
 <!-- Website template by freewebsitetemplates.com -->
+<!-- Start.html - the first really interesting page in the wizard.
+Thanks to W3Schools docs, and especially the following: 
+ * http://stackoverflow.com/questions/2015065/how-does-one-do-async-ajax-calls-using-cherrypy
+ -->
 <html>
 <head>
 	<meta charset="UTF-8">
@@ -16,6 +20,21 @@
 								contentType:"application/json; charset=utf-8" });
 				var s = JSON.stringify(data)
 				$.post(url, s, callback, "json");
+			}
+			function doPost(layer_height, col_min, col_max, row_min, row_max, response) {
+				// pass floats to all parameters except response, which is the function called when
+				// the POST completes, with the JSON returned from the server.
+				data = {"layerheight": layer_height,  
+						"col_min": col_min, 
+						"col_max": col_max, 
+						"row_min": row_min, 
+						"row_max": row_max}
+				$.postJSON("/engine", data, response);
+			}
+			function handleResp(resp) {
+				// Function which handles the json response to posts to the server.
+				// resp is an object populated with at least a Status element.
+				$("#status").html(resp.Status)
 			}
 			
 			$( "#layerheight" ).spinner();
@@ -34,13 +53,11 @@
 			
 			$("#progressbar").progressbar({value: false});
 			
+			
 			bGenD.click(function(event) {
 				// Generate a generic test part...
-				$("#progress-area").css({"display": "block"})
-				$.postJSON("/engine", {"col_min": 0.1, "col_max": 1.0, "row_min": 0.1, "row_max": 1.0},
-					function(s) {
-						$("#message").text(s.Status);
-					});
+				$("#progress-area").css({"display": "block"});
+				doPost($("#layerheight").text, 0.1, 1, 0.1, 1, handleResp);
 			});
 		});
 	</script>
@@ -84,7 +101,7 @@
 				</div>
                 <br/>
 				<div id="accordion">
-					<h3>Defaults</h3>
+					<h3>Use Defaults</h3>
 					<div>
 						<p>Click the button to generate the first test part</p>
 						
@@ -92,7 +109,7 @@
 							<span class="ui-button-text">Generate Part</span>
 						</button>
 					</div>
-					<h3>Guided</h3>
+					<h3>Use Guided Settings</h3>
 					<div>
 						<h4>Printer Resolution</h4>
 						<p>What is the resolution specified by your printer manufacturer? Different technologies have
@@ -125,7 +142,7 @@
 						</button>
 					</div>
 					
-					<h3>Custom</h3>
+					<h3>Use Custom Settings</h3>
 					<div>
 						<h4>Layer Height</h4>
 						<p>
@@ -169,7 +186,7 @@
                 <p>
                 </p>
 				<div id="progress-area">
-					<p id="message">Generating part...</p>
+					<p id="message">Generating part...<span id="status"></span></p>
 					<div id="progressbar"></div>
 				</div>
                 <br/>
