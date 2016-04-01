@@ -1,5 +1,6 @@
 # Things I don't want in git...
-.idea/
+.idea
+.vscode
 *.stl
 *.pyc
 openscad/

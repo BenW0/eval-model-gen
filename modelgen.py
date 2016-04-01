@@ -8,6 +8,7 @@ NOTE: This code is written on Windows and assumes openscad is present in the ope
 for other OS's to the global constants at the top of this file.
 
 TODO: Fix logfiles not being automatically deletes and add deleting them to the (not yet implemented) linter.
+TODO: Implement a timeout so jobs are killed if they run too long.
 """
 
 import subprocess
@@ -24,7 +25,7 @@ MODEL_NAME = "Eval Model.scad"
 
 
 class Engine:
-    """ModelGen Engine
+    """Modelgen Engine
 
     Handles a set of running Modelgen instances, each associated with a different model being compiled.
 
@@ -40,11 +41,12 @@ class Engine:
         """
         Check to see if a file exists in the model cache. Returns (exists, path_to_file).
         :param model: ModelParams instance
-        :return: (exists, path_to_file). exists is True if a cached STL that matches params' signature is present; else False
-            in the False case, path_to_file is the path to where the file may someday be created.
+        :return: (exists, model_filename). exists is True if a cached STL that matches params' signature is present; else False
+            in the False case, model_filename is the file name in the Job.CACHE_DIR folder where the file may someday be created.
         """
-        path = Job.cache_name(model)
-        return os.path.exists(path), path
+        fname = Job.cache_name(model)
+        path = Job.cache_path(model)
+        return os.path.exists(path), fname
 
     def start_job(self, model):
         """
@@ -103,7 +105,7 @@ class Engine:
 
 
 class Job:
-    """Modelgen
+    """Modelgen Job
 
     Main class which governs a single instance of openscad. If multiple threads need access simultaneously, spawn
     one copy per thread.
@@ -118,6 +120,8 @@ class Job:
     In general, fields labeled params should be an instance of the ModelParams class.
 
     """
+
+    CACHE_DIR = "modelcache"
 
     def __init__(self, model):
         """ Modelgen constructor
@@ -144,9 +148,18 @@ class Job:
         """
         Define the local cache save name for a given parameter set params
         :param model: ModelParams instance (not checked)
+        :return: String containing the name of the (potentially nonexistant) cached file
+        """
+        return "%s.stl" % model.to_string()
+
+    @staticmethod
+    def cache_path(model):
+        """
+        Define the relative path and filename for a given parameter set params
+        :param model: ModelParams instance (not checked)
         :return: String containing the path to the (potentially nonexistant) cached file
         """
-        return "modelcache/%s.stl" % model.to_string()
+        return os.path.join(Job.CACHE_DIR, Job.cache_name(model))
 
     def start(self):
         """Starts the openscad rendering process.
@@ -157,7 +170,7 @@ class Job:
         """
 
         try:
-            popen_params = [OPENSCAD_EXE, "-o", self.fname]
+            popen_params = [OPENSCAD_EXE, "-o", os.path.join(Job.CACHE_DIR, self.fname)]
             popen_params.extend(self.model.to_openscad_defines())
             popen_params.append(MODEL_NAME)
         except Exception as e:
@@ -226,6 +239,7 @@ class Job:
 
 
 if __name__ == "__main__":
+    print "Running Modelgen tests"
     # this script implements a test of the modelgen module.
     automated = True
     authoritative = False       # if True, the output from this script will be sent to the reference file.
@@ -237,15 +251,17 @@ if __name__ == "__main__":
         print "Authoritative test. Recording to file."
         fout = open("modelgen.test", "w")
         #sys.systdout = fout
+    else:
+        fout = sys.stdout
 
     mymodel1 = ModelParams(0.1, 1, 0.1, 1)
     mymodel2 = ModelParams(0.2, 1, 0.9, 2)
 
     print >>fout, "Deleting cached models..."
-    if os.path.exists(Job.cache_name(mymodel1)):
-        os.remove(Job.cache_name(mymodel1))
-    if os.path.exists(Job.cache_name(mymodel2)):
-        os.remove(Job.cache_name(mymodel2))
+    if os.path.exists(Job.cache_path(mymodel1)):
+        os.remove(Job.cache_path(mymodel1))
+    if os.path.exists(Job.cache_path(mymodel2)):
+        os.remove(Job.cache_path(mymodel2))
 
     start = time.time()
     eng = Engine()
@@ -259,9 +275,9 @@ if __name__ == "__main__":
 
     def checkdone():
         (done, pth, suc, errtxt) = eng.check_job(mymodel1)
-        print >>fout, "Model 1 done=%i path=%s, success=%i, err='%s'" % (done, pth, suc, errtxt),
+        print >>fout, "Model 1 done=%i fname=%s, success=%i, err='%s'" % (done, pth, suc, errtxt),
         (done, pth, suc, errtxt) = eng.check_job(mymodel2)
-        print >>fout, "Model 2 done=%i path=%s, success=%i, err='%s'" % (done, pth, suc, errtxt)
+        print >>fout, "Model 2 done=%i fname=%s, success=%i, err='%s'" % (done, pth, suc, errtxt)
 
     print >>fout, "Immediately after start: "
     checkdone()

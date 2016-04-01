@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../../../Research/Software/Projector Scripts/.idea/Projector Scripts.iml" filepath="$PROJECT_DIR$/../../../Research/Software/Projector Scripts/.idea/Projector Scripts.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/eval models.iml" filepath="$PROJECT_DIR$/.idea/eval models.iml" />
     </modules>
   </component>

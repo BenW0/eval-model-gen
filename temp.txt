@@ -1,11 +1,2 @@
 Deleting cached models...
 Model 1 exists? False Model 2 exists? False
-Started
-Immediately after start: 
-Model 1 done=0 path=modelcache/c0.1-1_r0.1-1.stl, success=1, err='' Model 2 done=0 path=modelcache/c0.2-1_r0.9-2.stl, success=1, err='check_job has no job running and no file in the cache for model c0.2-1_r0.9-2'
-1s after start: 
-Model 1 done=0 path=modelcache/c0.1-1_r0.1-1.stl, success=1, err='' Model 2 done=0 path=modelcache/c0.2-1_r0.9-2.stl, success=1, err=''
-11s after start:
-Model 1 done=1 path=modelcache/c0.1-1_r0.1-1.stl, success=1, err='' Model 2 done=0 path=modelcache/c0.2-1_r0.9-2.stl, success=1, err=''
-Model 1 done=1 path=modelcache/c0.1-1_r0.1-1.stl, success=1, err='cached file found.' Model 2 done=0 path=modelcache/c0.2-1_r0.9-2.stl, success=1, err=''
-Model 1 exists? True Model 2 exists? True
