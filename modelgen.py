@@ -202,7 +202,7 @@ class Job:
         if self.proc.returncode != 0:
             self.haveError = True
             with open(self.logfilename, "r") as fin:
-                self.lastError = fin.readall()
+                self.lastError = fin.read()
         try:
             os.remove(self.logfilename)
         except Exception:
@@ -326,3 +326,7 @@ if __name__ == "__main__":
                 if sdiff == '':
                     print "Tests passed!"
                 print sdiff
+                fthis.close()
+
+        time.sleep(0.1)
+        os.remove("temp.txt")
