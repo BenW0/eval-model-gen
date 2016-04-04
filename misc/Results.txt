@@ -1,0 +1,4 @@
+4/1/2016 - color change filament on FlashForge, Desktop normal settings, 0.2mm layer height. Two iterations.
+
+Minimum Column Size: 0.85 ± 0.072 mm 
+Minimum Bar Size: 0.131 ± 0.058 mm

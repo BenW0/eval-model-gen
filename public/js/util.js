@@ -9,7 +9,7 @@
 
 function QueryStringToHash(query) {
 
-  if (query == '') return null;
+  if (query == '') return {};
 
   var hash = {};
 
@@ -41,16 +41,17 @@ function QueryStringToHash(query) {
 }
 
 
-function smartToString(number) {
-  // Rounds the number sort-of-automatically based on the magnitude
-  if (number == 0)
-    return "0";
-  var digits = 3;
-  var order = Math.round(Math.log(Math.abs(number)) / Math.log(10));
-  if (order >= -3 && order <= 6)
-    return number.toFixed(Math.max(digits - order, 0));
-  else
-    return number.toExponential(digits);
+function smartToString(number, digits) {
+    // Rounds the number sort-of-automatically based on the magnitude
+    if (number == 0)
+        return "0";
+    if (!digits)
+        var digits = 2;
+    var order = Math.round(Math.log(Math.abs(number)) / Math.log(10));
+    if (order >= -3 && order <= 6)
+        return number.toFixed(Math.max(digits - order, 0));
+    else
+        return number.toExponential(digits);
 }
 
 

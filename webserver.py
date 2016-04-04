@@ -33,6 +33,10 @@ class ModelChooserWeb(object):
         return open('template/iterate.html')
 
     @cherrypy.expose
+    def finish(self):
+        return open('template/finish.html')
+
+    @cherrypy.expose
     def getmodel(self, name, mask=True):
         """ Return a model file for download in response to a user's request.
         name is filtered for some basic very basic security, but this maybe should be re-thought later.

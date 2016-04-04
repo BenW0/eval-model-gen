@@ -10,75 +10,98 @@
 	<script src="js/mobile.js" type="text/javascript"></script>
 </head>
 <body>
-	<div id="page">
-		<div id="header">
-			<div>
-				<a href="index.html" class="logo"><img src="images/logo.png" alt=""></a>
-				<ul id="navigation">
-					<li>
-						<a href="index.html">Home</a>
-					</li>
-					<li class="menu selected">
-						<a href="about.html">About</a>
-						<ul class="primary">
-							<li>
-								<a href="product.html">Product</a>
-							</li>
-						</ul>
-					</li>
-					<li class="menu">
-						<a href="blog.html">Blog</a>
-						<ul class="secondary">
-							<li>
-								<a href="singlepost.html">Single post</a>
-							</li>
-						</ul>
-					</li>
-					<li>
-						<a href="contact.html">Contact</a>
-					</li>
-				</ul>
-			</div>
-		</div>
-		<div id="body">
-			<div class="header">
-				<div>
-					<h1>About</h1>
-				</div>
-			</div>
-			<div class="body">
-				<img src="images/bg-header-about.jpg" alt="">
-			</div>
-			<div class="footer">
-				<div class="sidebar">
-					<h1>Be Part of Our Community</h1>
-					<p>If you’re experiencing issues or having concerns about this website template, join the discussion <a href="http://www.freewebsitetemplates.com/forums/">on our forum</a> and meet other people in the community who share the same interests.</p>
-				</div>
-				<div class="article">
-					<h1>We Have Free Templates For Everyone</h1>
-					<p>Our website templates are created with inspiration, checked for quality and originality and meticulously sliced and coded. What’s more, they’re absolutely free! You can do a lot with them. You can modify them.</p>
-					<p>You can use them to design websites for clients, so long as you agree with the <a href="http://www.freewebsitetemplates.com/about/terms/">Terms of Use</a>. You can even remove all our links if you want to.</p>
-					<h1>We Have More Templates For You</h1>
-					<p>Looking for more templates? Just browse through all our <a href="http://www.freewebsitetemplates.com/">Free Website Templates</a>. But if you can’t find any website templates you can use, try our <a href="http://www.freewebsitetemplates.com/freewebdesign/">Free Web Design</a> service and tell us all about it. We love a good challenge!</p>
-					<h1>Template Details</h1>
-					<span>Design Version 2.</span>
-					<span>Code Version 1.</span>
-					<p>Website Template details, discussion and updates for this <a href="http://www.freewebsitetemplates.com/discuss/frozenyogurtshop/">Frozen Yogurt Shop Website Template</a>.</p>
-					<p>Website Template design by  <a href="http://www.freewebsitetemplates.com/">Free Website Templates</a>.</p>
-				</div>
-			</div>
-		</div>
-		<div id="footer">
-			<div>
-				<div class="connect">
-					<a href="http://freewebsitetemplates.com/go/facebook/" class="facebook">facebook</a>
-					<a href="http://freewebsitetemplates.com/go/twitter/" class="twitter">twitter</a>
-					<a href="http://freewebsitetemplates.com/go/googleplus/" class="googleplus">googleplus</a>
-					<a href="http://pinterest.com/fwtemplates/" class="pinterest">pinterest</a>
-				</div>
-				<p>&copy; 2023 Freeeze. All Rights Reserved.</p>
-			</div>
-		</div>
-	</div>
+
+<div id="page">
+    <div id="header">
+        <div>
+            <a href="index" class="logo"><img src="static/images/logo.png" alt=""></a>
+            <ul id="navigation">
+                <li class="selected">
+                    <a href="index">Home</a>
+                </li>
+                <li class="menu">
+                    <a href="static/help.html">Help</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="body" class="home">
+        <img class="bigimage" src="images/part1.png" style="width:250px">
+        <div class="bodytext">
+            <h1>The Printer Qualification Wizard</h1>
+			<p>
+				This tool quickly qualifies the minimum geometric feature size of an additive manufacturing process
+				under a set of machine/material/build parameter/post-processing conditions. It does this by iteratively printing
+				a series of test parts which evaluate the printer's ability to form thin columns and bars. After each
+				print, the results of the print are used to determine the parameters for the next part to print.
+			</p>
+			<br/>
+			<p>
+				Using this iterative approach, a minimum of material and print time is used. If the initial guess is
+				good, usually two or three iterations are all that are required to obtain minimum values with two digits
+				of precision.
+			</p>
+			<br/>
+			<p>
+				Note that a certain amount of user judgement is required when evaluating a "successful" print. We
+				generally suggest "success" be defined as material deposited in a <i>controlled</i>, <i>stable</i>
+				manner, so as to ensure that future parts procuded at this minimum scale will turn out consistently.
+			</p>
+			<h2>Using the Wizard</h2>
+			<h3>First Part</h3>
+			<p>
+				The first page of the wizard presents three methods for determining the initial test part to print. If
+				you have no prior knowledge about the print process, expand the Use Defaults section to generate a
+				generic test part that works well as a starting place on many processes that operate on the milimeter
+				scale.
+			</p>
+			<br/>
+			<p>
+				If you have some information about the printer parameters, start with the Guided Settings section and
+				enter the parameter listed in the explanatory text. A part will be generated which spans the range near
+				the minimum possible element size predicted by your printer type.
+			</p>
+			<br/>
+			<p>
+				If you have strong prior process knowledge, the Use Custom Settings section allows you to specify the
+				minimum and maximum pillar and bar diameters to use explicitly.
+			</p>
+			<br/>
+			<p>
+				Regardless of which route you choose, press the associated Generate Part button to have the server
+				automatically create a test part for your particular scenario. After a few seconds, a dialog should
+				notify you the part is ready to be downloaded. Go print the part on your printer with the associated
+				process/material/post-processing settings you wish to use, and then click the Next button.
+			</p>
+			<h3>Successive Parts</h3>
+			<p>
+				After printing a test part, the wizard will ask you to identify which features were not resolved. Note
+				that a printer may still produce the geometry, but it may be unstable, deformed, or unable to support
+				its own weight, and therefore should not be considered "resolved".
+			</p>
+			<br/>
+			<p>
+				Use the sliders in each section to indicate how many columns and bars printed successfully. If you are
+				content with the error bounds listed in the Current Results section, click Finish Wizard to accept these
+				figures. If another iteration is desired, click Generate Part to "zoom in" on the dimensions nearest the
+				failure point. A new part will be generated. Download it, print it, and click the Next button to
+				continue.
+			</p>
+			<br/>
+			<p>
+				To alter how fast the algorithm zooms in on the failure region, use the Zoom entry boxes in the Generating
+				options section. The higher the number, the smaller the difference will be between the minimum and
+				maximum feature size of the next part. If this number is too low, it will take many iterations to reach
+				an acceptable tolerance. If it is too high, the next part may be slightly too big or slightly too small
+				and have all elements either resolved or unresolved.
+			</p>
+        </div>
+    </div>
+</div>
+<div id="footer">
+    <div>
+        <p>&copy; 2016 Ben Weiss; University of Washington</p>
+    </div>
+</div>
 </body>
 </html>

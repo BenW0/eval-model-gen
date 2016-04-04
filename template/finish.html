@@ -1,0 +1,115 @@
+<!doctype html>
+<!-- Website template by freewebsitetemplates.com -->
+<!-- Finish.html - endpoint of the wizard
+
+TODO:
+* Switch from using hashes to store the page state to using parameters, and just tell the backend to ignore them.
+  This would make browser back/forward behavior and resetting of control values much more transparent.
+ -->
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Printer Evaluation Model Generator</title>
+    <link rel="stylesheet" href="static/external/jquery-ui-1.11.4.custom/jquery-ui.css" type="text/css">
+    <link rel="stylesheet" href="static/css/style.css" type="text/css">
+    <script src="static/external/jquery.js" type="text/javascript"></script>
+    <script src="static/external/jquery-ui-1.11.4.custom/jquery-ui.js" type="text/javascript"></script>
+    <script src="static/js/util.js" type="text/javascript"></script>
+
+    <script>
+        var col_thresh = 0;
+        var bar_thresh = 0;
+        var col_zoom = 7;
+        var bar_zoom = 7;
+        var out_params = {};
+
+        $(document).ready(function () {
+            out_params = parseUrl();
+
+            // Parse the information after the hash in the url and load it into the ref_part_params variable
+            $("#layer_height").html(out_params.layer_height.toString());
+
+
+            $("#col-output").html(smartToString(out_params.col_value) + "  ± " + smartToString(out_params.col_error) + " mm");
+            $("#bar-output").html(smartToString(out_params.bar_value) + "  ± " + smartToString(out_params.bar_error) + " mm");
+
+            // Detect a browser back button and reload the page
+            window.addEventListener('popstate', function (event) {
+                location.reload();
+                $("html,body").scrollTop(0);
+            });
+
+        });
+
+        function parseUrl() {
+            // Parses the information after the # in the url and returns it.
+            var params = QueryStringToHash(window.location.hash.substring(1));
+            // check for validity of the hash contents
+            if (typeof params.layer_height === "undefined" || typeof params.col_value === "undefined" ||
+                    typeof params.col_error === "undefined" || typeof params.bar_value === "undefined" ||
+                    typeof params.bar_error === "undefined") {
+                alert("URL missing parameters. Please use your browser's Back button to re-generate this page.");
+                // so we don't break anything, add defaults
+                out_params = {"layer_height": 0.2, "col_value": 0.1, "col_error": 1, "bar_value": 0.1, "bar_error": 1};
+            }
+            // convert elements to numbers
+            params.layer_height = Number(params.layer_height);
+            params.col_value = Number(params.col_value);
+            params.col_error = Number(params.col_error);
+            params.bar_value = Number(params.bar_value);
+            params.bar_error = Number(params.bar_error);
+
+            return params;
+        }
+    </script>
+</head>
+<body>
+<div id="page">
+    <div id="header">
+        <div>
+            <a href="index" class="logo"><img src="static/images/logo.png" alt=""></a>
+            <ul id="navigation">
+                <li class="selected">
+                    <a href="index">Home</a>
+                </li>
+                <li class="menu">
+                    <a href="static/help.html">Help</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="body" class="home">
+        <img class="bigimage" src="static/images/part1.png" style="width:250px">
+        <div class="bodytext">
+            <h1>Printer Qualification Wizard: Complete</h1>
+            <p>Based on the parts printed and your response, your printer has the following characteristics:
+            </p>
+            <br/>
+            <div class="indent">
+                <p style="font-size: 18px">
+                    Minimum Column Size: <span id="col-output"></span>
+                <br/>
+                    Minimum Bar Size: <span id="bar-output"></span>
+                </p>
+            </div>
+            <br/>
+            <br/>
+            <p>
+                This qualification run is using <span id="layer_height">0</span> mm for layer height.
+            </p>
+            <br/>
+            <p>
+                FUTURE: Include fields for saying what kind of printer/material/settings/post-processing were used
+                and add a button which either downloads the characteristic or saves it to a database.
+            </p>
+        </div>
+    </div>
+</div>
+<div id="footer">
+    <div>
+        <p>&copy; 2016 Ben Weiss; University of Washington</p>
+    </div>
+</div>
+</body>
+</html>

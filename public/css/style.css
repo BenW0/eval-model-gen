@@ -91,7 +91,7 @@ img {
 }
 #header div ul li {
 	display: inline-block;
-	*float: left; /* Needed for IE7 and old versions */
+	float: left; /* Needed for IE7 and old versions */
 	margin: 0 35px;
 	padding: 0;
 	position: relative;
