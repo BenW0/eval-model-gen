@@ -35,6 +35,13 @@ class Engine:
         """Engine constructor."""
         # mgs will be a dictionary of Modelgen objects, identified by the stringified form of their parameters.
         self.mgs = {}
+        # Make sure some folders we need are present.
+        if not os.path.exists("logs"):
+            os.mkdir("logs")
+        if not os.path.exists("modelcache"):
+            os.mkdir("modelcache")
+        if not os.path.exists("openscad"):
+            print("Error! Can't find openscad! Model creation will fail!")
 
     @staticmethod
     def check_exists(model):

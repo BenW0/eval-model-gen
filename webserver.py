@@ -131,7 +131,7 @@ class ModelChooserEngine(object):
 
 def start():
     """Starts the web server"""
-    cherrypy.config.update({'server.socket_port': 8081})
+    cherrypy.config.update('server.conf')
     conf = {
         '/': {
             'tools.staticdir.root': os.path.abspath(os.getcwd())
