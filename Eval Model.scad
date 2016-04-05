@@ -61,36 +61,40 @@ union()
 // if @skipFirst > 0, the first @skipFirst elements are not generated (this is used for figure generation)
 module pillars(minDia, maxDia, aspect, minLength, outrigger=false, skipFirst=0)
 {
+    gap =(coreLength - 0.5 * (maxDia + minDia) * pillarCount) / ( pillarCount + 0);
+    fudge = minDia * 0.02;    // this is enough extra height to fully intersect base/outrigger.
+    diaStep = (maxDia - minDia) / (pillarCount - 1);
+    pillarFirstX = -coreLength / 2 + gap / 2 + minDia / 2;
     union()
     {
-        gap = (coreLength - 0.5 * (maxDia + minDia) * pillarCount) / (pillarCount + 0);
-        fudge = minDia * 0.02;    // this is enough extra height to fully intersect base/outrigger.
-        diaStep = (maxDia - minDia) / (pillarCount - 1);
-        pillarFirstX = -coreLength / 2 + gap / 2 + minDia / 2;
+        
         // Build each vertical pillar
         for(i=[0:pillarCount-1])
         {
             // per-pillar variables
-            dia = minDia + i * diaStep;
-            cx = pillarFirstX + i * 0.5 * (dia + minDia) + i * gap;
-            h = max(aspect*dia, minLength) + fudge;
-            if(i >= skipFirst)
+            assign(dia = minDia + i * diaStep)
             {
-                translate([cx, 0, pillarStartHV - fudge / 2])
-                    cylinder(h=h, d=dia);
-            }
+            assign(cx = pillarFirstX + i * 0.5 * (dia + minDia) + i * gap,              h = max(aspect*dia, minLength) + fudge,
+                  out_width = dia + gap + (dia + diaStep) * 0.75 * sign(i),              out_height = max(diaStep * aspect * 1.5, coreWidth))
+            {
+                if(i >= skipFirst)
+                {
+                    translate([cx, 0, pillarStartHV - fudge / 2])
+                        cylinder(h=h, d=dia);
+                }
             
-            if(outrigger)
-            {
-                // sign(i) lets us have different behavior on the first (smallest)
-                // entry so it doesn't overhang awkwardly.
-                width = dia + gap + (dia + diaStep) * 0.75 * sign(i);
-                height = max(diaStep * aspect * 1.5, coreWidth);
-                translate([cx + dia / 2 + gap / 2 - width / 2, 0, pillarStartHV + h + height / 2])
-                    cube(size=[width, coreWidth, height], center=true);
+                if(outrigger)
+                {
+                    // sign(i) lets us have different behavior on the first (smallest)
+                    // entry so it doesn't overhang awkwardly.
+                    translate([cx + dia / 2 + gap / 2 - out_width / 2, 0, pillarStartHV + h + out_height / 2])
+                        cube(size=[out_width, coreWidth, out_height], center=true);
+                }
+            }
             }
         }
     }
 }
+
 
 
