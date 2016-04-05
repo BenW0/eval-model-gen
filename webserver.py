@@ -15,6 +15,7 @@ A note on sessions:
 import os
 import cherrypy
 from cherrypy.lib.static import serve_file
+from cherrypy.process import plugins
 from modelparams import ModelParams as mp
 import modelgen
 
@@ -129,13 +130,21 @@ class ModelChooserEngine(object):
         return out_data
 
 
+def secureheaders():
+    headers = cherrypy.response.headers
+    headers['X-Frame-Options'] = 'DENY'
+    headers['X-XSS-Protection'] = '1; mode=block'
+    headers['Content-Security-Policy'] = "default-src='self'"
+
+
 def start():
     """Starts the web server"""
     cherrypy.config.namespaces['modelgen'] = modelgen.Engine.modelgen_settings
     cherrypy.config.update('server.conf')
     conf = {
         '/': {
-            'tools.staticdir.root': os.path.abspath(os.getcwd())
+            'tools.staticdir.root': os.path.abspath(os.getcwd()),
+            'tools.secureheaders.on': True
         },
         '/engine': {
             'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
@@ -148,6 +157,13 @@ def start():
         }
     }
 
+    # set the priority according to your needs if you are hooking something
+    # else on the 'before_finalize' hook point.
+    cherrypy.tools.secureheaders = cherrypy.Tool('before_finalize', secureheaders, priority=60)
+
+    # TODO: Make these values editable in server.conf
+    # For now, use the default "nobody" user on the platform I'm using.
+    plugins.DropPrivileges(cherrypy.engine, uid=99, gid=99).subscribe()
     webapp = ModelChooserWeb()
     webapp.engine = ModelChooserEngine()
     cherrypy.quickstart(webapp, '/', conf)
