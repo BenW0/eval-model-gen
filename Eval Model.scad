@@ -12,9 +12,11 @@ horiz_aspect = true;
 skipH = 0;      // set to non-zero to skip rendering the first <skipH> bars
 skipV = 0;      // set to non-zero to skip rendering the first <skipV> columns 
 
-// quality settings
-$fa = 2; // 2 degrees/fragment minimum
-$fs = 0.03; // minimum size of fragments, in mm
+// quality settings. Since we don't control the scale, force the use of
+// a reasonable number of fragments regardless of size.
+//$fa = 10; // 5 degrees/fragment minimum
+//$fs = 0.003; // minimum size of fragments, in mm
+$fn = 20;
 
 // derived quantities
 maxPillarDia = max(maxPillarDiaH, maxPillarDiaV);
