@@ -134,7 +134,8 @@ def secureheaders():
     headers = cherrypy.response.headers
     headers['X-Frame-Options'] = 'DENY'
     headers['X-XSS-Protection'] = '1; mode=block'
-    headers['Content-Security-Policy'] = "default-src='self'"
+    # TODO: ADD THIS BACK IN
+    #headers['Content-Security-Policy'] = "default-src='self'"
 
 
 def start():
