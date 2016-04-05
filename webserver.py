@@ -131,6 +131,7 @@ class ModelChooserEngine(object):
 
 def start():
     """Starts the web server"""
+    cherrypy.config.namespaces['modelgen'] = modelgen.Engine.modelgen_settings
     cherrypy.config.update('server.conf')
     conf = {
         '/': {

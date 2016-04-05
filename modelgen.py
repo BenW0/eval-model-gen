@@ -19,9 +19,15 @@ import difflib
 
 from modelparams import ModelParams
 
+# Default settings. Override these with the modelgen namespace of server.conf
+if os.name == 'posix':      # linux and mac
+    OPENSCAD_EXE = "openscad/bin/openscad"
+else:                       # windows
+    OPENSCAD_EXE = "openscad/openscad"
 
-OPENSCAD_EXE = "openscad/openscad"
 MODEL_NAME = "Eval Model.scad"
+
+
 
 
 class Engine:
@@ -30,6 +36,9 @@ class Engine:
     Handles a set of running Modelgen instances, each associated with a different model being compiled.
 
     """
+
+    openscad_exe = OPENSCAD_EXE
+    model_name = MODEL_NAME
 
     def __init__(self):
         """Engine constructor."""
@@ -42,6 +51,18 @@ class Engine:
             os.mkdir("modelcache")
         if not os.path.exists("openscad"):
             print("Error! Can't find openscad! Model creation will fail!")
+
+    @staticmethod
+    def modelgen_settings(key, value):
+        """Handler for cherrypy's config system, called when it encounters the 'modelgen' namespace of the [global]
+        section"""
+        try:
+            if key.lower() == 'openscad':
+                Engine.openscad_exe = value
+            if key.lower() == 'model':
+                Engine.model_name = value
+        finally:
+            pass
 
     @staticmethod
     def check_exists(model):
@@ -177,9 +198,9 @@ class Job:
         """
 
         try:
-            popen_params = [OPENSCAD_EXE, "-o", os.path.join(Job.CACHE_DIR, self.fname)]
+            popen_params = [Engine.openscad_exe, "-o", os.path.join(Job.CACHE_DIR, self.fname)]
             popen_params.extend(self.model.to_openscad_defines())
-            popen_params.append(MODEL_NAME)
+            popen_params.append(Engine.model_name)
         except Exception as e:
             self.haveError = True
             self.lastError = str(e)
@@ -327,6 +348,3 @@ if __name__ == "__main__":
                     print "Tests passed!"
                 print sdiff
                 fthis.close()
-
-        time.sleep(0.1)
-        os.remove("temp.txt")
