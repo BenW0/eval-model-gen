@@ -149,11 +149,13 @@ def start():
         '/engine': {
             'request.dispatch': cherrypy.dispatch.MethodDispatcher(),
             'tools.response_headers.on': True,
-            'tools.response_headers.headers': [('Content-Type', 'application/json')]
+            'tools.response_headers.headers': [('Content-Type', 'application/json')],
+            'tools.secureheaders.on': True
         },
         '/static': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': './public'
+            'tools.staticdir.dir': './public',
+            'tools.secureheaders.on': True
         }
     }
 
