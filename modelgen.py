@@ -27,6 +27,9 @@ else:                       # windows
 
 MODEL_NAME = "Eval Model.scad"
 
+# path to images used for visualization
+IMAGES_PATH = "public/images"
+
 
 
 
@@ -85,7 +88,7 @@ class Engine:
         :return: (success, errortext), where success is a Boolean and errortext is a string explaining the error if
                 success == False
         """
-        key = model.to_string()
+        key = model.to_hash()
         if key in self.mgs:
             # This key is duplicate; a job is already running.
             return True, ""
@@ -106,7 +109,7 @@ class Engine:
         :param model: ModelParams object specifying which model to check
         :return: Tuple: (finished, path_to_file, success, errortext)
         """
-        key = model.to_string()
+        key = model.to_hash()
 
         ready = False
         success = True
@@ -130,6 +133,20 @@ class Engine:
         """Cleans up jobs which have finished but haven't been deleted. This should be run once in a while in a
         server environment"""
         raise NotImplementedError
+
+    @staticmethod
+    def build_images():
+        """A script to generate the cache of images used to visualize the relevant feature on the front end"""
+
+        for var, camera in ModelParams.camera_data.items():
+            for i in range(11):
+                outfile = os.path.join(IMAGES_PATH, "%s-%i.png" % (var, i))
+                popen_params = [Engine.openscad_exe, "-o", outfile, "-D", "skip%s=%i" % (var, i),
+                                "--camera=%s" % camera, "--autocenter", "--imgsize=220,220",
+                                "--projection=ortho", Engine.model_name]
+                print(repr(popen_params))
+                proc = subprocess.Popen(popen_params)
+                proc.wait()  # wait for the process to finish
 
 
 class Job:
@@ -162,7 +179,7 @@ class Job:
         self.haveError = False
         self.lastError = ""
         self.logfile = None
-        self.logfilename = "logs/%s-%i.log" % (model.to_string(), time.time())      # make sure it's unique
+        self.logfilename = "logs/%i-%i.log" % (model.to_hash(), time.time())      # make sure it's unique
 
     def __del__(self):
         try:
@@ -178,7 +195,7 @@ class Job:
         :param model: ModelParams instance (not checked)
         :return: String containing the name of the (potentially nonexistant) cached file
         """
-        return "%s.stl" % model.to_string()
+        return "%i.stl" % model.to_hash()
 
     @staticmethod
     def cache_path(model):
@@ -201,6 +218,7 @@ class Job:
             popen_params = [Engine.openscad_exe, "-o", os.path.join(Job.CACHE_DIR, self.fname)]
             popen_params.extend(self.model.to_openscad_defines())
             popen_params.append(Engine.model_name)
+            print popen_params
         except Exception as e:
             self.haveError = True
             self.lastError = str(e)
@@ -209,7 +227,7 @@ class Job:
         try:
             self.logfile = open(self.logfilename, "w")
             self.proc = subprocess.Popen(popen_params, stdout=self.logfile, stderr=subprocess.STDOUT, bufsize=-1)
-        except subprocess.CalledProcessError as e:
+        except Exception as e:
             self.haveError = True
             self.lastError = str(e)
             return False, str(e)
@@ -267,84 +285,95 @@ class Job:
 
 
 if __name__ == "__main__":
-    print "Running Modelgen tests"
-    # this script implements a test of the modelgen module.
-    automated = True
-    authoritative = False       # if True, the output from this script will be sent to the reference file.
+    # load model parameters into modelparams
+    ModelParams.init_settings(Engine.model_name)
 
-    if automated:
-        fout = open("temp.txt", "w")
-        #sys.stdout = fout
-    elif authoritative:
-        print "Authoritative test. Recording to file."
-        fout = open("modelgen.test", "w")
-        #sys.systdout = fout
+    # Check to see if images need to be generated...
+    if True and not os.path.exists(os.path.join(IMAGES_PATH, "%s-0.png" % ModelParams.camera_data.keys()[0])):
+        # Need to generate the images...
+        Engine.build_images()
     else:
-        fout = sys.stdout
+        print "Running Modelgen tests"
+        # this script implements a test of the modelgen module.
+        automated = False
+        authoritative = False       # if True, the output from this script will be sent to the reference file.
 
-    mymodel1 = ModelParams(0.1, 1, 0.1, 1)
-    mymodel2 = ModelParams(0.2, 1, 0.9, 2)
+        if automated:
+            fout = open("temp.txt", "w")
+            #sys.stdout = fout
+        elif authoritative:
+            print "Authoritative test. Recording to file."
+            fout = open("modelgen.test", "w")
+            #sys.systdout = fout
+        else:
+            fout = sys.stdout
 
-    print >>fout, "Deleting cached models..."
-    if os.path.exists(Job.cache_path(mymodel1)):
-        os.remove(Job.cache_path(mymodel1))
-    if os.path.exists(Job.cache_path(mymodel2)):
-        os.remove(Job.cache_path(mymodel2))
 
-    start = time.time()
-    eng = Engine()
-    print >>sys.stderr, "Startup: %is" % (time.time() - start)
-    start = time.time()
-    print >>fout, "Model 1 exists? " + str(eng.check_exists(mymodel1)[0]) + " Model 2 exists? " + str(eng.check_exists(mymodel2)[0])
-    eng.start_job(mymodel1)
-    print >>fout, "Started"
-    print >>sys.stderr, "Start_job: %is" % (time.time() - start)
-    start = time.time()
+        mymodel1 = ModelParams()
+        mymodel1.params[ModelParams.LAYER_HEIGHT_VAR] = 0.2
+        mymodel2 = ModelParams()
+        mymodel2.params[ModelParams.LAYER_HEIGHT_VAR] = 0.3
 
-    def checkdone():
-        (done, pth, suc, errtxt) = eng.check_job(mymodel1)
-        print >>fout, "Model 1 done=%i fname=%s, success=%i, err='%s'" % (done, pth, suc, errtxt),
-        (done, pth, suc, errtxt) = eng.check_job(mymodel2)
-        print >>fout, "Model 2 done=%i fname=%s, success=%i, err='%s'" % (done, pth, suc, errtxt)
+        print >>fout, "Deleting cached models..."
+        if os.path.exists(Job.cache_path(mymodel1)):
+            os.remove(Job.cache_path(mymodel1))
+        if os.path.exists(Job.cache_path(mymodel2)):
+            os.remove(Job.cache_path(mymodel2))
 
-    print >>fout, "Immediately after start: "
-    checkdone()
-    print >>sys.stderr, "Check done: %is" % (time.time() - start)
-    time.sleep(1)
+        start = time.time()
+        eng = Engine()
+        print >>sys.stderr, "Startup: %is" % (time.time() - start)
+        start = time.time()
+        print >>fout, "Model 1 exists? " + str(eng.check_exists(mymodel1)[0]) + " Model 2 exists? " + str(eng.check_exists(mymodel2)[0])
+        eng.start_job(mymodel1)
+        print >>fout, "Started"
+        print >>sys.stderr, "Start_job: %is" % (time.time() - start)
+        start = time.time()
 
-    print >>fout, "1s after start: "
-    start = time.time()
-    checkdone()
-    print >>sys.stderr, "Check done: %is" % (time.time() - start)
-    time.sleep(10)      # time enough for the process to finish
+        def checkdone():
+            (done, pth, suc, errtxt) = eng.check_job(mymodel1)
+            print >>fout, "Model 1 done=%i fname=%s, success=%i, err='%s'" % (done, pth, suc, errtxt),
+            (done, pth, suc, errtxt) = eng.check_job(mymodel2)
+            print >>fout, "Model 2 done=%i fname=%s, success=%i, err='%s'" % (done, pth, suc, errtxt)
 
-    print >>fout, "11s after start:"
-    start = time.time()
-    checkdone()
-    print >>sys.stderr, "Check done: %is" % (time.time() - start)
-    start = time.time()
-    checkdone()
-    print >>sys.stderr, "Check done: %is" % (time.time() - start)
+        print >>fout, "Immediately after start: "
+        checkdone()
+        print >>sys.stderr, "Check done: %is" % (time.time() - start)
+        time.sleep(1)
 
-    print >>fout, "Model 1 exists? " + str(eng.check_exists(mymodel1)[0]) + " Model 2 exists? " + str(eng.check_exists(mymodel2)[0])
+        print >>fout, "1s after start: "
+        start = time.time()
+        checkdone()
+        print >>sys.stderr, "Check done: %is" % (time.time() - start)
+        time.sleep(20)      # time enough for the process to finish
 
-    if authoritative:
-        fout.close()
-    if automated:
-        fout.close()
+        print >>fout, "11s after start:"
+        start = time.time()
+        checkdone()
+        print >>sys.stderr, "Check done: %is" % (time.time() - start)
+        start = time.time()
+        checkdone()
+        print >>sys.stderr, "Check done: %is" % (time.time() - start)
 
-        # compare with autoritative output
-        with open("modelgen.test") as fauth:
-            with open("temp.txt") as fthis:
-                auth = []
-                for line in fauth:
-                    auth.append(line)
-                this = []
-                for line in fthis:
-                    this.append(line)
-                diff = difflib.context_diff(auth, this, 'Reference', 'This run')
-                sdiff = ''.join(diff)
-                if sdiff == '':
-                    print "Tests passed!"
-                print sdiff
-                fthis.close()
+        print >>fout, "Model 1 exists? " + str(eng.check_exists(mymodel1)[0]) + " Model 2 exists? " + str(eng.check_exists(mymodel2)[0])
+
+        if authoritative:
+            fout.close()
+        if automated:
+            fout.close()
+
+            # compare with autoritative output
+            with open("modelgen.test") as fauth:
+                with open("temp.txt") as fthis:
+                    auth = []
+                    for line in fauth:
+                        auth.append(line)
+                    this = []
+                    for line in fthis:
+                        this.append(line)
+                    diff = difflib.context_diff(auth, this, 'Reference', 'This run')
+                    sdiff = ''.join(diff)
+                    if sdiff == '':
+                        print "Tests passed!"
+                    print sdiff
+                    fthis.close()

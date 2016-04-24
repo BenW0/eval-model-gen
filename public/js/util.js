@@ -2,6 +2,10 @@
  * A few utility functions that will be useful in multiple files
  */
 
+
+LAYER_HEIGHT_VAR = "layerHeight";
+NOZZLE_DIAMETER_VAR = "nozzleDiameter";
+
 /* QueryStringToHash() - converts a query string (parameters) back into an object.
  * From user 太極者無極而生 on stackoverflow:
  * http://stackoverflow.com/questions/1131630/the-param-inverse-function-in-javascript-jquery
@@ -46,7 +50,7 @@ function smartToString(number, digits) {
     if (number == 0)
         return "0";
     if (!digits)
-        var digits = 2;
+        digits = 2;
     var order = Math.round(Math.log(Math.abs(number)) / Math.log(10));
     if (order >= -3 && order <= 6)
         return number.toFixed(Math.max(digits - order, 0));
@@ -89,6 +93,7 @@ function handleDone(resp) {
         generated = true;
         // download file and display a link in case that doesn't work...
         last_status_obj.html("Ready!  Click <a id='download_link' href='" + link + "'>here</a> if download doesn't begin automatically");
+        $("#post-message").css({"display": "block"});
         $("a#download_link").attr({target: '_blank', href: link});
         $("body").append("<iframe src='" + link + "' style='display: none;'></iframe>");
     }
@@ -116,22 +121,33 @@ function postJSON(url, data, callback) {
         .fail(handleFail)
         .always(handleAlways);
 }
-function startGenerate(layer_height, col_min, col_max, bar_min, bar_max, status_obj, progress_obj) {
-    // pass floats to all parameters.
-    part_params = {"layer_height": layer_height,
-            "col_min": col_min,
-            "col_max": col_max,     
-            "bar_min": bar_min,
-            "bar_max": bar_max};
+function startGenerate(new_part_params, status_obj, progress_obj) {
+    // Starts the process of generating a new part.
     progress_obj.progressbar("option", "value", false);
     last_status_obj = status_obj;
     last_progress_obj = progress_obj;
-    postJSON("/engine", jQuery.extend({}, part_params, {"Command": "Start"}), handleDone);
+    part_params = new_part_params;
+    postJSON("/engine", jQuery.extend({}, new_part_params, {"Command": "Start"}), handleDone);
 }
 function checkDone() {
     // should only be called after calling startGenerate() or else part_params won't be set correctly.
     if(!generating)
         return;
     postJSON("/engine", jQuery.extend({}, part_params, {"Command": "Check"}), handleDone);
+}
+function submitResult(data) {
+    // Submits results and form data from finish.html to the server
+    postJSON("/engine", jQuery.extend({}, data, {"Command": "Submit"}), function (resp) {
+        if (resp.Status == "OK") {
+            $("#status").html("Submission Succeeded. Your confirmation number is " + String(resp.Confirm));
+        }
+        else {
+            if (typeof resp.ErrMessage === "undefined" )
+                $("#status").html("Unknown Error occurred");
+            else 
+                $("#status").html("Error occurred: " + resp.ErrMessage);
+        }
+    });
+
 }
 

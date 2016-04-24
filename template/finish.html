@@ -5,6 +5,7 @@
 TODO:
 * Switch from using hashes to store the page state to using parameters, and just tell the backend to ignore them.
   This would make browser back/forward behavior and resetting of control values much more transparent.
+* Make a better means of categorically identifying and subdividing printer classes, printers, and feedstocks/print settings
  -->
 <html>
 <head>
@@ -16,49 +17,74 @@ TODO:
     <script src="static/external/jquery.js" type="text/javascript"></script>
     <script src="static/external/jquery-ui-1.11.4.custom/jquery-ui.js" type="text/javascript"></script>
     <script src="static/js/util.js" type="text/javascript"></script>
+    <script src="static/js/params.js" type="text/javascript"></script>
 
     <script>
-        var col_thresh = 0;
-        var bar_thresh = 0;
-        var col_zoom = 7;
-        var bar_zoom = 7;
-        var out_params = {};
+        var part_params = {};
+        var param_data = {};    // static reference data about each parameter
 
         $(document).ready(function () {
-            out_params = parseUrl();
+            // Parse the parameters structure which defines information about the different parameters we'll be testing
+            param_data = JSON.parse(params_json);
 
-            // Parse the information after the hash in the url and load it into the ref_part_params variable
-            $("#layer_height").html(out_params.layer_height.toString());
+            // Parse the URL
+            part_params = parseUrl();
 
 
-            $("#col-output").html(smartToString(out_params.col_value) + "  ± " + smartToString(out_params.col_error) + " mm");
-            $("#bar-output").html(smartToString(out_params.bar_value) + "  ± " + smartToString(out_params.bar_error) + " mm");
+            $("#layer_height").html(part_params[LAYER_HEIGHT_VAR].toString());
 
-            // Detect a browser back button and reload the page
-            window.addEventListener('popstate', function (event) {
-                location.reload();
-                $("html,body").scrollTop(0);
-            });
+
+            // Generate rows in the Results section for each parameter, populated with defaults
+            var list = $("#data-area");
+            var template = list.html();
+            var id;
+            var new_html = "";
+            for (id = 0; id < param_data.length; id++) {
+                new_html += template
+                        .replace("__name", param_data[id].Name)
+                        .replace("__value", smartToString(part_params["final" + param_data[id].varBase]) +
+                                "  ± " + smartToString(part_params["error" + param_data[id].varBase]) + " mm");
+            }
+            list.html(new_html);
+
+            $("#printer-type").selectmenu().css({"vertical-align": "-100%"});
+
+            $("#submit").button().click(function(event) {
+                var out = $.extend({}, part_params);
+                out.printerType = $("#printer-type").val();
+                out.printerModel = $("#printer-model").val();
+                out.printerName = $("#printer-name").val();
+                out.groupName = $("#group-id").val();
+                out.feedstock = $("#feedstock").val();
+                out.notes = $("#notes").val();
+
+                submitResult(out);
+            })
 
         });
+
 
         function parseUrl() {
             // Parses the information after the # in the url and returns it.
             var params = QueryStringToHash(window.location.hash.substring(1));
             // check for validity of the hash contents
-            if (typeof params.layer_height === "undefined" || typeof params.col_value === "undefined" ||
-                    typeof params.col_error === "undefined" || typeof params.bar_value === "undefined" ||
-                    typeof params.bar_error === "undefined") {
+            if (typeof params[LAYER_HEIGHT_VAR] === "undefined") {
                 alert("URL missing parameters. Please use your browser's Back button to re-generate this page.");
-                // so we don't break anything, add defaults
-                out_params = {"layer_height": 0.2, "col_value": 0.1, "col_error": 1, "bar_value": 0.1, "bar_error": 1};
             }
-            // convert elements to numbers
-            params.layer_height = Number(params.layer_height);
-            params.col_value = Number(params.col_value);
-            params.col_error = Number(params.col_error);
-            params.bar_value = Number(params.bar_value);
-            params.bar_error = Number(params.bar_error);
+            params[LAYER_HEIGHT_VAR] = Number(params[LAYER_HEIGHT_VAR]);
+            // add defaults for the rest of the parameters, if they were missing (which is unlikely)
+            var i;
+            var layerHeight = params[LAYER_HEIGHT_VAR];      // needed for eval() below
+            for(i = 0; i < param_data.length; i++) {
+                var base_name = param_data[i].varBase;
+                if (typeof params["final" + base_name] === "undefined")
+                        params["final" + base_name] = NaN;
+                if (typeof params["error" + base_name] === "undefined")
+                        params["error" + base_name] = NaN;
+                // convert everything to a number
+                params["final" + base_name] = Number(params["final" + base_name]);
+                params["error" + base_name] = Number(params["error" + base_name]);
+            }
 
             return params;
         }
@@ -87,22 +113,55 @@ TODO:
             </p>
             <br/>
             <div class="indent">
-                <p style="font-size: 18px">
-                    Minimum Column Size: <span id="col-output"></span>
-                <br/>
-                    Minimum Bar Size: <span id="bar-output"></span>
-                </p>
+                <div id="data-area">
+                    <p style="font-size: 18px">
+                        __name: __value
+                    </p>
+                </div>
             </div>
             <br/>
             <br/>
             <p>
-                This qualification run is using <span id="layer_height">0</span> mm for layer height.
+                This qualification used <span id="layer_height">0</span> mm for layer height.
             </p>
             <br/>
-            <p>
-                FUTURE: Include fields for saying what kind of printer/material/settings/post-processing were used
-                and add a button which either downloads the characteristic or saves it to a database.
-            </p>
+            <div id="sections">
+                <h3 class="section-head" id="name">Save Results</h3>
+                <div class="section-body final-form">
+                    <p>Printer Type:</p>
+                    <p class="indent">
+                        <select name="printer-type" id="printer-type" class="final-control">
+							<option value="Powder">Binder Jetting (3D Powder Printing)</option>
+                            <option value="DED">Directed Energy Deposition</option>
+                            <option value="Extrusion">Material Extrusion (FDM, FFF, syringe, etc.)</option>
+                            <option value="Material Jetting">Material Jetting (PolyJet)</option>
+                            <option value="PBF">Powder Bed Fusion (SLS, EBM, SLM, etc.)</option>
+							<option value="SLA">Stereolithography (SLA)</option>
+							<option value="DLP">Patterning Photopolymerization (DLP)</option>
+                            <option value="Lamination">Sheet Lamination</option>
+							<option value="Other">Other (specify in Notes)</option>
+                        </select></p><br/>
+                    <p>Printer Model: </p>
+                        <p class="indent" ><input type="text" id="printer-model" class="final-control" style="width:400px"></p><br/>
+                    <p>Printer Name/Number:</p>
+                        <p class="indent"><input type="text" id="printer-name" class="final-control" style="width:400px"></p><br/>
+                    <p>Group Member Names (ME 480 only):</p>
+                        <p class="indent"><input type="text" id="group-id" class="final-control" style="width:400px"></p><br/>
+                    <p>Filament/Resin/Feedstock Used:</p>
+                        <p class="indent"><input type="test" id="feedstock" class="final-control" style="width:400px"></p><br/>
+                    <p>Other Notes/Settings:</p>
+                    <div class="indent">
+                        <textarea name="notes" class="final-control" id="notes" rows=3 cols=55 ></textarea>
+                    </div>
+                    <br/>
+                    <button class="button" id="submit">
+                        <span class="ui-button-text">Submit</span>
+                    </button>
+                    <div id="status" style="clear:right">
+                        <!-- Status from server goes here -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

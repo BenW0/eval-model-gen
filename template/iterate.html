@@ -5,6 +5,11 @@
 TODO:
 * Switch from using hashes to store the page state to using parameters, and just tell the backend to ignore them.
   This would make browser back/forward behavior and resetting of control values much more transparent.
+* Trap the Back and Forward button so it goes back and remembers where you left the slider, and forward
+  correctly updates the # with the modified information
+* Don't have the page reload on Back button or Next button -- just update appropriate variables and re-call a trimmed-
+  down version of the current $.ready function.
+* Warn the user when 0 or 10 items came out to decrease the zoom factor so valid data is obtained.
  -->
 <html>
 <head>
@@ -16,113 +21,101 @@ TODO:
     <script src="static/external/jquery.js" type="text/javascript"></script>
     <script src="static/external/jquery-ui-1.11.4.custom/jquery-ui.js" type="text/javascript"></script>
     <script src="static/js/util.js" type="text/javascript"></script>
+    <script src="static/js/params.js" type="text/javascript"></script>
 
     <script>
-        var col_thresh = 0;
-        var bar_thresh = 0;
-        var col_zoom = 5;
-        var bar_zoom = 5;
-        var ref_part_params = {};
+        var param_data = {};    // static reference data about each parameter
+        var var_id = 0;         // ID of the current variable in the param_data structure
+        var var_name = '';      // variable name for the current variable
+        var var_thresh = 0;     // threshold obtained for current variable
+        var var_zoom = 5;       // zoom factor for current variable
+        var ref_part_params = {};   // parameters from the current url.
 
         $(document).ready(function () {
 
-            ref_part_params = parseUrl();
+            // Parse the parameters structure which defines information about the different parameters we'll be testing
+            param_data = JSON.parse(params_json);
 
             // Parse the information after the hash in the url and load it into the ref_part_params variable
-            $("#layer_height").html(ref_part_params.layer_height.toString());
+            ref_part_params = parseUrl();
+
+            // Figure out which variable we should check on this page of the wizard
+            if (typeof ref_part_params.varId === "undefined")
+                    ref_part_params.varId = 0;
+            var_id = ref_part_params.varId;
+            var_name = param_data[var_id].varBase;
+            // Fill in a bunch of bits in the page that change with each variable's parameters
+            populatePage();
 
             // Load resource images into the img-cache div hidden at the bottom of the page
-            var template1 = '<img id="partN-columns#" src="static/images/partN-columns#.png" width="220" height="220">';
-            var template2 = '<img id="partN-bars#" src="static/images/partN-bars#.png" width="220" height="220">';
+            var template1 = '<img id="image#" src="static/images/' + var_name + '-#.png" width="220" height="220">';
             var new_html = '';
             for(var i = 0; i < 11; i++) {
-                new_html += template1.replace(/#/g, i.toString()) + template2.replace(/#/g, i.toString());
+                new_html += template1.replace(/#/g, i.toString());
             }
             $("#img-cache").html(new_html);
 
 
-            $("#col-slider").slider({
+            $("#slider").slider({
                 min: 0,
                 max: 10,
                 range: "min",
                 value: 0,
                 slide: function (event, ui) {
-                    col_thresh = ui.value;
-                    drawCols();
+                    var_thresh = ui.value;
+                    drawPic();
                     updateText();
                 }
             });
 
-            $("#bar-slider").slider({
-                min: 0,
-                max: 10,
-                range: "min",
-                value: 0,
-                slide: function (event, ui) {
-                    bar_thresh = ui.value;
-                    drawBars();
-                    updateText();
-                }
-            });
-
-            bar_zoom = $("#zoom-bars").spinner({
+            var_zoom = $("#zoom").spinner({
                 change: function(event, ui){
-                    bar_zoom = $("#zoom-bars").val();
+                    var_zoom = $("#zoom").val();
                     updateText();
                 },
                 spin: function(event, ui) {
-                    bar_zoom = ui.value;
-                    updateText()
-                }}).val();
-            col_zoom = $("#zoom-cols").spinner({
-                change: function(event, ui){
-                    col_zoom = $("#zoom-cols").val();
-                    updateText();
-                },
-                spin: function(event, ui) {
-                    col_zoom = ui.value;
+                    var_zoom = ui.value;
                     updateText()
                 }}).val();
 
             $("#progressbar").progressbar({value: false, max: 100});
 
+            $("#next").button().click( function(event) {
+                // Add the current selection to the url, increment varId, and reload the page
+                ref_part_params["cur" + var_name] = var_thresh;
+                ref_part_params["zoom" + var_name] = var_zoom;
+                ref_part_params.varId = var_id + 1;
+
+                location.href = "iterate#" + $.param(ref_part_params);
+                // we didn't change pages, no refresh occurs. Force a page reload, partly because I'm lazy, and
+                // partly so the user feels like something happened!
+                location.reload();
+                $("html,body").scrollTop(0);
+            });
+
             $("#generate").button().click( function(event) {
-                var res = getResults();     // retrieve the centers of the current target points
-                startGenerate(ref_part_params.layer_height, res.new_col_min, res.new_col_max, res.new_bar_min, res.new_bar_max, $("#status"), $("#progressbar"));
-                $("#next").button( "option", "disabled", false );
+                var res = getAllResults();     // retrieve statistics about the results obtained from this iteration
+                startGenerate(res.new_params, $("#status"), $("#progressbar"));
+                $("#iterate").button().css({"display":"block"});
 				// show the "working" status bar and field
 				$("#progress-area").css({"display": "block"});
             });
 
             $("#finish").button().click( function(event) {
-                var res = getResults();
-                location.href = "finish#" + $.param({
-                            "layer_height": ref_part_params.layer_height,
-                            "col_value": res.col_center,
-                            "col_error": res.col_error,
-                            "bar_value": res.bar_center,
-                            "bar_error": res.bar_error
-                        });
+                var res = getAllResults();
+                location.href = "finish#" + $.param(res.results);
             });
 
-            $("#next").button({
-                disabled: true     // keep Next disabled until a part has been generated.
-            }).click(function(event) {
+            $("#iterate").button().click(function(event) {
                 if (!generated) {
                     if (!confirm("You have not yet generated a test part with these settings. Continue anyway?"))
                         return;
                 }
                 var new_url = "";
-                if((typeof part_params["layer_height"] === "undefined")) {
+                if((typeof part_params[LAYER_HEIGHT_VAR] === "undefined")) {
                     // use the computed next configuration, even though a test part hasn't been generated
-                    var res = getResults();
-                    new_url = "iterate#" + $.param({
-                                "layer_height": ref_part_params.layer_height,
-                                "col_min": res.new_col_min,
-                                "col_max": res.new_col_max,
-                                "bar_min": res.new_bar_min,
-                                "bar_max": res.new_bar_max
-                            });
+                    var res = getAllResults();
+                    new_url = "iterate#" + $.param(res.new_params);
                 }
                 else {
                     // use the characteristics of the actual part generated
@@ -149,18 +142,36 @@ TODO:
             // We need graphics for this, so wait until the page is fully loaded.
             // Fill the canvases with initial images
 
-            drawCols();
-            drawBars();
+            drawPic();
             updateText();
         });
 
+        function populatePage() {
+            // Called on page load once we know which variable we're using to populate a bunch of text on the page
+            // that depends on the particular parameter being analyzed:
+            if (var_id == param_data.length - 1) {
+                $("#final-section").css({"display": "block"});
+                $("#next").css({"display": "none"});
+            }
+            else
+                    $("#final-section").css({"display": "none"});
 
-        function drawCols() {
+            $("#layer_height").html(ref_part_params[LAYER_HEIGHT_VAR].toString());
+
+            var pd = param_data[var_id];
+            $("#name").html(pd.Name);
+            $("#desc").html(pd.Desc);
+            $("#lost-label").html(pd.LowKeyword);
+            $("#printed-label").html(pd.HighKeyword);
+        }
+
+
+        function drawPic() {
 
             // Draws the columns image on the columns canvas
-            var canvas = $("#col-canvas")[0];
+            var canvas = $("#canvas")[0];
             var ctx = canvas.getContext("2d");
-            var img = $("#partN-columns" + col_thresh.toString())[0];
+            var img = $("#image" + var_thresh.toString())[0];
             // TODO: Clear the canvas?
             ctx.setTransform(1, 0, 0, 1, 0, 0);     // Clear transformation matrix
             ctx.drawImage(img, 0, 0);
@@ -168,86 +179,117 @@ TODO:
             // draw the reference dimensions
             ctx.rotate(Math.PI / 2);
             ctx.font = "12px Arial";
-            ctx.fillText(smartToString(ref_part_params.col_min), 80, -23);
-            ctx.fillText(smartToString(ref_part_params.col_max), 80, -200);
-        }
-
-        function drawBars() {
-            // Draws the columns image on the columns canvas
-            var canvas = $("#bar-canvas")[0];
-            var ctx = canvas.getContext("2d");
-            var img = $("#partN-bars" + bar_thresh.toString())[0];
-            // TODO: Clear the canvas?
-            ctx.setTransform(1, 0, 0, 1, 0, 0);     // Clear transformation matrix
-            ctx.drawImage(img, 0, 0);
-            ctx.rotate(Math.PI / 2);
-            ctx.font = "12px Arial";
-            ctx.fillText(smartToString(ref_part_params.bar_min), 60, -18);
-            ctx.fillText(smartToString(ref_part_params.bar_max), 100, -195);
+            ctx.fillText(smartToString(ref_part_params["min" + var_name]), 80, -23);
+            ctx.fillText(smartToString(ref_part_params["max" + var_name]), 80, -200);
         }
 
         function updateText() {
             // Updates all the text elements on the page when something changes
-            var res = getResults();
-            $("#col-lost").html(col_thresh.toString());
-            $("#col-printed").html((10-col_thresh).toString());
-            $("#bar-lost").html(bar_thresh.toString());
-            $("#bar-printed").html((10-bar_thresh).toString());
+            var res = getVarResults();
+            $("#lost").html(var_thresh.toString());
+            $("#printed").html((10 - var_thresh).toString());
 
-            $("#col-output").html(smartToString(res.col_center) + "  ± " + smartToString(res.col_error) + " mm");
-            $("#bar-output").html(smartToString(res.bar_center) + "  ± " + smartToString(res.bar_error) + " mm");
+            $("#output").html(smartToString(res.center) + "  ± " + smartToString(res.error) + " mm");
 
-            $("#new-cols").html(smartToString(res.new_col_min, 3) + " to " + smartToString(res.new_col_max, 3) +
-                    " mm (" + smartToString(res.col_center, 3) + "  ± " + smartToString(res.new_col_range / 2, 3) + ")");
-            $("#new-bars").html(smartToString(res.new_bar_min, 3) + " to " + smartToString(res.new_bar_max, 3) +
-                    " mm (" + smartToString(res.bar_center, 3) + "  ± " + smartToString(res.new_bar_range / 2, 3) + ")");
+            $("#new-range").html(smartToString(res.new_min, 3) + " to " + smartToString(res.new_max, 3) +
+                    " mm (" + smartToString(res.center, 3) + "  ± " + smartToString(res.new_range / 2, 3) + ")");
             return res;
         }
 
-
-        function getResults() {
+        function getVarResults(varName, varThresh, varZoom) {
             // Returns an object with the following members based on the reference part parameters and
-            // the current values of the sliders
-            // bar/col_center: The center of the identified characteristic
-            // bar/col_error: The approximate error on the identified characteristic
-            // new_bar/col_min: If a new test part were generated now, this should be its min
-            // new_bar/col_max: '' ...max
+            // the parameters passed (name - variable name; thresh - threshold indicated by user; zoom - zoom factor to use)
+            // Output:
+            // center: The center of the identified characteristic
+            // error: The approximate error on the identified characteristic
+            // new_min: If a new test part were generated now, this should be its min
+            // new_max: '' ...max
+            //
+            // If all arguments are omitted, assumes we are using the current variable (var_id) and the current
+            // settings of the sliders.
+
+            if (typeof varName === "undefined") {
+                varName = var_name;
+                varThresh = var_thresh;
+                varZoom = var_zoom;
+            }
+
+            var old_min = ref_part_params["min" + varName];
+            var old_max = ref_part_params["max" + varName];
+
             var obj = {};
-            obj.bar_center = Math.max(0, ref_part_params.bar_min + (ref_part_params.bar_max - ref_part_params.bar_min) * (bar_thresh - 0.5) / 10);
-            obj.bar_error = (ref_part_params.bar_max - ref_part_params.bar_min) / 5;
-            obj.col_center = Math.max(0, ref_part_params.col_min + (ref_part_params.col_max - ref_part_params.col_min) * (col_thresh - 0.5) / 10);
-            obj.col_error = (ref_part_params.col_max - ref_part_params.col_min) / 5;
+            obj.center = Math.max(0, old_min + (old_max - old_min) * (varThresh - 0.5) / 10);
+            obj.error = (old_max - old_min) / 5;
 
             // define the new ranges for the bars and columns
-            obj.new_bar_range = (ref_part_params.bar_max - ref_part_params.bar_min) / (bar_zoom);
-            obj.new_col_range = (ref_part_params.col_max - ref_part_params.col_min) / (col_zoom);
+            obj.new_range = (old_max - old_min) / (varZoom);
 
-            obj.new_bar_min = Math.max(0, obj.bar_center - obj.new_bar_range * 0.5);
-            obj.new_bar_max = obj.bar_center + obj.new_bar_range * 0.5;
-            obj.new_col_min = Math.max(0, obj.col_center - obj.new_col_range * 0.5);
-            obj.new_col_max = obj.col_center + obj.new_col_range * 0.5;
+            obj.new_min = Math.max(0, obj.center - obj.new_range * 0.5);
+            obj.new_max = obj.center + obj.new_range * 0.5;
 
             return obj;
 
+        }
+
+        function getAllResults() {
+            // Effectively does getVarResults() on every variable, used for computing the next step or reporting
+            // final results. The structure of the result is split depending on the intended use:
+            // output.new_params is a structure containing the parameters to pass to a new test part
+            // output.results is a structure containing the final values and errors for each parameter.
+
+            var i;
+            var new_params = {};
+            new_params[LAYER_HEIGHT_VAR] = ref_part_params[LAYER_HEIGHT_VAR];
+            var results = {};
+            results[LAYER_HEIGHT_VAR] = ref_part_params[LAYER_HEIGHT_VAR];
+
+            // First, save off the current values in the ref_part_params structure
+            ref_part_params["cur" + var_name] = var_thresh;
+            ref_part_params["zoom" + var_name] = var_zoom;
+
+            // Now, go through and generate results for each variable.
+            for(i = 0; i < param_data.length; i++) {
+                var name = param_data[i].varBase;
+
+                // Make sure we have the parameters we're about to need!
+                if (typeof ref_part_params["cur" + name] === "undefined" || typeof ref_part_params["zoom" + name] === "undefined") {
+                    alert("Something strange is going on -- I'm missing a url parameter! I'm using my best guess!");
+                    ref_part_params["cur" + name] = 5;
+                    ref_part_params["zoom" + name] = 5;
+                }
+                var obj = getVarResults(name, ref_part_params["cur" + name], ref_part_params["zoom" + name]);
+                new_params["min" + name] = obj.new_min;
+                new_params["max" + name] = obj.new_max;
+                results["final" + name] = obj.center;
+                results["error" + name] = obj.error;
+            }
+
+            var out = {};
+            out.new_params = new_params;
+            out.results = results;
+            return out;
         }
 
         function parseUrl() {
             // Parses the information after the # in the url and returns it.
             var params = QueryStringToHash(window.location.hash.substring(1));
             // check for validity of the hash contents
-            if (typeof params.layer_height === "undefined" || typeof params.col_min === "undefined" ||
-                    typeof params.col_max === "undefined" || typeof params.bar_min === "undefined" ||
-                    typeof params.bar_max === "undefined") {
+            if (typeof params[LAYER_HEIGHT_VAR] === "undefined") {
                 alert("URL missing parameters. Please use your browser's Back button to re-generate this page.");
-                // so we don't break anything, add defaults
-                ref_part_params = {"layer_height": 0.2, "col_min": 0.1, "col_max": 1, "bar_min": 0.1, "bar_max": 1};
             }
-            // convert elements to numbers
-            params.layer_height = Number(params.layer_height);
-            params.col_min = Number(params.col_min);
-            params.col_max = Number(params.col_max);
-            params.bar_min = Number(params.bar_min);
-            params.bar_max = Number(params.bar_max);
+            params[LAYER_HEIGHT_VAR] = Number(params[LAYER_HEIGHT_VAR]);
+            // add defaults for the rest of the parameters, if they were missing (which is unlikely)
+            var i;
+            var layerHeight = params[LAYER_HEIGHT_VAR];      // needed for eval() below
+            for(i = 0; i < param_data.length; i++) {
+                if (typeof params["min" + param_data[i].varBase] === "undefined")
+                        params["min" + param_data[i].varBase] = eval(String(param_data[i].minDefault));
+                if (typeof params["max" + param_data[i].varBase] === "undefined")
+                        params["max" + param_data[i].varBase] = eval(String(param_data[i].maxDefault));
+                // convert everything to a number
+                params["min" + param_data[i].varBase] = Number(params["min" + param_data[i].varBase]);
+                params["max" + param_data[i].varBase] = Number(params["max" + param_data[i].varBase]);
+            }
 
             return params;
         }
@@ -272,7 +314,8 @@ TODO:
         <img class="bigimage" src="static/images/part1.png" style="width:250px">
         <div class="bodytext">
             <h1>Printer Qualification Wizard</h1>
-            <p>Look at the test part you printed in the previous step. The model contained 10 bars and 10 columns,
+            <p>Look at the test part you printed. For each of a bunch of test parameters, the part contained 10 different
+                sized features,
                 but your printer probably didn't correctly reproduce all ten (if it did, that's OK!). In this
                 step, we will use the results of which bars did and didn't print to define a new test part that will
                 "zoom in" on your printer's capability.
@@ -284,55 +327,31 @@ TODO:
             </p>
             <br/>
             <div id="sections">
-                <h3 class="section-head">Columns</h3>
+                <h3 class="section-head" id="name">Columns</h3>
                 <div class="section-body">
-                    <canvas id="col-canvas" width="220" height="220"></canvas>
+                    <canvas id="canvas" width="220" height="220"></canvas>
                     <div class="subsec-left-col">
                         <p>This image is representative; your part may looks slightly different.</p>
                         <br/>
-                        <p>Use the slider to indicate how many columns printed acceptably.</p>
+                        <p id="desc">Use the slider to indicate how many columns printed acceptably.</p>
                         <br/>
-                        <div id="col-slider" style="margin-left: 1em; margin-bottom: 3px;"></div>
-                        <span id="col-lost" style="margin-left: 1em;">0</span> Lost
-                        <span style="text-align: right; float: right;"><span id="col-printed">10</span> Printed</span>
-                    </div>
-                </div>
-                <h3 class="section-head">Bars</h3>
-                <div class="section-body">
-                    <canvas id="bar-canvas" width="220" height="220"></canvas>
-                    <div style="float: left; max-width: 50%;">
-                        <p>This image is representative; your part may looks slightly different.</p>
-                        <br/>
-                        <p>Use the slider to indicate how many bars printed acceptably.</p>
-                        <br/>
-                        <div id="bar-slider" style="margin-left: 1em"></div>
-                        <span id="bar-lost" style="margin-left: 1em;">0</span> Lost
-                        <span style="text-align: right; float: right;"><span id="bar-printed">10</span> Printed</span>
+                        <div id="slider" style="margin-left: 1em; margin-bottom: 3px;"></div>
+                        <span id="lost" style="margin-left: 1em;">0</span> <span id="lost-label">Lost</span>
+                        <span style="text-align: right; float: right;"><span id="printed">10</span> <span id="printed-label">Printed</span></span>
                     </div>
                 </div>
             </div>
 
             <br/>
 
-            <h3>Current Results</h3>
-            <p>Based on the results so far, your machine achieves the following print characteristics:</p>
+            <h3>Results</h3>
+            <p>Based on your input, the machine achieves these print characteristics:</p>
             <br/>
             <div class="indent">
                 <p style="font-size: 18px">
-                    Minimum Column Size: <span id="col-output"></span>
-                <br/>
-                    Minimum Bar Size: <span id="bar-output"></span>
+                    Minimum Size: <span id="output"></span>
                 </p>
             </div>
-            <br/>
-            <h3>Keep Iterating?</h3>
-            <p>Do you want to generate a new part, zooming in on the failure threshold?</p>
-            <button class="button" id="generate" style="float: none; margin-left: 4em">
-                <span class="ui-button-text">Generate Part</span>
-            </button>
-            <button class="button" id="finish" style="float: none; margin-left: 6em">
-                <span class="ui-button-text">Finish Wizard</span>
-            </button>
             <br/>
             <h3 class="section-head">Generation Options</h3>
             <div class="section-body">
@@ -340,19 +359,12 @@ TODO:
                 <div class="indent">
                     <table>
                         <tr>
-                            <td>Column Zoom:</td>
+                            <td>Zoom for This Characteristic:</td>
                             <td>
-                                <input class="inputbox" id="zoom-cols" name="zoom-cols" value="5" min="0.5" max="10"
+                                <input class="inputbox" id="zoom" name="zoom" value="5" min="0.5" max="10"
                                        step="0.5" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
                             </td>
 
-                        </tr>
-                        <tr>
-                            <td>Bar Zoom:</td>
-                            <td>
-                                <input class="inputbox" id="zoom-bars" name="zoom-bars" value="5" min="0.5" max="10"
-                                       step="0.5" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
-                            </td>
                         </tr>
                     </table>
                 </div>
@@ -361,21 +373,35 @@ TODO:
                 <br/>
                 <p>The new test part would have the following settings:</p>
                 <div class="indent">
-                    <p>Columns: <span id="new-cols"></span></p>
-                    <p>Bars: <span id="new-bars"></span></p>
+                    <p><span id="new-range"></span></p>
                 </div>
             </div>
             <p>
-            </p>
-            <div id="progress-area">
-                <p id="message">Generating part...<span id="status"></span></p>
-                <div id="progressbar"></div>
-                <br/>
-                <p>Go print this part, then click Next to evaluate the results.</p>
-            </div>
             <button class="button" id="next">
-                <span class="ui-button-text">Next</span>
+                <span class="ui-button-text">Next Parameter</span>
             </button>
+            <br/>
+            <div id="final-section">
+                <h3>Keep Iterating?</h3>
+                <p>Do you want to generate a new part, zooming in on the failure threshold?</p>
+                <button class="button" id="generate" style="float: none; margin-left: 4em">
+                    <span class="ui-button-text">Generate Part</span>
+                </button>
+                <button class="button" id="finish" style="float: none; margin-left: 6em">
+                    <span class="ui-button-text">Finish Wizard</span>
+                </button>
+                <div id="progress-area">
+                    <p id="message">Generating part...<span id="status"></span></p>
+                    <div id="progressbar"></div>
+                    <br/>
+                </div>
+                <div id="post-message" style="display:none">
+                    <p >Go print this part, then click Next to evaluate the results.</p>
+                    <button class="button" id="iterate" style="display:none">
+                        <span class="ui-button-text">Next</span>
+                    </button>
+                </div>
+            </div>
 
         </div>
     </div>

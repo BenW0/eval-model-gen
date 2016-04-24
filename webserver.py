@@ -10,14 +10,20 @@ A note on sessions:
   This webapp doesn't use sessions. Instead, the "session" is entirely based on the state of the selection variables.
   So, effectively, the "session id" is the json describing the test part being used.
 
+TODO:
+    * Implement a more platform (and instance-) independent hash method for locating model parameter sets in the
+      stack of running jobs and in the file cache. What we have for now works, but may not in the future.
+
 """
 
 import os
 import cherrypy
 from cherrypy.lib.static import serve_file
 from cherrypy.process import plugins
-from modelparams import ModelParams as mp
+from modelparams import ModelParams
 import modelgen
+
+OUTPUT_FILENAME = 'result_log.txt'
 
 
 class ModelChooserWeb(object):
@@ -64,18 +70,48 @@ class ModelChooserEngine(object):
     def __init__(self):
         # Create the engine which will actually do the model construction.
         self.engine = modelgen.Engine()
+        # Initialize modelparams settings (loaded from openscad)
+        ModelParams.init_settings(self.engine.model_name)
+        # Save off a copy of the json that we just loaded from the openscad 
+        with open("public/js/params.js", "w") as fout:
+            fout.write("//This is a generated code file. All changes will be lost on next server load!\n")
+            fout.write("params_json = '%s';\n" % ModelParams.json_str.replace("\n", " "))
+        # Save the heading fields in the order they should be saved for writing the output file.
+        # You would think we would use a dict, but I want to preserve list ordering...
+        self.output_fields = ['printerType',
+                                   'printerModel',
+                                   'printerName',
+                                   'groupName',
+                                   'feedstock',
+                                   'notes']
+        self.output_field_names = ['Printer Type',
+                                   'Printer Model',
+                                   'Printer Name',
+                                   'Group Name',
+                                   'Feedstock',
+                                   'Notes']
 
-    @staticmethod
-    def is_numberlike(data):
-        if type(data) is float or type(data) is int:
-            return True
-        if isinstance(data, basestring):
-            try:
-                temp = float(data)  # try parsing the string into a float
-            except ValueError:
-                return False
-            return True
-        return False
+        for item in ModelParams.json_parsed:
+            var = item['varBase']
+            self.output_fields.append('final' + var)
+            self.output_field_names.append(item['Name'] + ' Minimum')
+            self.output_fields.append('error' + var)
+            self.output_field_names.append(item['Name'] + ' Error')
+
+        # If it doesn't exist, initialize the results file
+        if not os.path.exists(OUTPUT_FILENAME):
+            with open(OUTPUT_FILENAME, 'w') as fout:
+                fout.write('ID\t' + reduce(lambda x,y:x + '\t' + y, self.output_field_names) + '\n')
+            self.next_submit_id = 1
+        else:
+            with open(OUTPUT_FILENAME, 'r') as fin:
+                last_id = 1
+                for line in fin:
+                    val = line.split('\t')[0]
+                    if ModelParams.is_numberlike(val):
+                        last_id = int(val)
+            self.next_submit_id = last_id + 1
+
 
 
     @cherrypy.tools.json_in()
@@ -84,21 +120,17 @@ class ModelChooserEngine(object):
         in_data = cherrypy.request.json
         cherrypy.log("Handling Engine Post: " + str(in_data))
         # Make sure the json passed has the required elements, and they are the correct format.
-        if not all(map(in_data.has_key, mp.JSON_FIELDS)):
-            cherrypy.log("JSON structure is missing a required field!")
-            return {"Status": "Error", "ErrMessage": "Missing JSON Field"}
         if "Command" not in in_data:
             cherrypy.log("JSON structure is missing command field")
             return {"Status": "Error", "ErrMessage": "Unknown command"}
-        if not all(map(lambda key : self.is_numberlike(in_data[key]), mp.JSON_FIELDS)):
-            cherrypy.log("JSON structure contains non-numeric data.")
-            return {"Status": "Error", "ErrMessage": "Non-numeric input"}
 
         # Switch based on which kind of request this is...
         out_data = {"Status": "Testing!", "ErrMessage": "", "Filename": ""}
         if in_data["Command"].lower() == 'start':
             # Check to see if this model is already cached
-            model = mp.from_json(in_data)
+            in_data.pop("Command")
+            model = ModelParams()
+            model.load_json(in_data)
             exists, path = self.engine.check_exists(model)
             if exists:
                 out_data["Status"] = "Ready"
@@ -114,7 +146,9 @@ class ModelChooserEngine(object):
                     cherrypy.log("Engine error! Job: " + str(in_data) + " Error: " + errtext)
 
         elif in_data["Command"].lower() == 'check':
-            model = mp.from_json(in_data)
+            in_data.pop("Command")
+            model = ModelParams()
+            model.load_json(in_data)
             done, path, success, errtext = self.engine.check_job(model)
             out_data["Status"] = "Working"
             if done:
@@ -126,6 +160,23 @@ class ModelChooserEngine(object):
                 cherrypy.log("Engine error! Job: " + str(in_data) + " Error: " + errtext)
                 out_data["ErrMessage"] = errtext
 
+        elif in_data["Command"].lower() == 'submit':
+            in_data.pop("Command")
+            str_out = '%i\t' % self.next_submit_id
+            for key in self.output_fields:
+                if key in in_data:
+                    str_out += str(in_data[key]).replace('\n', '\\n')
+                str_out += '\t'
+            try:
+                with open(OUTPUT_FILENAME, 'a') as fout:
+                    fout.write(str_out + '\n')
+                out_data["Status"] = "OK"
+                out_data["Confirm"] = self.next_submit_id
+                self.next_submit_id += 1
+            except Exception as e:
+                cherrypy.log("Submit Error: " + str(e))
+                out_data["Status"] = "Error"
+                out_data["ErrMessage"] = str(e)
 
         return out_data
 

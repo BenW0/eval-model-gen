@@ -7,3 +7,5 @@ openscad/
 logs/
 server.conf
 temp.txt
+public/js/params.js
+result_log.txt

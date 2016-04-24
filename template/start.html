@@ -18,9 +18,12 @@ TODO
     <script src="static/external/jquery.js" type="text/javascript"></script>
     <script src="static/external/jquery-ui-1.11.4.custom/jquery-ui.js" type="text/javascript"></script>
     <script src="static/js/util.js" type="text/javascript"></script>
+    <script src="static/js/params.js" type="text/javascript"></script>
 
 	<script>
 		$(document).ready(function() {
+            // Parse the parameters structure which defines information about the different parameters we'll be testing
+            var param_data = JSON.parse(params_json);
 
 			$("#layerheight").spinner();
 			$("#resolution").spinner();
@@ -31,36 +34,77 @@ TODO
 			$("#accordion").accordion({
 				heightStyle: "content"
 			});
-            var sColMin = $("#a-col-min").spinner();
-			var sColMax = $("#a-col-max").spinner();
-			var sBarMin = $("#a-bar-min").spinner();
-            var sBarMax = $("#a-bar-max").spinner();
+            //var sColMin = $("#a-col-min").spinner();
+			//var sColMax = $("#a-col-max").spinner();
+
+            // Generate rows in the Custom section for each parameter, populated with defaults
+            var list = $("#model-params-area");
+            var template = list.html();
+            var id;
+            var new_html = "";
+            for (id = 0; id < param_data.length; id++) {
+                new_html += template
+                        .replace("__min_id", param_data[id].varBase + "-min")
+                        .replace("__max_id", param_data[id].varBase + "-max")
+                        .replace("__name", param_data[id].Name);
+            }
+            list.html(new_html);
+
+            for (id = 0; id < param_data.length; id++) {
+                param_data[id].sMin = $("#" + param_data[id].varBase + "-min").spinner();
+                param_data[id].sMax = $("#" + param_data[id].varBase + "-max").spinner();
+            }
 			
 			var pbGen = $("#progressbar").progressbar({value: false, max: 100});
 			
 			
 			bGenD.click(function(event) {
+                var part_params = {};
+                var i;
+                part_params[LAYER_HEIGHT_VAR] = $("#layerheight").val();
+				// fill in the default parameters from the config file, using layerHeight as a valid variable name
+                var layerHeight = part_params[LAYER_HEIGHT_VAR];
+                // TODO: Find a more secure alternative. Maybe new Function as here:http://www.everythingfrontend.com/posts/studying-javascript-eval.html
+                for(i = 0; i < param_data.length; i++) {
+                    part_params["min" + param_data[i].varBase] = eval(String(param_data[i].minDefault));
+                    part_params["max" + param_data[i].varBase] = eval(String(param_data[i].maxDefault));
+                }
 				// Generate a generic test part...
-				startGenerate($("#layerheight").val(), 0.1, 1, 0.1, 1, $("#status"), $("#progressbar"));
+				startGenerate(part_params, $("#status"), $("#progressbar"));
 				// show the "working" status bar and field
 				$("#progress-area").css({"display": "block"});
 			});
 
 			bGenG.click(function(event) {
-				// Generate a test part based on supplied printer resolution...
-                // We will go from res / 2 to res * 5 for columns and
-                // min(layerheight, res / 2) to max(layerheight * 3, res * 5) for bars
-                var res = $("#resolution").val();
-                var lh = $("#layerheight").val();
-				startGenerate(lh, res / 2, res * 5, Math.min(lh, res / 2), Math.max(lh * 3, res * 5), $("#status"), $("#progressbar"));
+				// Generate a test part based on supplied printer resolution... Defaults are applied in the server
+                // (ModelParams.load_json())
+                var part_params = {};
+                part_params[LAYER_HEIGHT_VAR] = $("#layerheight").val();
+                part_params[NOZZLE_DIAMETER_VAR] = $("#resolution").val();
+				// fill in the default parameters from the config file, using layerHeight and nozzleDiameter
+                // as valid variable names
+                var layerHeight = part_params[LAYER_HEIGHT_VAR];
+                var nozzleDiameter = part_params[NOZZLE_DIAMETER_VAR];
+                // TODO: Find a more secure alternative. Maybe new Function as here:http://www.everythingfrontend.com/posts/studying-javascript-eval.html
+                for(i = 0; i < param_data.length; i++) {
+                    part_params["min" + param_data[i].varBase] = eval(String(param_data[i].minDefaultND));
+                    part_params["max" + param_data[i].varBase] = eval(String(param_data[i].maxDefaultND));
+                }
+				startGenerate(part_params, $("#status"), $("#progressbar"));
 				// show the "working" status bar and field
 				$("#progress-area").css({"display": "block"});
 			});
 
 			bGenC.click(function(event) {
 				// Generate a test part based on specified parameters
-                var lh = $("#layerheight").val();
-				startGenerate(lh, sColMin.val(), sColMax.val(), sBarMin.val(), sBarMax.val(), $("#status"), $("#progressbar"));
+                var part_params = {};
+                part_params[LAYER_HEIGHT_VAR] = $("#layerheight").val();
+                var id;
+                for (id = 0; id < param_data.length; id++) {
+                    part_params["min" + param_data[id].varBase] = param_data[id].sMin.val();
+                    part_params["max" + param_data[id].varBase] = param_data[id].sMax.val();
+                }
+				startGenerate(part_params, $("#status"), $("#progressbar"));
 				// show the "working" status bar and field
 				$("#progress-area").css({"display": "block"});
 			});
@@ -167,23 +211,17 @@ TODO
 					
 					<h3>Use Custom Settings</h3>
 					<div>
-						<p>Control the settings for the minimum and maximum columns and bars here</p>
-						<div class="indent">
-							<table>
-							<tr>
-								<td>Column Range:</td>
-								<td><input class="inputbox" id="a-col-min" name="a-col-min" value="0.1" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
-								mm to  </td>
-								<td><input class="inputbox" id="a-col-max" name="a-col-max" value="1.0" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
-								mm</td>
-							</tr>
-							<tr>
-								<td>Bar Range:</td>
-								<td><input class="inputbox" id="a-bar-min" name="a-bar-min" value="0.1" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
-								mm to  </td>
-								<td><input class="inputbox" id="a-bar-max" name="a-bar-max" value="1.0" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
-								mm</td>
-							</tr>
+						<p>Control the settings for the minimum and maximum sizes of various features here</p>
+                        <br/>
+						<div>
+							<table id="model-params-area">
+                                <tr>
+                                    <td>__name</td>
+                                    <td><input class="inputbox" id="__min_id" value="0.1" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+                                    mm to  </td>
+                                    <td><input class="inputbox" id="__max_id" value="1.0" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+                                    mm</td>
+                                </tr>
 							</table>
 						</div>
 						<br/>
@@ -197,14 +235,15 @@ TODO
 				<div id="progress-area">
 					<p id="message">Generating part...<span id="status"></span></p>
 					<div id="progressbar"></div>
-                    <p>Go print this part on your printer, then click Next to continue.</p>
 				</div>
-                <br/>
-                <p></p>
-                <button class="button" id="next">
-                    <span class="ui-button-text">Next</span>
-                </button>
-
+				<div id="post-message" style="display:none">
+                    <p style="display:none;">Go print this part on your printer, then click Next to continue.</p>
+					<br/>
+					<p></p>
+					<button class="button" id="next">
+						<span class="ui-button-text">Next</span>
+					</button>
+				</div>
 			</div>
 		</div>
 	</div>
