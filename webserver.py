@@ -217,7 +217,7 @@ def start():
 
     # TODO: Make these values editable in server.conf
     # For now, use the default "nobody" user on the platform I'm using.
-    plugins.DropPrivileges(cherrypy.engine, uid=99, gid=99).subscribe()
+    plugins.DropPrivileges(cherrypy.engine, uid=65534, gid=65534).subscribe()
     webapp = ModelChooserWeb()
     webapp.engine = ModelChooserEngine()
     cherrypy.quickstart(webapp, '/', conf)
