@@ -42,7 +42,7 @@ TODO:
             // Figure out which variable we should check on this page of the wizard
             if (typeof ref_part_params.varId === "undefined")
                     ref_part_params.varId = 0;
-            var_id = ref_part_params.varId;
+            var_id = parseInt(ref_part_params.varId);
             var_name = param_data[var_id].varBase;
             // Fill in a bunch of bits in the page that change with each variable's parameters
             populatePage();
@@ -177,10 +177,10 @@ TODO:
             ctx.drawImage(img, 0, 0);
 
             // draw the reference dimensions
-            ctx.rotate(Math.PI / 2);
-            ctx.font = "12px Arial";
-            ctx.fillText(smartToString(ref_part_params["min" + var_name]), 80, -23);
-            ctx.fillText(smartToString(ref_part_params["max" + var_name]), 80, -200);
+            //ctx.rotate(Math.PI / 2);
+            //ctx.font = "12px Arial";
+            //ctx.fillText(smartToString(ref_part_params["min" + var_name]), 80, -23);
+            //ctx.fillText(smartToString(ref_part_params["max" + var_name]), 80, -200);
         }
 
         function updateText() {
@@ -311,9 +311,23 @@ TODO:
         </div>
     </div>
     <div id="body" class="home">
-        <img class="bigimage" src="static/images/part1.png" style="width:250px">
+        <canvas class="bigimage" id="canvas" width="440" height="440">
         <div class="bodytext">
-            <h1>Printer Qualification Wizard</h1>
+            <div id="intro">
+                <h1>Printer Qualification Wizard</h1>
+                <p>Look at the test part you printed. For each of a bunch of test parameters, the part contained 10 different
+                    sized features,
+                    but your printer probably didn't correctly reproduce all ten (if it did, that's OK!). In this
+                    step, we will use the results of which bars did and didn't print to define a new test part that will
+                    "zoom in" on your printer's capability.
+                </p>
+                <br/>
+                <p>
+                    This qualification run is using <span id="layer_height">0</span> mm for layer height. Please do not change
+                    the layer height for successive prints.
+                </p>
+            </div>
+            <h1 id="name">Printer Qualification Wizard</h1>
             <p>Look at the test part you printed. For each of a bunch of test parameters, the part contained 10 different
                 sized features,
                 but your printer probably didn't correctly reproduce all ten (if it did, that's OK!). In this
@@ -329,13 +343,12 @@ TODO:
             <div id="sections">
                 <h3 class="section-head" id="name">Columns</h3>
                 <div class="section-body">
-                    <canvas id="canvas" width="220" height="220"></canvas>
-                    <div class="subsec-left-col">
+                    <div>
                         <p>This image is representative; your part may looks slightly different.</p>
                         <br/>
                         <p id="desc">Use the slider to indicate how many columns printed acceptably.</p>
                         <br/>
-                        <div id="slider" style="margin-left: 1em; margin-bottom: 3px;"></div>
+                        <div id="slider" style="margin: 0 1em 3px 1em;"></div>
                         <span id="lost" style="margin-left: 1em;">0</span> <span id="lost-label">Lost</span>
                         <span style="text-align: right; float: right;"><span id="printed">10</span> <span id="printed-label">Printed</span></span>
                     </div>

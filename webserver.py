@@ -105,7 +105,7 @@ class ModelChooserEngine(object):
             self.next_submit_id = 1
         else:
             with open(OUTPUT_FILENAME, 'r') as fin:
-                last_id = 1
+                last_id = 0
                 for line in fin:
                     val = line.split('\t')[0]
                     if ModelParams.is_numberlike(val):

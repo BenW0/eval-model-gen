@@ -4,8 +4,11 @@ Uses openscad to build an STL file with a given set of parameters.
 This is a small wrapper over the command line, capable of running multiple jobs in parallel from
 a main Engine class.
 
+RUNNING THIS FILE: Running just this file will create the preview images in public/images if they don't already exist,
+  and if they do, it will run a test of the model engine's code.
+
 NOTE: This code is written on Windows and assumes openscad is present in the openscad folder. Tweaks may be required
-for other OS's to the global constants at the top of this file.
+for other OS's to the global constants at the top of this file for tests to work; server.conf also sets these variables.
 
 TODO: Fix logfiles not being automatically deletes and add deleting them to the (not yet implemented) linter.
 TODO: Implement a timeout so jobs are killed if they run too long.
@@ -104,7 +107,7 @@ class Engine:
 
     def check_job(self, model):
         """
-        Returns the status of a model: (finished, path_to_file)
+        Returns the status of a model: (finished, path_to_file, success, errortext)
 
         :param model: ModelParams object specifying which model to check
         :return: Tuple: (finished, path_to_file, success, errortext)
@@ -135,14 +138,14 @@ class Engine:
         raise NotImplementedError
 
     @staticmethod
-    def build_images():
+    def _build_images():
         """A script to generate the cache of images used to visualize the relevant feature on the front end"""
 
         for var, camera in ModelParams.camera_data.items():
             for i in range(11):
                 outfile = os.path.join(IMAGES_PATH, "%s-%i.png" % (var, i))
                 popen_params = [Engine.openscad_exe, "-o", outfile, "-D", "skip%s=%i" % (var, i),
-                                "--camera=%s" % camera, "--autocenter", "--imgsize=220,220",
+                                "--camera=%s" % camera, "--autocenter", "--imgsize=440,440",
                                 "--projection=ortho", Engine.model_name]
                 print(repr(popen_params))
                 proc = subprocess.Popen(popen_params)
@@ -289,9 +292,9 @@ if __name__ == "__main__":
     ModelParams.init_settings(Engine.model_name)
 
     # Check to see if images need to be generated...
-    if True and not os.path.exists(os.path.join(IMAGES_PATH, "%s-0.png" % ModelParams.camera_data.keys()[0])):
+    if True or not os.path.exists(os.path.join(IMAGES_PATH, "%s-0.png" % ModelParams.camera_data.keys()[0])):
         # Need to generate the images...
-        Engine.build_images()
+        Engine._build_images()
     else:
         print "Running Modelgen tests"
         # this script implements a test of the modelgen module.

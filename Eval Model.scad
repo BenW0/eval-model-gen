@@ -5,7 +5,11 @@
    TODO:
      - Improve sizing of outrigger to better accommodate aspect ratio requirements of negative
        features by allowing the left hand edge to not be aligned with the Y axis.
-     - Add a test for depth of emboss/engrave needed to be visible
+     - Add a test for depth of emboss/engrave needed to be visible. Vertical: cylinder on top of xyRadius.
+       Horizontal: cylinder on right side, negative cylinder on connectingBar
+     - Create a test script that generates a model for each variable bigger and smaller than
+       its default for validating model integrity.
+     - Add an overhang angle test
  */ 
  
 // Special variable set explicitly by the eval server. Don't change this name without also changing it in
@@ -32,7 +36,7 @@ nozzleDiameter = 0.4;   // mm, only supplied in a default mode
 /*
 <json>
     {
-        "Name": "Vertical Positive Pillars",
+        "Name": "Vertical Pillars",
         "Desc": "Use the slider to indicate how many columns printed acceptably.",
         "LowKeyword": "Lost",
         "HighKeyword": "Printed",
@@ -46,66 +50,272 @@ nozzleDiameter = 0.4;   // mm, only supplied in a default mode
 </json>
 */
         
-minPosPillarDiaV = 1; //mm
-maxPosPillarDiaV = 1.1;
+minPosPillarDiaV = 0.1; //mm
+maxPosPillarDiaV = 2;
 skipPosPillarDiaV = -1;      // skip the first <> items when building (for visualization purposes)
 
 /*
 <json>
     {
-        "Name": "Vertical Negative Pillars",
+        "Name": "Horizontal Circular Holes",
         "Desc": "Use the slider to indicate how many holes let light through.",
         "LowKeyword": "Lost",
+        "HighKeyword": "Resolved",
+        "varBase": "NegPillarDiaH",
+        "minDefault": "0.5 * layerHeight",
+        "maxDefault": "10 * layerHeight",
+        "minDefaultND": "0.5 * layerHeight",
+        "maxDefaultND": "10 * layerHeight",
+        "cameraData": "-5.97,-11.23,-0.61,50.6,0,45.7,90"
+    }
+</json>
+*/
+minNegPillarDiaH = 0.5 * layerHeight;
+maxNegPillarDiaH = 10 * layerHeight;
+skipNegPillarDiaH = -1;
+
+/*
+<json>
+    {
+        "Name": "Horizontal Bosses",
+        "Desc": "Use the slider to indicate how many bumps printed successfully.",
+        "LowKeyword": "Lost",
         "HighKeyword": "Printed",
+        "varBase": "PosButtonDiaH",
+        "minDefault": "0.5 * layerHeight",
+        "maxDefault": "10 * layerHeight",
+        "minDefaultND": "0.5 * layerHeight",
+        "maxDefaultND": "10 * layerHeight",
+        "cameraData": "-5.97,-11.23,-0.61,50.6,0,45.7,90"
+    }
+</json>
+*/
+minPosButtonDiaH = 0.5 * layerHeight; //mm
+maxPosButtonDiaH = 10 * layerHeight;
+skipPosButtonDiaH = -1;
+
+/*
+<json>
+    {
+        "Name": "Horizontal Slots",
+        "Desc": "Use the slider to indicate how many horizontal slots were resolved. Drooping of the roof is acceptable on larger slots.",
+        "LowKeyword": "Lost",
+        "HighKeyword": "Resolved",
+        "varBase": "NegFinThkH",
+        "minDefault": "0.5 * layerHeight",
+        "maxDefault": "7 * layerHeight",
+        "minDefaultND": "0.5 * layerHeight",
+        "maxDefaultND": "10 * layerHeight",
+        "cameraData": "-5.97,-11.23,-0.61,50.6,0,45.7,90"
+    }
+</json>
+*/
+minNegFinThkH = 0.5 * layerHeight;
+maxNegFinThkH = 7 * layerHeight;
+skipNegFinThkH = -1;
+
+/*
+<json>
+    {
+        "Name": "Horizontal Pockets",
+        "Desc": "Use the slider to indicate how many horizontal pockets are visible.",
+        "LowKeyword": "Lost",
+        "HighKeyword": "Resolved",
+        "varBase": "NegButtonDiaH",
+        "minDefault": "0.5 * layerHeight",
+        "maxDefault": "7 * layerHeight",
+        "minDefaultND": "0.5 * layerHeight",
+        "maxDefaultND": "7 * layerHeight",
+        "cameraData": "-5.97,-11.23,-0.61,50.6,0,45.7,90"
+    }
+</json>
+*/
+minNegButtonDiaH = 0.5 * layerHeight;
+maxNegButtonDiaH = 10 * layerHeight;
+skipNegButtonDiaH = -1;
+
+/*
+<json>
+    {
+        "Name": "In-Layer Fillets",
+        "Desc": "On how many of the rectangular columns can you tell the difference between the bottom half and the top half?",
+        "LowKeyword": "Look Different",
+        "HighKeyword": "Look the Same",
+        "varBase": "XYRadius",
+        "minDefault": 0.1,
+        "maxDefault": 1,
+        "minDefaultND": "0.5 * nozzleDiameter",
+        "maxDefaultND": "2.5 * nozzleDiameter",
+        "cameraData": "-2.19,-17.52,11.67,57.1,0,142.4,80.4"
+    }
+</json>
+*/
+minXYRadius = 0.1;
+maxXYRadius = 1;
+skipXYRadius = -1;
+
+/*
+<json>
+    {
+        "Name": "Horizontal Circular Bars",
+        "Desc": "How many horizontal bars were printed successfully?",
+        "LowKeyword": "Lost",
+        "HighKeyword": "Printed",
+        "varBase": "PosPillarDiaH",
+        "minDefault": "0.5 * layerHeight",
+        "maxDefault": "10 * layerHeight",
+        "minDefaultND": "0.5 * layerHeight",
+        "maxDefaultND": "10 * layerHeight",
+        "cameraData": "-5.55,-4,5.98,61.3,0,88.5,91.85"
+    }
+</json>
+*/
+minPosPillarDiaH = 0.5 * layerHeight; //mm
+maxPosPillarDiaH = 10 * layerHeight;
+skipPosPillarDiaH = -1;
+
+/*
+<json>
+    {
+        "Name": "Horizontal Fins",
+        "Desc": "How many horizontal fins were printed successfully? Some drooping is OK.",
+        "LowKeyword": "Lost",
+        "HighKeyword": "Printed",
+        "varBase": "PosFinThkH",
+        "minDefault": "0.5 * layerHeight",
+        "maxDefault": "7 * layerHeight",
+        "minDefaultND": "0.5 * layerHeight",
+        "maxDefaultND": "7 * layerHeight",
+        "cameraData": "-4.56,-3.53,5.75,125,0,105.3,91.85"
+    }
+</json>
+*/
+minPosFinThkH = 0.5 * layerHeight;    //mm
+maxPosFinThkH = 7 * layerHeight;
+skipPosFinThkH = -1;
+
+/*
+<json>
+    {
+        "Name": "Vertical Pockets",
+        "Desc": "Look on the bottom of the printed part. How many of the vertical pockets are visible? Some drooping is OK.",
+        "LowKeyword": "Lost",
+        "HighKeyword": "Resolved",
+        "varBase": "NegButtonDiaV",
+        "minDefault": 0.1,
+        "maxDefault": 2,
+        "minDefaultND": "0.5 * nozzleDiameter",
+        "maxDefaultND": "5 * nozzleDiameter",
+        "cameraData": "-11.45,-5.72,6.6,223.7,0,65.1,82.67"
+    }
+</json>
+*/
+minNegButtonDiaV = .1;
+maxNegButtonDiaV = 2;
+skipNegButtonDiaV = -1;
+
+/*
+<json>
+    {
+        "Name": "Vertical Bosses",
+        "Desc": "Back on the top side, how many of the vertical bumps are visible?",
+        "LowKeyword": "Lost",
+        "HighKeyword": "Printed",
+        "varBase": "PosButtonDiaV",
+        "minDefault": 0.1,
+        "maxDefault": 2,
+        "minDefaultND": "0.5 * nozzleDiameter",
+        "maxDefaultND": "5 * nozzleDiameter",
+        "cameraData": "-17.45,-1.9,6.34,38.9,0,306.9,74.4"
+    }
+</json>
+*/
+minPosButtonDiaV = .1; //mm
+maxPosButtonDiaV = 2;
+skipPosButtonDiaV = -1;
+
+/*
+<json>
+    {
+        "Name": "Vertical Fins",
+        "Desc": "How many of the vertical fins were printed?",
+        "LowKeyword": "Lost",
+        "HighKeyword": "Printed",
+        "varBase": "PosFinThkV",
+        "minDefault": 0.1,
+        "maxDefault": 2,
+        "minDefaultND": "0.5 * nozzleDiameter",
+        "maxDefaultND": "5 * nozzleDiameter",
+        "cameraData": "-0.65,4.66,8.35,40.1,0,140.2,91.85"
+    }
+</json>
+*/
+minPosFinThkV = 0.1;
+maxPosFinThkV = 2;
+skipPosFinThkV = -1;
+
+/*
+<json>
+    {
+        "Name": "Vertical Slots",
+        "Desc": "How many of the vertical slots were printed?",
+        "LowKeyword": "Lost",
+        "HighKeyword": "Printed",
+        "varBase": "NegFinThkV",
+        "minDefault": 0.1,
+        "maxDefault": 2,
+        "minDefaultND": "0.5 * nozzleDiameter",
+        "maxDefaultND": "5 * nozzleDiameter",
+        "cameraData": "0.29,3.19,5.25,45.9,0,175.8,90"
+    }
+</json>
+*/
+minNegFinThkV = 0.1;
+maxNegFinThkV = 2;
+skipNegFinThkV = -1;
+
+/*
+<json>
+    {
+        "Name": "Vertical Circular Holes",
+        "Desc": "How many holes let light through (or would have except for squishing on the first layer?",
+        "LowKeyword": "Lost",
+        "HighKeyword": "Resolved",
         "varBase": "NegPillarDiaV",
         "minDefault": 0.1,
         "maxDefault": 2,
         "minDefaultND": "0.5 * nozzleDiameter",
         "maxDefaultND": "5 * nozzleDiameter",
-        "cameraData": "-3.95,5.44,4.58,28.4,0,149.6,91.85"
+        "cameraData": "-0.87,11.25,0.15,15.8,0,139.4,84"
     }
 </json>
 */
-minNegPillarDiaV = 1;
-maxNegPillarDiaV = 1.1;
+minNegPillarDiaV = 0.1;
+maxNegPillarDiaV = 2;
 skipNegPillarDiaV = -1;
 
-minPosPillarDiaH = 1; //mm
-maxPosPillarDiaH = 1.1;
-
-minNegPillarDiaH = 1;
-maxNegPillarDiaH = 1.1;
-
-minPosButtonDiaH = 1; //mm
-maxPosButtonDiaH = 2;
-
-minNegButtonDiaH = 1;
-maxNegButtonDiaH = 2;
-
-minPosButtonDiaV = 1; //mm
-maxPosButtonDiaV = 2;
-minNegButtonDiaV = 1;
-maxNegButtonDiaV = 2;
-
-minPosFinThkH = 1;    //mm
-maxPosFinThkH = 1.1;
-minNegFinThkH = 1;
-maxNegFinThkH = 1.1;
-
-minPosFinThkV = 0.1;
-maxPosFinThkV = 2;
-minNegFinThkV = 0.1;
-maxNegFinThkV = 2;
-
+/*
+<json>
+    {
+        "Name": "Inter-Layer Fillets",
+        "Desc": "How many rounded regions are visible on the part corner?",
+        "LowKeyword": "Lost",
+        "HighKeyword": "Visible",
+        "varBase": "YZRadius",
+        "minDefault": 0.1,
+        "maxDefault": 1,
+        "minDefaultND": "0.5 * nozzleDiameter",
+        "maxDefaultND": "2.5 * nozzleDiameter",
+        "cameraData": "-3.07,11.93,0.4,32.6,0,135.2,91.85"
+    }
+</json>
+*/
 minYZRadius = 0.1;
 maxYZRadius = 1;
+skipYZRadius = -1;
 
-minXYRadius = 0.1;
-maxXYRadius = 1;
-
+// The number of features to produce for each series.
 featureCount = 10;
-skipH = -1;      // set to non-zero to skip rendering the first <skipH> bars
-skipV = -1;      // set to non-zero to skip rendering the first <skipV> columns 
 
 // Ratios used for determining the relative sizes of different features
 positiveHSizeRatio = 7;        // ratio of height to diameter/thickness for horizontal pillars/fins
@@ -124,44 +334,47 @@ $fn = 16;
 meanNegFinThkV = (minNegFinThkV + maxNegFinThkV) / 2;
 meanPosFinThkV = (minPosFinThkV + maxPosFinThkV) / 2;
 meanNegPillarDiaV = (minNegPillarDiaV + maxNegPillarDiaV) / 2;
+meanPosPillarDiaV = (minPosPillarDiaV + maxPosPillarDiaV) / 2;
 meanPosButtonDiaV = (minPosButtonDiaV + maxPosButtonDiaV) / 2;
 meanNegButtonDiaV = (minNegButtonDiaV + maxNegButtonDiaV) / 2;
+meanPosPillarDiaH = (minPosPillarDiaH + maxPosPillarDiaH) / 2;
+
+maxPosPillarDia = max(maxPosPillarDiaH, maxPosPillarDiaV);
+minPosPillarDia = min(minPosPillarDiaH, minPosPillarDiaV);
+meanPosPillarDia = (maxPosPillarDia + minPosPillarDia) / 2;
+
+// Fillet variables
+yzFilletGap = maxPosFinThkV;
+
+xyFilletColumnWidth = max(meanPosPillarDiaV * 2, 2 * maxXYRadius);
+xyFilletColumnHeight = pillarVSizeRatio * xyFilletColumnWidth / 4;
 
 // vfinMinSpacing records the minimum X-direction space needed for each positive/negative fin pair,
 // assuming they are arranged in opposite order (biggest positive next to smallest negative).
 vfinMinSpacing = max(maxNegFinThkV + minPosFinThkV, minNegFinThkV + maxPosFinThkV) / 2;
 
 // Minimum and maximum width variables for each of the major test components. Used in calculating the x-direction width of the total part.
-minWidthVars = [minPosPillarDiaV, minPosPillarDiaH, minNegPillarDiaH, minPosFinThkH * minHFinWidthThkRatio, minNegFinThkH * minHFinWidthThkRatio, vfinMinSpacing];
-maxWidthVars = [maxPosPillarDiaV, maxPosPillarDiaH, maxNegPillarDiaH, minNegFinThkH * minHFinWidthThkRatio, maxNegFinThkH * minHFinWidthThkRatio, vfinMinSpacing];
-
-maxPosPillarDia = max(maxPosPillarDiaH, maxPosPillarDiaV);
-minPosPillarDia = min(minPosPillarDiaH, minPosPillarDiaV);
-meanPosPillarDia = (maxPosPillarDia + minPosPillarDia) / 2;
+minWidthVars = [minPosPillarDiaV, minPosPillarDiaH, minNegPillarDiaH, minPosFinThkH * minHFinWidthThkRatio, minNegFinThkH * minHFinWidthThkRatio, vfinMinSpacing, xyFilletColumnWidth];
+maxWidthVars = [maxPosPillarDiaV, maxPosPillarDiaH, maxNegPillarDiaH, minNegFinThkH * minHFinWidthThkRatio, maxNegFinThkH * minHFinWidthThkRatio, vfinMinSpacing, xyFilletColumnWidth];
 maxPillarDia = max(maxWidthVars);
 minPillarDia = min(minWidthVars);
 meanPillarDia = (maxPillarDia + minPillarDia) / 2;
 
 fudge = minPillarDia * 0.02;        // a small buffer to make solids cleanly intersect.
 
-yzFilletGap = maxPosFinThkV;
-xyFilletGap = maxPosFinThkH;
-
-xyFilletColumnWidth = maxPosPillarDiaV * 2;
-xyFilletColumnHeight = pillarVSizeRatio * xyFilletColumnWidth / 4;
 
 // Outrigger dimensions
-outriggerMinDepth = max(maxPosPillarDiaV * 1.5 + xyFilletColumnWidth, minNegFinThkH * negativeHSizeRatio, minNegPillarDiaH * negativeHSizeRatio);
+outriggerMinDepth = max(maxPosPillarDiaV * 2 + xyFilletColumnWidth, minNegFinThkH * negativeHSizeRatio, minNegPillarDiaH * negativeHSizeRatio);
 outriggerGapConstant = 0.5;
 outriggerHeight = (max(maxPosPillarDiaH, maxPosButtonDiaH) + maxNegPillarDiaH + max(maxPosFinThkH, maxNegButtonDiaH) + maxNegFinThkH) * (1 + outriggerGapConstant);
 outriggerGapV = outriggerHeight / (1 + outriggerGapConstant) * outriggerGapConstant / 4;
 
 // coreHeight will be the average of the size the negative vertical columns and fins want, limited so it isn't too low to receive the horizontal pillars.
-coreHeight = max(outriggerHeight - outriggerGapV - maxNegPillarDiaV, 
+coreHeight = max(outriggerHeight - outriggerGapV - maxNegPillarDiaH, 
     (finLenThkRatioV * meanNegFinThkV + pillarVSizeRatio * meanNegPillarDiaV) / 2);
 // coreWidth ensures the gapH between each pillar is at least 2/3 of either max pillar.
 coreWidth = featureCount * (max([ for (i = [0:1:len(minWidthVars)-1]) (minWidthVars[i] + maxWidthVars[i]) / 2 ]) + maxPillarDia * 0.667);
-    
+
 
 negFinLengthV = coreHeight;
 posFinLengthV = finLenThkRatioV * meanPosFinThkV;
@@ -175,8 +388,8 @@ pillarSpacing = coreWidth / featureCount;
 posPillarMinLengthH = maxPosPillarDiaV * 2;
 posPillarMinLengthV = maxPosPillarDiaH * 2;
 
-hButtonThk = meanPosPillarDia / 2;
-vButtonThk = meanPosPillarDia / 2;      // TODO: limit this with layer height?
+hButtonThk = max(meanPosPillarDiaH / 2, layerHeight * 3);
+vButtonThk = max(meanPosPillarDiaH / 2, layerHeight * 3);      // TODO: limit this with layer height?
 
 posFinWidthH = coreWidth / featureCount - meanPosFinThkV;
 negFinWidthH = coreWidth / featureCount - meanNegFinThkV;
@@ -203,21 +416,21 @@ difference()
         
         // Vertical fins
         translate([0,coreYGap * 0.5,coreHeight])
-            vfins(true, skipV);
+            vfins(true, skipPosFinThkV);
         
         // horizontal pillars
         translate([0,0,outriggerHeight - 1.5 * outriggerGapV - maxNegPillarDiaH - maxPosPillarDiaH / 2])
         rotate([90,0,0])
-            pillars(minPosPillarDiaH, maxPosPillarDiaH, positiveHSizeRatio, posPillarMinLengthH, skipH);
+            pillars(minPosPillarDiaH, maxPosPillarDiaH, positiveHSizeRatio, posPillarMinLengthH, skipPosPillarDiaH);
         
         // horizontal buttons
         translate([0, foutriggerEndY(), outriggerHeight - 1.5 * outriggerGapV - maxNegPillarDiaH - maxPosButtonDiaH / 2])
         rotate([90,0,0])
-            pillars(minPosButtonDiaH, maxPosButtonDiaH, 0, hButtonThk, skipH);
+            pillars(minPosButtonDiaH, maxPosButtonDiaH, 0, hButtonThk, skipPosButtonDiaH);
         
         // positive horizontal fins
         translate([fgapX(posFinWidthH, posFinWidthH) * 0.5, 0, outriggerGapV + maxPosFinThkH / 2])
-        hfins(minPosFinThkH, maxPosFinThkH, posFinWidthH);
+        hfins(minPosFinThkH, maxPosFinThkH, posFinWidthH, skipPosFinThkH);
         
         // vertical pillars
         translate([0, foutriggerEndY() + maxPosPillarDiaV, outriggerHeight])
@@ -226,11 +439,11 @@ difference()
         // vertical buttons
         translate([-(coreWidth + connectingBarWidth) / 2, connectingBarCenterY, coreHeight])
         rotate([0, 0, 90])
-            pillars(minPosButtonDiaV, maxPosButtonDiaV, 0, vButtonThk, skipH, overrideWidth=connectingBarLength);
+            pillars(minPosButtonDiaV, maxPosButtonDiaV, 0, vButtonThk, skipPosButtonDiaV, overrideWidth=connectingBarLength);
         
         // xy fillets
         translate([0, foutriggerEndY() + (outriggerMinDepth + 2 * maxPosPillarDiaV) / 2, outriggerHeight])
-            xyfillets(minXYRadius, maxXYRadius, coreWidth, skipV);
+            xyfillets(minXYRadius, maxXYRadius, coreWidth, skipXYRadius);
                 
     };
     
@@ -238,20 +451,20 @@ difference()
     // horizontal pillars
     translate([0,0,outriggerHeight - outriggerGapV - maxNegPillarDiaH / 2])
     rotate([90,0,0])
-        pillars(minNegPillarDiaH, maxNegPillarDiaH, 0, abs(foutriggerEndY()) + 3 * fudge, skipH, backwards=true);
+        pillars(minNegPillarDiaH, maxNegPillarDiaH, 0, abs(foutriggerEndY()) + 3 * fudge, skipNegPillarDiaH, backwards=true);
     
     // horizontal buttons
     translate([0, foutriggerEndY() + hButtonThk, outriggerGapV + maxNegButtonDiaH / 2])
     rotate([90,0,0])
-        pillars(minNegButtonDiaH, maxNegButtonDiaH, 0, hButtonThk + 2 * fudge, skipH);
+        pillars(minNegButtonDiaH, maxNegButtonDiaH, 0, hButtonThk + 2 * fudge, skipNegButtonDiaH);
     
     // horizontal fins
     translate([0, -3 * fudge, 1.5 * outriggerGapV + max(maxPosFinThkH, maxNegButtonDiaH) + maxNegFinThkH / 2])
-        hfins(maxNegFinThkH, minNegFinThkH, negFinWidthH);
+        hfins(maxNegFinThkH, minNegFinThkH, negFinWidthH, skipNegFinThkH);
     
     // vertical fins
     translate([0, coreYGap * 0.5, 0])
-    vfins(false, skipV);
+    vfins(false, skipNegFinThkV);
     
     // negative vertical pillars
     translate([0, coreDepth - coreYGap * 0.5 - maxNegPillarDiaV / 2, -2 * fudge])
@@ -260,12 +473,12 @@ difference()
     // negative vertical buttons
     translate([-(coreWidth + connectingBarWidth) / 2, connectingBarCenterY, -2 * fudge])
     rotate([0, 0, 90])
-        pillars(minNegButtonDiaV, maxNegButtonDiaV, 0, vButtonThk, skipH, overrideWidth=connectingBarLength);
+        pillars(minNegButtonDiaV, maxNegButtonDiaV, 0, vButtonThk, skipNegButtonDiaV, overrideWidth=connectingBarLength);
         
     // negative fillets
-    translate([-connectingBarWidth / 2, coreDepth, coreHeight])
+    translate([0, coreDepth, coreHeight])
     scale([-1, 1, 1])
-    yzfillets(minYZRadius, maxYZRadius, yzFilletGap, coreWidth + connectingBarWidth, skipH);
+    yzfillets(minYZRadius, maxYZRadius, yzFilletGap, coreWidth, skipYZRadius);
 
 }
 }
@@ -427,6 +640,11 @@ module xyfillets(minR, maxR, totalLength, skipFirst=-1)
                             cylinder(h=xyFilletColumnHeight / 2, r=r,center=true);
                     }
                 }
+            }
+            else
+            {
+                translate([0,0,xyFilletColumnHeight / 2 - fudge])
+                    cube(size=[xyFilletColumnWidth, xyFilletColumnWidth, xyFilletColumnHeight / 2 ], center=true);
             }
         }
     }

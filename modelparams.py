@@ -4,6 +4,9 @@ ModelParams
 This is a small interface class which makes it easier to keep track of model parameters.
 Now that model parameters have been moved to a configuration file, this class is also responsible for loading
 the configuration file on startup.
+
+RUNNING THIS FILE: Running just this file generates a set of models for validating the flexibility of the openscad
+   model by creating one model with each variable at 2x its default max and 0.5x its default min.
 """
 
 import json
@@ -137,3 +140,74 @@ class ModelParams:
                 return False
             return True
         return False
+
+
+if __name__ == "__main__":
+    # Generate a series of eval models to verify the model's flexibility to different inputs.
+    import modelgen
+    import time
+    import shutil
+
+    print("Building a variety of models to check scad flexibility...")
+
+    eng = modelgen.Engine()
+    ModelParams.init_settings(eng.model_name)
+
+    if os.path.exists("modelcache/validation"):
+        shutil.rmtree("modelcache/validation")
+    os.mkdir("modelcache/validation")
+
+    # Generate a pair of models for layerHeight.
+    var = ModelParams.LAYER_HEIGHT_VAR
+
+    # first, do a small variant
+    model1 = ModelParams()
+    model1.params[var] = "0.05"
+
+    eng.start_job(model1)
+
+    # next, do a big variant
+    model2 = ModelParams()
+    model2.params[var] = "0.5"
+
+    eng.start_job(model2)
+    done = False
+    while not done:
+        time.sleep(1)
+        res2 = eng.check_job(model2)
+        res1 = eng.check_job(model1)
+        done = res2[0] and res1[0]
+
+    shutil.copy("modelcache/" + res2[1], "modelcache/validation/%s-big.stl" % var)
+    shutil.copy("modelcache/" + res1[1], "modelcache/validation/%s-small.stl" % var)
+    print("%s-big done" % var)
+
+    for item in ModelParams.json_parsed:
+        var = item["varBase"]
+
+        # first, do a small variant
+        model1 = ModelParams()
+        model1.params["min" + var] = "0.5 * " + str(item["minDefault"])
+        model1.params["max" + var] = "0.5 * " + str(item["minDefault"])
+
+        eng.start_job(model1)
+
+        # next, do a big variant. We'll let both jobs run so we can use two cores
+        model2 = ModelParams()
+        model2.params["min" + var] = "2 * " + str(item["maxDefault"])
+        model2.params["max" + var] = "2 * " + str(item["maxDefault"])
+
+        eng.start_job(model2)
+        done = False
+        while not done:
+            time.sleep(1)
+            res1 = eng.check_job(model1)
+            res2 = eng.check_job(model2)
+            done = res2[0] and res1[0]
+
+        shutil.copy("modelcache/" + res1[1], "modelcache/validation/%s-small.stl" % var)
+        shutil.copy("modelcache/" + res2[1], "modelcache/validation/%s-big.stl" % var)
+        print("%s done" % var)
+
+
+
