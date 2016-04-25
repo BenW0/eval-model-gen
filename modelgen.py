@@ -10,8 +10,7 @@ RUNNING THIS FILE: Running just this file will create the preview images in publ
 NOTE: This code is written on Windows and assumes openscad is present in the openscad folder. Tweaks may be required
 for other OS's to the global constants at the top of this file for tests to work; server.conf also sets these variables.
 
-TODO: Fix logfiles not being automatically deletes and add deleting them to the (not yet implemented) linter.
-TODO: Implement a timeout so jobs are killed if they run too long.
+TODO: see github
 """
 
 import subprocess

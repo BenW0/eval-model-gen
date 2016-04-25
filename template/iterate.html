@@ -2,14 +2,7 @@
 <!-- Website template by freewebsitetemplates.com -->
 <!-- Iterate.html - each successive page in the wizard, until we reach the end.
 
-TODO:
-* Switch from using hashes to store the page state to using parameters, and just tell the backend to ignore them.
-  This would make browser back/forward behavior and resetting of control values much more transparent.
-* Trap the Back and Forward button so it goes back and remembers where you left the slider, and forward
-  correctly updates the # with the modified information
-* Don't have the page reload on Back button or Next button -- just update appropriate variables and re-call a trimmed-
-  down version of the current $.ready function.
-* Warn the user when 0 or 10 items came out to decrease the zoom factor so valid data is obtained.
+TODO: See github
  -->
 <html>
 <head>
@@ -70,7 +63,18 @@ TODO:
                 }
             });
 
-            var_zoom = $("#zoom").spinner({
+            $("#zoom-slider").slider({
+                min: 1,
+                max: 10,
+                value: var_zoom,
+                slide: function (event, ui) {
+                    var_zoom = ui.value;
+                    drawPic();
+                    updateText();
+                }
+            });
+
+            /*var_zoom = $("#zoom").spinner({
                 change: function(event, ui){
                     var_zoom = $("#zoom").val();
                     updateText();
@@ -79,6 +83,7 @@ TODO:
                     var_zoom = ui.value;
                     updateText()
                 }}).val();
+                */
 
             $("#progressbar").progressbar({value: false, max: 100});
 
@@ -162,32 +167,96 @@ TODO:
 
             var pd = param_data[var_id];
             $("#name").html(pd.Name);
+            $("#name2").html(pd.Name);
             $("#desc").html(pd.Desc);
             $("#lost-label").html(pd.LowKeyword);
             $("#printed-label").html(pd.HighKeyword);
+
+
+            $("#min-size").html(smartToString(ref_part_params["min" + pd.varBase]) + ' mm');
+            $("#max-size").html(smartToString(ref_part_params["max" + pd.varBase]) + ' mm');
         }
 
 
         function drawPic() {
 
-            // Draws the columns image on the columns canvas
+            // Draws the part image on the main canvas
             var canvas = $("#canvas")[0];
             var ctx = canvas.getContext("2d");
             var img = $("#image" + var_thresh.toString())[0];
-            // TODO: Clear the canvas?
-            ctx.setTransform(1, 0, 0, 1, 0, 0);     // Clear transformation matrix
+            var i;
+            //ctx.setTransform(1, 0, 0, 1, 0, 0);     // Clear transformation matrix
             ctx.drawImage(img, 0, 0);
 
-            // draw the reference dimensions
-            //ctx.rotate(Math.PI / 2);
-            //ctx.font = "12px Arial";
-            //ctx.fillText(smartToString(ref_part_params["min" + var_name]), 80, -23);
-            //ctx.fillText(smartToString(ref_part_params["max" + var_name]), 80, -200);
+            // draw the note
+            ctx.font = "14px Arial";
+            ctx.fillText("This image is representative; your part may looks slightly different.", 5, 430);
+
+            // draw the zoom visualization on the zoom canvas
+            canvas = $("#zoom-canvas")[0];
+            ctx = canvas.getContext("2d");
+            ctx.canvas.width = $("#zoom-slider").width();
+            var min_dia = 3, max_dia = 20,
+                cur_min = parseFloat(ref_part_params["min" + var_name]),
+                cur_max = parseFloat(ref_part_params["max" + var_name]),
+                results = getVarResults(),
+                start_val = Math.min(results.new_min, cur_min),
+                end_val = Math.max(results.new_max, cur_max),
+                this_start_t = (cur_min - start_val) / (end_val - start_val),
+                this_start_x = 10 + this_start_t * (canvas.width - 40),
+                this_end_t = (cur_max - start_val) / (end_val - start_val),
+                this_end_x = 10 + this_end_t * (canvas.width - 40),
+                next_start_t = (results.new_min - start_val) / (end_val - start_val),
+                next_start_x = 10 + next_start_t * (canvas.width - 40),
+                next_end_t = (results.new_max - start_val) / (end_val - start_val),
+                next_end_x = 10 + next_end_t * (canvas.width - 40),
+                next_start_dia = min_dia + (results.new_min - cur_min) / (cur_max - cur_min) * (max_dia - min_dia),
+                next_end_dia = min_dia + (results.new_max - cur_min) / (cur_max - cur_min) * (max_dia - min_dia);
+            // draw the axis and test part images
+            ctx.moveTo(0, canvas.height - 20);
+            ctx.lineTo(canvas.width, canvas.height - 20);
+            for(i = 0; i < 10; i++) {
+                var oldx = this_start_x + (this_end_x - this_start_x) * i / 9;
+                ctx.moveTo(oldx, canvas.height - 20);
+                ctx.lineTo(oldx, canvas.height - 25);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(oldx, 50, min_dia + (max_dia - min_dia) * i / 9, 0, 2*Math.PI);
+                if (i >= var_thresh) {
+                    ctx.fillStyle = 'black';
+                    ctx.fill();
+                }
+                ctx.stroke();
+
+                // draw next test part
+                var newx = next_start_x + (next_end_x - next_start_x) * i / 9;
+                ctx.beginPath();
+                ctx.arc(newx, 100, next_start_dia + (next_end_dia - next_start_dia) * i / 9, 0, 2*Math.PI);
+                ctx.fillStyle = 'black';
+                ctx.fill();
+                ctx.stroke();
+
+            }
+            // label the axis
+            ctx.font = "14px Arial";
+            ctx.fillText(smartToString(cur_min), this_start_x - 5, canvas.height - 7);
+            ctx.textAlign = 'right';
+            ctx.fillText(smartToString(cur_max), this_end_x + 10, canvas.height - 7);
+            ctx.textAlign = 'center';
+            ctx.fillText("Feature Size (mm)", canvas.width / 2, canvas.height - 7);
+            ctx.textAlign = 'left';
+            ctx.fillText("This Test Part", 10, 30);
+            ctx.fillText("Next Test Part", 10, 80);
+
+            // draw the representation of last iteration's part
+            for(i = 0; i <=10; i++) {
+            }
         }
 
         function updateText() {
             // Updates all the text elements on the page when something changes
             var res = getVarResults();
+
             $("#lost").html(var_thresh.toString());
             $("#printed").html((10 - var_thresh).toString());
 
@@ -220,8 +289,10 @@ TODO:
             var old_max = ref_part_params["max" + varName];
 
             var obj = {};
-            obj.center = Math.max(0, old_min + (old_max - old_min) * (varThresh - 0.5) / 10);
+            obj.center = Math.max(0, old_min + (old_max - old_min) * (varThresh - 0.5) / 9);
             obj.error = (old_max - old_min) / 5;
+            if (varThresh == 0 || varThresh == 10)
+                    obj.error = NaN;
 
             // define the new ranges for the bars and columns
             obj.new_range = (old_max - old_min) / (varZoom);
@@ -321,7 +392,7 @@ TODO:
                     sized features,
                     but your printer probably didn't correctly reproduce all ten (if it did, that's OK!). In this
                     step, we will use the results of which bars did and didn't print to define a new test part that will
-                    "zoom in" on your printer's capability.
+                    "zoom in" on your printer's capability. We will do this for each of the test features on your part.
                 </p>
                 <br/>
                 <p>
@@ -332,45 +403,36 @@ TODO:
             <h1 id="name">Printer Qualification Wizard</h1>
 
             <div>
-                <p>This image is representative; your part may looks slightly different.</p>
-                <br/>
                 <p id="desc">Use the slider to indicate how many columns printed acceptably.</p>
                 <br/>
+                <span id="min-size" style="margin-left: 0;">0</span>
+                <span id="max-size" style="text-align: right; float: right;">0</span>
                 <div id="slider" style="margin: 0 1em 3px 1em;"></div>
                 <span id="lost" style="margin-left: 1em;">0</span> <span id="lost-label">Lost</span>
                 <span style="text-align: right; float: right;"><span id="printed">10</span> <span id="printed-label">Printed</span></span>
             </div>
 
             <br/>
-
-            <h3>Results</h3>
-            <p>Based on your input, the machine achieves these print characteristics:</p>
+            <p>The machine achieves these print characteristics:</p>
             <br/>
             <div class="indent">
                 <p style="font-size: 18px">
-                    Minimum Size: <span id="output"></span>
+                    Minimum <span id="name2"></span>: <span id="output"></span>
                 </p>
             </div>
             <br/>
             <h3 class="section-head">Generation Options</h3>
             <div class="section-body">
-                <p>Zoom Factor: Ratio by which the (max - min) range is scaled around the failure point</p>
-                <div class="indent">
-                    <table>
-                        <tr>
-                            <td>Zoom for This Characteristic:</td>
-                            <td>
-                                <input class="inputbox" id="zoom" name="zoom" value="5" min="0.5" max="10"
-                                       step="0.5" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
-                            </td>
-
-                        </tr>
-                    </table>
-                </div>
-                <p>Zoom factor of 1 means no change; 10 means zoom so the whole bar range is spread in the difference
-                    between two bars. Values less than 1 zoom out.</p>
+                <p>How much should we zoom in around the failure region?</p>
+                <canvas id="zoom-canvas" height="150"></canvas>
+                <div id="zoom-slider"></div>
+                <span style="margin-left: 5px">No Zoom</span>
+                <span style="text-align: right; float: right;">High Zoom</span>
+                <p style="margin-top: 1em">Choose a higher zoom if you are confident the failure lies near the feature you indicated above.
+                Choose a lower zoom if the failure occured near the edge of the range to make sure it is visible in
+                the next test part.</p>
                 <br/>
-                <p>The new test part would have the following settings:</p>
+                <p>The new test part would have the following settings for this feature:</p>
                 <div class="indent">
                     <p><span id="new-range"></span></p>
                 </div>

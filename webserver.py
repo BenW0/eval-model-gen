@@ -10,9 +10,7 @@ A note on sessions:
   This webapp doesn't use sessions. Instead, the "session" is entirely based on the state of the selection variables.
   So, effectively, the "session id" is the json describing the test part being used.
 
-TODO:
-    * Implement a more platform (and instance-) independent hash method for locating model parameter sets in the
-      stack of running jobs and in the file cache. What we have for now works, but may not in the future.
+TODO: see Github
 
 """
 
