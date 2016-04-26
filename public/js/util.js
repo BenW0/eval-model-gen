@@ -78,7 +78,7 @@ function handleDone(resp) {
     }
     else if(resp.Status == "Working")
     {
-        last_status_obj.html(resp.Status);
+        last_status_obj.html("Working...This may take up to two minutes...");
         // if we're still working, check back later (only if we haven't already set the timer)
         if(!generating)
             timer = window.setInterval(checkDone, 700);

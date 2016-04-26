@@ -31,16 +31,36 @@
 			</div>
 		</div>
 		<div id="body" class="home">
-        <img class="bigimage" src="static/images/part1.png" style="width:300px">
+        <img class="bigimage" src="static/images/index.png" width="220" height="600" style="width:220px; height:600px;">
         <div class="bodytext">
             <h1>Printer Qualification Wizard</h1>
-            <p>This wizard will generate a series of parts which, when printed, can be used to determine the
-					minimum achievable feature size, as well as other important print characteristics.
+            <p>This wizard will generate a series of parts which, when printed, can determine the
+					smallest size features producible by the printer.
 			</p>
 			<br/>
 			<p>Since we don't assume you have easy access to fancy metrology equipment, the wizard works
-			iteratively: Print a part, then return here and answer a few questions about how it turned
-			out, and the wizard will use that information to generate a new test part for you to print.
+			iteratively. For example, to find the smallest printable column,
+			<br/>
+            <table>
+            <tr>
+                <td><img src="static/images/1.png" class="number"></td>
+                <td><p class="number-list">The wizard will generate a part based on your printer's specifications.</p></td>
+            </tr>
+            <tr>
+                <td><img src="static/images/2.png" class="number"></td>
+                <td><p class="number-list">Print that part, and look at how many columns printed</p></td>
+            </tr>
+            <tr>
+                <td><img src="static/images/3.png" class="number"></td>
+                <td><p class="number-list">The wizard takes your response, and generates a new test part with a narrower range of columns</p></td>
+            </tr>
+            <tr>
+                <td><img src="static/images/4.png" class="number"></td>
+                <td><p class="number-list">Print the new part, and look at how many columns printed</p></td>
+            </tr>
+            </table>
+
+			<br/>
 			After a few iterations, your printer's capabilities will be known with several digits of precision.</p>
 			<br/>
 			<a class="button" id="startbutton" href="start">Get Started</a>

@@ -170,8 +170,8 @@ img {
 	float: left;
 	margin: 50px 1em 2em .5em;
 	width: 375px;
-	border: medium solid #469bdd;
-	box-shadow: 1px 1px 10px #BDD8DA;
+	/*border: medium solid #469bdd;
+	box-shadow: 1px 1px 10px #BDD8DA;*/
 }
 .bodytext {
 	display:block;
@@ -293,7 +293,7 @@ img {
 	padding: 0 0 0 10px;
 	text-align: left;
 	width: 130px;*/
-	width: 100px;
+	width: 70px;
 }
 .bodytext ul {
 	margin: 0;
@@ -304,6 +304,13 @@ img {
 .bodytext ul li {
 	margin: 0 10px;
 	padding: 0;
+}
+
+.bodytext .number {
+	width:1.2em;
+	height:1.2em;
+	padding: 0.5em 0.5em 0em 3em;
+	display:inline;
 }
 
 .button {

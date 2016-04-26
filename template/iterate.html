@@ -23,33 +23,12 @@ TODO: See github
         var var_thresh = 0;     // threshold obtained for current variable
         var var_zoom = 5;       // zoom factor for current variable
         var ref_part_params = {};   // parameters from the current url.
+        var load_timer;
 
         $(document).ready(function () {
 
             // Parse the parameters structure which defines information about the different parameters we'll be testing
             param_data = JSON.parse(params_json);
-
-            // Parse the information after the hash in the url and load it into the ref_part_params variable
-            ref_part_params = parseUrl();
-
-            // Figure out which variable we should check on this page of the wizard
-            if (typeof ref_part_params.varId === "undefined") {
-                ref_part_params.varId = 0;
-                $("#intro").css({display:"block"});
-            }
-            var_id = parseInt(ref_part_params.varId);
-            var_name = param_data[var_id].varBase;
-            // Fill in a bunch of bits in the page that change with each variable's parameters
-            populatePage();
-
-            // Load resource images into the img-cache div hidden at the bottom of the page
-            var template1 = '<img id="image#" src="static/images/' + var_name + '-#.png" width="220" height="220">';
-            var new_html = '';
-            for(var i = 0; i < 11; i++) {
-                new_html += template1.replace(/#/g, i.toString());
-            }
-            $("#img-cache").html(new_html);
-
 
             $("#slider").slider({
                 min: 0,
@@ -66,7 +45,7 @@ TODO: See github
             $("#zoom-slider").slider({
                 min: 1,
                 max: 10,
-                value: var_zoom,
+                value: 5,
                 slide: function (event, ui) {
                     var_zoom = ui.value;
                     drawPic();
@@ -74,29 +53,36 @@ TODO: See github
                 }
             });
 
-            /*var_zoom = $("#zoom").spinner({
-                change: function(event, ui){
-                    var_zoom = $("#zoom").val();
-                    updateText();
-                },
-                spin: function(event, ui) {
-                    var_zoom = ui.value;
-                    updateText()
-                }}).val();
-                */
-
             $("#progressbar").progressbar({value: false, max: 100});
 
             $("#next").button().click( function(event) {
                 // Add the current selection to the url, increment varId, and reload the page
                 ref_part_params["cur" + var_name] = var_thresh;
                 ref_part_params["zoom" + var_name] = var_zoom;
+                //alert(var_zoom.toString());
                 ref_part_params.varId = var_id + 1;
 
-                location.href = "iterate#" + $.param(ref_part_params);
-                // we didn't change pages, no refresh occurs. Force a page reload, partly because I'm lazy, and
-                // partly so the user feels like something happened!
-                location.reload();
+                //location.hash = '#' + $.param(ref_part_params);
+                history.pushState(null, "", '#' + $.param(ref_part_params));
+                // rebuild the dynamic bits of the page for the new variable
+                populatePage();
+                drawPic();
+                updateText();
+                $("html,body").scrollTop(0);
+            });
+            $("#previous").button().click( function(event) {
+                // Add the current selection to the url, decrement varId, and reload the page
+                ref_part_params["cur" + var_name] = var_thresh;
+                ref_part_params["zoom" + var_name] = var_zoom;
+                //alert(var_zoom.toString());
+                ref_part_params.varId = var_id - 1;
+
+                //location.hash = '#' + $.param(ref_part_params);
+                history.pushState(null, "", '#' + $.param(ref_part_params));
+                // rebuild the dynamic bits of the page for the new variable
+                populatePage();
+                drawPic();
+                updateText();
                 $("html,body").scrollTop(0);
             });
 
@@ -118,22 +104,20 @@ TODO: See github
                     if (!confirm("You have not yet generated a test part with these settings. Continue anyway?"))
                         return;
                 }
-                var new_url = "";
+                var new_hash = "";
                 if((typeof part_params[LAYER_HEIGHT_VAR] === "undefined")) {
                     // use the computed next configuration, even though a test part hasn't been generated
                     var res = getAllResults();
-                    new_url = "iterate#" + $.param(res.new_params);
+                    new_hash = $.param(res.new_params);
                 }
                 else {
                     // use the characteristics of the actual part generated
-                    new_url = "iterate#" + $.param(part_params);
+                    new_hash = $.param(part_params);
                 }
 
                 // Redirect to the new url
-                location.href = new_url;
-                // if we didn't change pages, no refresh occurs. Force a page reload, partly because I'm lazy, and
-                // partly so the user feels like something happened!
-                location.reload();
+                location.hash = new_hash;
+                populatePage();
                 $("html,body").scrollTop(0);
             });
 
@@ -142,6 +126,12 @@ TODO: See github
                 location.reload();
                 $("html,body").scrollTop(0);
             });
+
+            // Fill in a bunch of bits in the page that change with each variable's parameters
+            populatePage();
+
+            // set a timer to load some more images in a minute
+            load_timer = window.setTimeout(loadMoreStuff, 700);
 
         });
 
@@ -154,14 +144,43 @@ TODO: See github
         });
 
         function populatePage() {
-            // Called on page load once we know which variable we're using to populate a bunch of text on the page
-            // that depends on the particular parameter being analyzed:
-            if (var_id == param_data.length - 1) {
-                $("#final-section").css({"display": "block"});
-                $("#next").css({"display": "none"});
+            // Called on page load and on changing parameters to set the page up for a given parameter.
+
+            // Parse the information after the hash in the url and load it into the ref_part_params variable
+            ref_part_params = parseUrl();
+
+            // Figure out which variable we should check on this page of the wizard
+            if (typeof ref_part_params.varId === "undefined") {
+                ref_part_params.varId = 0;
+                $("#intro").css({display:"block"});
             }
             else
-                    $("#final-section").css({"display": "none"});
+                    $("#intro").css({display:"none"});
+            var_id = parseInt(ref_part_params.varId);
+            var_name = param_data[var_id].varBase;
+            if (ref_part_params.varId == 0)
+                    $("#previous").css({display:"none"});
+            else
+                    $("#previous").css({display:"block"});
+
+            // Load resource images into the img-cache div hidden at the bottom of the page
+            var template1 = '<img id="' + var_name + '#" src="static/images/' + var_name + '-#.png" width="220" height="220">';
+            var new_html = '';
+            for(var i = 0; i < 11; i++) {
+                // may already be loaded...
+                if (!$('#' + var_name + i.toString()).length )
+                    new_html += template1.replace(/#/g, i.toString());
+            }
+            $("#img-cache").append(new_html);
+
+            if (var_id == param_data.length - 1) {
+                $("#final-section").css({"display": "block"});
+                $("#next").css({"visibility": "hidden"});
+            }
+            else {
+                $("#final-section").css({"display": "none"});
+                $("#next").css({"visibility":"visible"});
+            }
 
             $("#layer_height").html(ref_part_params[LAYER_HEIGHT_VAR].toString());
 
@@ -175,6 +194,45 @@ TODO: See github
 
             $("#min-size").html(smartToString(ref_part_params["min" + pd.varBase]) + ' mm');
             $("#max-size").html(smartToString(ref_part_params["max" + pd.varBase]) + ' mm');
+
+            if (!(typeof ref_part_params["cur" + var_name] === "undefined")) {
+                var_thresh = parseInt(ref_part_params["cur" + var_name]);
+            }
+            else {
+                var_thresh = 0;
+            }
+            $("#slider").slider('value', var_thresh);
+
+
+            if (!(typeof ref_part_params["zoom" + var_name] === "undefined")) {
+                var_zoom = parseInt(ref_part_params["zoom" + var_name]);
+                if (var_zoom < 1 || var_zoom > 10)
+                        var_zoom = 5;
+            }
+            else {
+                if (var_zoom == 0)
+                        var_zoom = 5;
+            }
+            $("#zoom-slider").slider('value', var_zoom);
+
+        }
+
+        function loadMoreStuff() {
+            // Timer function that gets called to load the rest of the images after the current page is up and running
+
+            // Load resource images into the img-cache div hidden at the bottom of the page
+            var entry;
+            for(entry = 0; entry < param_data.length; entry++) {
+                var var_name = param_data[entry].varBase;
+                var template1 = '<img id="' + var_name + '#" src="static/images/' + var_name + '-#.png" width="220" height="220">';
+                var new_html = '';
+                for(var i = 0; i < 11; i++) {
+                    // may already be loaded...
+                    if (!$('#' + var_name + i.toString()).length )
+                        new_html += template1.replace(/#/g, i.toString());
+                }
+                $("#img-cache").append(new_html);
+            }
         }
 
 
@@ -183,7 +241,7 @@ TODO: See github
             // Draws the part image on the main canvas
             var canvas = $("#canvas")[0];
             var ctx = canvas.getContext("2d");
-            var img = $("#image" + var_thresh.toString())[0];
+            var img = $("#" + var_name + var_thresh.toString())[0];
             var i;
             //ctx.setTransform(1, 0, 0, 1, 0, 0);     // Clear transformation matrix
             ctx.drawImage(img, 0, 0);
@@ -263,10 +321,6 @@ TODO: See github
             if (!do_all_next_circles) {
                 ctx.textAlign = 'center';
                 ctx.fillText("--10--", (next_start_x + next_end_x) * 0.5, 105);
-            }
-
-            // draw the representation of last iteration's part
-            for(i = 0; i <=10; i++) {
             }
         }
 
@@ -368,17 +422,25 @@ TODO: See github
                 alert("URL missing parameters. Please use your browser's Back button to re-generate this page.");
             }
             params[LAYER_HEIGHT_VAR] = Number(params[LAYER_HEIGHT_VAR]);
+
+            if (!(typeof params["varId"] === "undefined"))
+                    params["varId"] = Number(params["varId"]);
             // add defaults for the rest of the parameters, if they were missing (which is unlikely)
             var i;
             var layerHeight = params[LAYER_HEIGHT_VAR];      // needed for eval() below
             for(i = 0; i < param_data.length; i++) {
-                if (typeof params["min" + param_data[i].varBase] === "undefined")
-                        params["min" + param_data[i].varBase] = eval(String(param_data[i].minDefault));
-                if (typeof params["max" + param_data[i].varBase] === "undefined")
-                        params["max" + param_data[i].varBase] = eval(String(param_data[i].maxDefault));
+                var varName = param_data[i].varBase;
+                if (typeof params["min" + varName] === "undefined")
+                        params["min" + varName] = eval(String(param_data[i].minDefault));
+                if (typeof params["max" + varName] === "undefined")
+                        params["max" + varName] = eval(String(param_data[i].maxDefault));
                 // convert everything to a number
-                params["min" + param_data[i].varBase] = Number(params["min" + param_data[i].varBase]);
-                params["max" + param_data[i].varBase] = Number(params["max" + param_data[i].varBase]);
+                params["min" + varName] = Number(params["min" + varName]);
+                params["max" + varName] = Number(params["max" + varName]);
+                if (!(typeof params["cur" + varName] === "undefined"))
+                        params["cur" + varName] = Number(params["cur" + varName]);
+                if (!(typeof params["zoom" + varName] === "undefined"))
+                        params["zoom" + varName] = Number(params["zoom" + varName]);
             }
 
             return params;
@@ -430,19 +492,15 @@ TODO: See github
             </div>
 
             <br/>
-            <p>The machine achieves these print characteristics:</p>
-            <br/>
-            <div class="indent">
-                <p style="font-size: 18px">
-                    Minimum <span id="name2"></span>: <span id="output"></span>
-                </p>
-            </div>
+            <p style="font-size: 14px">
+                Minimum <span id="name2"></span>: <span id="output"></span>
+            </p>
             <br/>
             <h3 class="section-head">Generation Options</h3>
             <div class="section-body">
                 <p>How much should we zoom in around the failure region?</p>
                 <canvas id="zoom-canvas" height="150"></canvas>
-                <div id="zoom-slider"></div>
+                <div id="zoom-slider" style="margin-right:1em"></div>
                 <span style="margin-left: 5px">No Zoom</span>
                 <span style="text-align: right; float: right;">High Zoom</span>
                 <p style="margin-top: 1em">Choose a higher zoom if you are confident the failure lies near the feature you indicated above.
@@ -456,10 +514,13 @@ TODO: See github
             </div>
             <p>
             <button class="button" id="next">
-                <span class="ui-button-text">Next Parameter</span>
+                <span class="ui-button-text">Next Parameter --&gt</span>
+            </button>
+            <button class="button" id="previous">
+                <span class="ui-button-text">&lt-- Previous Parameter</span>
             </button>
             <br/>
-            <div id="final-section">
+            <div id="final-section" style="clear:right">
                 <h3>Keep Iterating?</h3>
                 <p>Do you want to generate a new part, zooming in on the failure threshold?</p>
                 <button class="button" id="generate" style="float: none; margin-left: 4em">
