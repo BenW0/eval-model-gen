@@ -196,9 +196,9 @@ TODO: See github
             canvas = $("#zoom-canvas")[0];
             ctx = canvas.getContext("2d");
             ctx.canvas.width = $("#zoom-slider").width();
-            var min_dia = 3, max_dia = 20,
-                cur_min = parseFloat(ref_part_params["min" + var_name]),
+            var cur_min = parseFloat(ref_part_params["min" + var_name]),
                 cur_max = parseFloat(ref_part_params["max" + var_name]),
+                this_end_r = ctx.canvas.width / 35, this_start_r = Math.max(3, this_end_r * cur_min / cur_max),
                 results = getVarResults(),
                 start_val = Math.min(results.new_min, cur_min),
                 end_val = Math.max(results.new_max, cur_max),
@@ -210,8 +210,19 @@ TODO: See github
                 next_start_x = 10 + next_start_t * (canvas.width - 40),
                 next_end_t = (results.new_max - start_val) / (end_val - start_val),
                 next_end_x = 10 + next_end_t * (canvas.width - 40),
-                next_start_dia = min_dia + (results.new_min - cur_min) / (cur_max - cur_min) * (max_dia - min_dia),
-                next_end_dia = min_dia + (results.new_max - cur_min) / (cur_max - cur_min) * (max_dia - min_dia);
+                next_start_r = this_start_r + (results.new_min - cur_min) / (cur_max - cur_min) * (this_end_r - this_start_r),
+                next_end_r = this_start_r + (results.new_max - cur_min) / (cur_max - cur_min) * (this_end_r - this_start_r),
+                do_all_next_circles = (next_end_x - next_start_x) / 9 >= (next_start_r + next_end_r);
+
+            // draw part boxes
+            ctx.fillStyle = '#d8e7f3';
+            ctx.fillRect(this_start_x - this_start_r - 5, 50 - this_end_r - 3,
+                    this_end_x - this_start_x + this_start_r + this_end_r + 10,
+                    this_end_r * 2 + 6);
+            ctx.fillRect(next_start_x - next_start_r - 5, 100 - next_end_r - 3,
+                    next_end_x - next_start_x + next_start_r + next_end_r + 10,
+                    next_end_r * 2 + 6);
+
             // draw the axis and test part images
             ctx.moveTo(0, canvas.height - 20);
             ctx.lineTo(canvas.width, canvas.height - 20);
@@ -221,7 +232,7 @@ TODO: See github
                 ctx.lineTo(oldx, canvas.height - 25);
                 ctx.stroke();
                 ctx.beginPath();
-                ctx.arc(oldx, 50, min_dia + (max_dia - min_dia) * i / 9, 0, 2*Math.PI);
+                ctx.arc(oldx, 50, this_start_r + (this_end_r - this_start_r) * i / 9, 0, 2*Math.PI);
                 if (i >= var_thresh) {
                     ctx.fillStyle = 'black';
                     ctx.fill();
@@ -229,12 +240,14 @@ TODO: See github
                 ctx.stroke();
 
                 // draw next test part
-                var newx = next_start_x + (next_end_x - next_start_x) * i / 9;
-                ctx.beginPath();
-                ctx.arc(newx, 100, next_start_dia + (next_end_dia - next_start_dia) * i / 9, 0, 2*Math.PI);
-                ctx.fillStyle = 'black';
-                ctx.fill();
-                ctx.stroke();
+                if (do_all_next_circles || i == 0 || i == 9) {
+                    var newx = next_start_x + (next_end_x - next_start_x) * i / 9;
+                    ctx.beginPath();
+                    ctx.arc(newx, 100, next_start_r + (next_end_r - next_start_r) * i / 9, 0, 2*Math.PI);
+                    ctx.fillStyle = 'black';
+                    ctx.fill();
+                    ctx.stroke();
+                }
 
             }
             // label the axis
@@ -247,6 +260,10 @@ TODO: See github
             ctx.textAlign = 'left';
             ctx.fillText("This Test Part", 10, 30);
             ctx.fillText("Next Test Part", 10, 80);
+            if (!do_all_next_circles) {
+                ctx.textAlign = 'center';
+                ctx.fillText("--10--", (next_start_x + next_end_x) * 0.5, 105);
+            }
 
             // draw the representation of last iteration's part
             for(i = 0; i <=10; i++) {
