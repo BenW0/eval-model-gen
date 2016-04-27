@@ -1,0 +1,52 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link href="nouislider.min.css" rel="stylesheet">
+    <link href="test.css" rel="stylesheet">
+</head>
+<body>
+    <script src="nouislider.min.js"></script>
+    <div id="myslide"><div class="connect" id="connect"></div><div class="connect2" id="connect2"></div></div>
+
+
+    <script>
+        var connectSlider = document.getElementById('myslide');
+
+        noUiSlider.create(connectSlider, {
+            start: [2, 8],
+            connect: false,
+            step: 1,
+            range: {
+                'min': 0,
+                'max': 10
+            }
+        });
+
+
+
+        var connectBar = document.getElementById('connect'),
+                connectBar2 = document.getElementById('connect2'),
+            connectBase = connectSlider.querySelector('.noUi-base');
+
+        // Give the bar a class for styling and add it to the slider.
+        //connectBase.appendChild(connectBar);
+
+        connectSlider.noUiSlider.on('update', function( values, handle, a, b, handlePositions ) {
+
+            var offset = handlePositions[handle];
+
+            // Right offset is 100% - left offset
+            if ( handle === 1 ) {
+                connectBar2.style['left'] = offset + '%';
+                offset = 100 - offset;
+            }
+
+            // Pick left for the first handle, right for the second.
+            connectBar.style[handle ? 'right' : 'left'] = offset + '%';
+        });
+
+
+
+    </script>
+</body>
+</html>

@@ -116,8 +116,11 @@ TODO: See github
                 }
 
                 // Redirect to the new url
-                location.hash = new_hash;
+                history.pushState(null, "", '#' + new_hash);
+                // rebuild the dynamic bits of the page for the new set of variables
                 populatePage();
+                drawPic();
+                updateText();
                 $("html,body").scrollTop(0);
             });
 
@@ -131,7 +134,7 @@ TODO: See github
             populatePage();
 
             // set a timer to load some more images in a minute
-            load_timer = window.setTimeout(loadMoreStuff, 700);
+            load_timer = window.setTimeout(loadMoreStuff, 6000);
 
         });
 

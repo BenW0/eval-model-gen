@@ -487,8 +487,29 @@ module core()
 {
     color(normalColor)
     {
-        translate([0, coreDepth/2, coreHeight/2])
+        root2on2 = sqrt(2) / 2;
+        difference()
+        {
+            translate([0, coreDepth/2, coreHeight/2])
             cube(size=[coreWidth, coreDepth, coreHeight], center=true);
+            
+            // Do the cutaway for the vertical negative fins bottoms
+            scale([1,1, min(1, negFinLengthV / finDepthV)])     // scale so it takes up half the core or 45 degrees, whichever is smaller.
+            translate([0, coreYGap * 0.5 + finDepthV / 2,0])
+            rotate([45,0,0])
+            {
+                edgelen = finDepthV * root2on2;
+                cube(size=[coreWidth + 4 * fudge, edgelen, edgelen],center=true);
+            }
+            
+            // Do the cutaway for the vertical negative pillars bottom side
+            translate([0, coreDepth, 0])
+            rotate([45,0,0])
+            {
+                edgelen = (maxNegPillarDiaV + 0.5 * coreYGap) * root2on2 * 2;
+                cube(size=[coreWidth + 4 * fudge, edgelen, edgelen], center=true);
+            }
+        }
 
         // make the connecting bar
         cbHeight = coreHeight;
