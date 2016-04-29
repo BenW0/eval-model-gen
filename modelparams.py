@@ -17,7 +17,6 @@ class ModelParams:
     # String constants containing metadata in the openscad file comments
     JSON_START = "<json>"
     JSON_END = "</json>"
-    JSON_PARAM = "Param"        # name of Model parameter block in scad json metadata
 
     # A couple of hard-coded fields
     LAYER_HEIGHT_VAR = "layerHeight"
@@ -29,10 +28,10 @@ class ModelParams:
     # JSON data parsed into a list of valid variables from the front end, which use keys instead of variable names
     # to keep urls shorter. Each entry is keyed by a front end variable, and maps to a back end variable.
     #  This will be used to keep arbitrary assignments from being passed to the scad command line.
-    param_map = {LAYER_HEIGHT_VAR: LAYER_HEIGHT_VAR, NOZZLE_DIAMETER_VAR: NOZZLE_DIAMETER_VAR}
+    param_map = {}
     # The following dicts follow the structure of self.params and are keyed by backend variable names (dependent
     # variables in the param_map dict).
-    default_values = {}         # default values to use if no user input is supplied. Keys are entries in param_list
+    default_values = {}         # default values to use if no user input is supplied. Keys are values in param_map
     default_nd_values = {}      # default values to use if only nozzle diameter is supplied
     # An extra dict with camera data for generating images.
     camera_data = {}              # dict of variables and associated camera settings, used for visualization
@@ -60,9 +59,14 @@ class ModelParams:
         # to a default specified in default_nd_values.
         if ModelParams.NOZZLE_DIAMETER_VAR in json_struct:
             self.params = ModelParams.default_nd_values.copy()
+        else:
+            self.params = ModelParams.default_values.copy()
 
         for key, value in json_struct.items():
             if key in ModelParams.param_map.keys():       # First, make sure it's a valid parameter
+                # duplicated entry?
+                if type(value) is list:
+                    value = value[0]
                 # second, make sure it's numeric
                 if not ModelParams.is_numberlike(value):
                     err_text = "Non-numeric input ignored"
@@ -81,6 +85,13 @@ class ModelParams:
 
         :param model_fname: (string) Filename of the OpenSCAD model file to parse.
         """
+        # Clear the shared datastructures we'll be setting in this module
+        ModelParams.default_values = {}
+        ModelParams.default_nd_values = {}
+        ModelParams.param_map = {ModelParams.LAYER_HEIGHT_VAR: ModelParams.LAYER_HEIGHT_VAR,
+                                 ModelParams.NOZZLE_DIAMETER_VAR: ModelParams.NOZZLE_DIAMETER_VAR}
+        ModelParams.camera_data = {}
+
         with open(model_fname, "r") as fin:
             everything = fin.read()
 
@@ -93,7 +104,7 @@ class ModelParams:
             spt = chunk.split(ModelParams.JSON_END)
             if len(spt) == 1:
                 # error
-                raise Exception, "Error parsing OpenSCAD JSON metadata - couldn't find a matching %s field" % ModelParams.JSON_END
+                raise ValueError, "Error parsing OpenSCAD JSON metadata - couldn't find a matching %s field" % ModelParams.JSON_END
             chunk = spt[0].rstrip()
             if chunk[-1] != ",":
                 chunk += ","
@@ -102,14 +113,14 @@ class ModelParams:
         # clean up the end of the json
         if jstr[-1] == ',':
             jstr = jstr[0:-1]
-            jstr += "]"
+
+        jstr += "]"
 
         # Now parse the json variables into the param_list structure
         ModelParams.json_parsed = json.loads(jstr)
         key = 0
         for item in ModelParams.json_parsed:
             item["varKey"] = key
-            key += 1
 
             var = item["varBase"]
             minvar = "min%s" % var
@@ -123,6 +134,8 @@ class ModelParams:
             ModelParams.default_nd_values[maxvar] = item["maxDefaultND"]
 
             ModelParams.camera_data[var] = item["cameraData"]
+
+            key += 1
 
         # re-compile the modified json to a string for the server
         ModelParams.json_str = json.dumps(ModelParams.json_parsed,)

@@ -49,7 +49,12 @@ class ModelChooserWeb(object):
         :param mask: Boolean specifying whether to mask the name of the actual file with "Test Part.stl"
         :return: File server serving the file specified (if it exists)
         """
-        new_name = name.replace('/', '').replace('\\', '').replace('..', '')
+        # Harden the request string against attempts to break out of the sandbox
+        bad_chars = ['/', '\\', '..', ';', '&', '(', ')', '{', '}', '`', '$']
+        new_name = name
+        for char in bad_chars:
+            new_name = new_name.replace(char, '')
+
         path = os.path.join(os.path.abspath(os.getcwd()), modelgen.Job.CACHE_DIR, new_name)
         # hopefully this will keep us quarantined in the modelcache directory.
         if os.path.exists(path):
@@ -74,14 +79,15 @@ class ModelChooserEngine(object):
         with open("public/js/params.js", "w") as fout:
             fout.write("//This is a generated code file. All changes will be lost on next server load!\n")
             fout.write("params_json = '%s';\n" % ModelParams.json_str.replace("\n", " "))
+
         # Save the heading fields in the order they should be saved for writing the output file.
         # You would think we would use a dict, but I want to preserve list ordering...
         self.output_fields = ['printerType',
-                                   'printerModel',
-                                   'printerName',
-                                   'groupName',
-                                   'feedstock',
-                                   'notes']
+                              'printerModel',
+                              'printerName',
+                              'groupName',
+                              'feedstock',
+                              'notes']
         self.output_field_names = ['Printer Type',
                                    'Printer Model',
                                    'Printer Name',

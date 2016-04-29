@@ -226,6 +226,14 @@ class Job:
             self.lastError = str(e)
             return False, str(e)
 
+        # log this model generation for debugging/tracking purposes
+        try:
+            with open("logs/modelgen.log", 'a') as flog:
+                flog.write(time.asctime() + '~ ' + reduce(lambda x,y:x + ' ' + y, popen_params) + '\n')
+        except Exception as e:
+            print e  # I don't care if logging fails for any reason...
+            pass
+
         try:
             self.logfile = open(self.logfilename, "w")
             self.proc = subprocess.Popen(popen_params, stdout=self.logfile, stderr=subprocess.STDOUT, bufsize=-1)
