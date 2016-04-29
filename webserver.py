@@ -86,13 +86,15 @@ class ModelChooserEngine(object):
                               'printerModel',
                               'printerName',
                               'groupName',
-                              'feedstock',
+                              'feedstockType',
+                              'feedstockColor',
                               'notes']
         self.output_field_names = ['Printer Type',
                                    'Printer Model',
                                    'Printer Name',
                                    'Group Name',
-                                   'Feedstock',
+                                   'Feedstock Material',
+                                   'Feedstock Vendor/Color',
                                    'Notes']
 
         for item in ModelParams.json_parsed:

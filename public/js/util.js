@@ -148,7 +148,8 @@ function submitResult(data) {
     // Submits results and form data from finish.html to the server
     postJSON("/engine", jQuery.extend({}, data, {"Command": "Submit"}), function (resp) {
         if (resp.Status == "OK") {
-            $("#status").html("Submission Succeeded. Your confirmation number is " + String(resp.Confirm));
+            $("#status").html("Submission Succeeded. Your confirmation number is " + String(resp.Confirm) +
+                                '. Click <a href="index">here to go home.</a>');
         }
         else {
             if (typeof resp.ErrMessage === "undefined" )

@@ -11,7 +11,9 @@
     <script src="static/external/jquery-ui-1.11.4.custom/jquery-ui.js" type="text/javascript"></script>
 	<script>
 		$(document).ready(function() {
-			 $("#startbutton").button();
+			 $("#startbutton").button().click(function() {
+				 location.href = "start"
+			 });
 		});
 	</script>
 </head>
@@ -63,7 +65,9 @@
 			<br/>
 			After a few iterations, your printer's capabilities will be known with several digits of precision.</p>
 			<br/>
-			<a class="button" id="startbutton" href="start">Get Started</a>
+			<button class="button" id="startbutton">
+				<span class="ui-button-text">Get Started</span>
+			</button>
         </div>
     </div>
 	</div>

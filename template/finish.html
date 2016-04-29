@@ -54,7 +54,8 @@ TODO: see github
                 out.printerModel = $("#printer-model").val();
                 out.printerName = $("#printer-name").val();
                 out.groupName = $("#group-id").val();
-                out.feedstock = $("#feedstock").val();
+                out.feedstockType = $("#feedstock-type").val();
+                out.feedstockColor = $("#feedstock-color").val();
                 out.notes = $("#notes").val();
 
                 submitResult(out);
@@ -152,13 +153,15 @@ TODO: see github
 							<option value="Other">Other (specify in Notes)</option>
                         </select></p><br/>
                     <p>Printer Model: </p>
-                        <p class="indent" ><input type="text" id="printer-model" class="final-control" style="width:400px"></p><br/>
+                        <p class="indent" ><input type="text" id="printer-model" class="final-control"></p><br/>
                     <p>Printer Name/Number:</p>
-                        <p class="indent"><input type="text" id="printer-name" class="final-control" style="width:400px"></p><br/>
+                        <p class="indent"><input type="text" id="printer-name" class="final-control"></p><br/>
                     <p>Group Member Names (ME 480 only):</p>
-                        <p class="indent"><input type="text" id="group-id" class="final-control" style="width:400px"></p><br/>
-                    <p>Filament/Resin/Feedstock Used:</p>
-                        <p class="indent"><input type="test" id="feedstock" class="final-control" style="width:400px"></p><br/>
+                        <p class="indent"><input type="text" id="group-id" class="final-control" ></p><br/>
+                    <p>Filament/Resin/Feedstock Material:</p>
+                        <p class="indent"><input type="text" id="feedstock-type" class="final-control"></p><br/>
+                    <p>Filament/Resin/Feedstock Vendor/Color:</p>
+                        <p class="indent"><input type="text" id="feedstock-color" class="final-control"></p><br/>
                     <p>Other Notes/Settings:</p>
                     <div class="indent">
                         <textarea name="notes" class="final-control" id="notes" rows=3 cols=55 ></textarea>
