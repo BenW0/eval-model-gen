@@ -26,11 +26,15 @@ class ModelParams:
     # String json structure extracted from the scad file's metadata
     json_str = ''
     json_parsed = {}    # parsed version of json data
-    # JSON data parsed into a list of valid variables. This will be used to keep arbitrary assignments from being
-    # passed to the scad command line.
-    param_list = [LAYER_HEIGHT_VAR, NOZZLE_DIAMETER_VAR]
+    # JSON data parsed into a list of valid variables from the front end, which use keys instead of variable names
+    # to keep urls shorter. Each entry is keyed by a front end variable, and maps to a back end variable.
+    #  This will be used to keep arbitrary assignments from being passed to the scad command line.
+    param_map = {LAYER_HEIGHT_VAR: LAYER_HEIGHT_VAR, NOZZLE_DIAMETER_VAR: NOZZLE_DIAMETER_VAR}
+    # The following dicts follow the structure of self.params and are keyed by backend variable names (dependent
+    # variables in the param_map dict).
     default_values = {}         # default values to use if no user input is supplied. Keys are entries in param_list
     default_nd_values = {}      # default values to use if only nozzle diameter is supplied
+    # An extra dict with camera data for generating images.
     camera_data = {}              # dict of variables and associated camera settings, used for visualization
 
     def __init__(self):
@@ -58,12 +62,12 @@ class ModelParams:
             self.params = ModelParams.default_nd_values.copy()
 
         for key, value in json_struct.items():
-            if key in ModelParams.param_list:       # First, make sure it's a valid parameter
+            if key in ModelParams.param_map.keys():       # First, make sure it's a valid parameter
                 # second, make sure it's numeric
                 if not ModelParams.is_numberlike(value):
                     err_text = "Non-numeric input ignored"
                 else:
-                    self.params[key] = float(value)
+                    self.params[ModelParams.param_map[key]] = float(value)
 
         return success, err_text
 
@@ -72,14 +76,15 @@ class ModelParams:
     def init_settings(model_fname):
         """
         Parses the json metadata in the OpenSCAD model file, storing both the raw JSON (for use in building the
-        web page) and the parsed parameters (for use in generating models)
+        web page) and the parsed parameters (for use in generating models). This method also assigns a numeric
+        key which is used to keep url and variable names short on the front end.
 
         :param model_fname: (string) Filename of the OpenSCAD model file to parse.
         """
         with open(model_fname, "r") as fin:
             everything = fin.read()
 
-        ModelParams.json_str = "["
+        jstr = "["
 
         chunks = everything.split(ModelParams.JSON_START)
         chunks.pop(0)       # get rid of the first entry, which is the beginning of the file up to the first match
@@ -92,28 +97,35 @@ class ModelParams:
             chunk = spt[0].rstrip()
             if chunk[-1] != ",":
                 chunk += ","
-            ModelParams.json_str += chunk
+                jstr += chunk
 
         # clean up the end of the json
-        if ModelParams.json_str[-1] == ',':
-            ModelParams.json_str = ModelParams.json_str[0:-1]
-        ModelParams.json_str += "]"
+        if jstr[-1] == ',':
+            jstr = jstr[0:-1]
+            jstr += "]"
 
         # Now parse the json variables into the param_list structure
-        ModelParams.json_parsed = json.loads(ModelParams.json_str)
+        ModelParams.json_parsed = json.loads(jstr)
+        key = 0
         for item in ModelParams.json_parsed:
+            item["varKey"] = key
+            key += 1
+
             var = item["varBase"]
             minvar = "min%s" % var
-            ModelParams.param_list.append(minvar)
+            ModelParams.param_map["min%i" % key] = minvar
             ModelParams.default_values[minvar] = item["minDefault"]
             ModelParams.default_nd_values[minvar] = item["minDefaultND"]
 
             maxvar = "max%s" % var
-            ModelParams.param_list.append(maxvar)
+            ModelParams.param_map["max%i" % key] = maxvar
             ModelParams.default_values[maxvar] = item["maxDefault"]
             ModelParams.default_nd_values[maxvar] = item["maxDefaultND"]
 
             ModelParams.camera_data[var] = item["cameraData"]
+
+        # re-compile the modified json to a string for the server
+        ModelParams.json_str = json.dumps(ModelParams.json_parsed,)
 
     def to_hash(self):
         """Generate a string representation of the class. This is unique for the combination of class elements."""
@@ -142,8 +154,9 @@ class ModelParams:
         return False
 
 
-if __name__ == "__main__":
-    # Generate a series of eval models to verify the model's flexibility to different inputs.
+def main():
+    # Generate a series of eval models (to be checked manually) to verify the model's flexibility to different inputs.
+    # This is not a unit test!
     import modelgen
     import time
     import shutil
@@ -211,3 +224,6 @@ if __name__ == "__main__":
 
 
 
+
+if __name__ == "__main__":
+    main()

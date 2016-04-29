@@ -21,7 +21,7 @@ TODO: see Github
 	<script>
 		$(document).ready(function() {
             // Parse the parameters structure which defines information about the different parameters we'll be testing
-            var param_data = JSON.parse(params_json);
+            var param_data = parseParams(params_json);
 
 			$("#layerheight").spinner();
 			$("#resolution").spinner();
@@ -64,8 +64,8 @@ TODO: see Github
                 var layerHeight = part_params[LAYER_HEIGHT_VAR];
                 // TODO: Find a more secure alternative. Maybe new Function as here:http://www.everythingfrontend.com/posts/studying-javascript-eval.html
                 for(i = 0; i < param_data.length; i++) {
-                    part_params["min" + param_data[i].varBase] = eval(String(param_data[i].minDefault));
-                    part_params["max" + param_data[i].varBase] = eval(String(param_data[i].maxDefault));
+                    part_params["min" + param_data[i].varKey] = eval(String(param_data[i].minDefault));
+                    part_params["max" + param_data[i].varKey] = eval(String(param_data[i].maxDefault));
                 }
 				// Generate a generic test part...
 				startGenerate(part_params, $("#status"), $("#progressbar"));
@@ -85,8 +85,8 @@ TODO: see Github
                 var nozzleDiameter = part_params[NOZZLE_DIAMETER_VAR];
                 // TODO: Find a more secure alternative. Maybe new Function as here:http://www.everythingfrontend.com/posts/studying-javascript-eval.html
                 for(i = 0; i < param_data.length; i++) {
-                    part_params["min" + param_data[i].varBase] = eval(String(param_data[i].minDefaultND));
-                    part_params["max" + param_data[i].varBase] = eval(String(param_data[i].maxDefaultND));
+                    part_params["min" + param_data[i].varKey] = eval(String(param_data[i].minDefaultND));
+                    part_params["max" + param_data[i].varKey] = eval(String(param_data[i].maxDefaultND));
                 }
 				startGenerate(part_params, $("#status"), $("#progressbar"));
 				// show the "working" status bar and field
@@ -99,8 +99,8 @@ TODO: see Github
                 part_params[LAYER_HEIGHT_VAR] = $("#layerheight").val();
                 var id;
                 for (id = 0; id < param_data.length; id++) {
-                    part_params["min" + param_data[id].varBase] = param_data[id].sMin.val();
-                    part_params["max" + param_data[id].varBase] = param_data[id].sMax.val();
+                    part_params["min" + param_data[id].varKey] = param_data[id].sMin.val();
+                    part_params["max" + param_data[id].varKey] = param_data[id].sMax.val();
                 }
 				startGenerate(part_params, $("#status"), $("#progressbar"));
 				// show the "working" status bar and field

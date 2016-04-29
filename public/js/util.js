@@ -46,16 +46,25 @@ function QueryStringToHash(query) {
 
 
 function smartToString(number, digits) {
-    // Rounds the number sort-of-automatically based on the magnitude
-    if (number == 0)
+    // Rounds the number sort-of-automatically based on the magnitude. This is also used to sanitize strings obtained
+    // from the url before displaying on a page.
+    var num = parseFloat(number);
+    if (num == 0)
         return "0";
     if (!digits)
         digits = 2;
-    var order = Math.round(Math.log(Math.abs(number)) / Math.log(10));
+    var order = Math.round(Math.log(Math.abs(num)) / Math.log(10));
     if (order >= -3 && order <= 6)
-        return number.toFixed(Math.max(digits - order, 0));
+        return num.toFixed(Math.max(digits - order, 0));
     else
-        return number.toExponential(digits);
+        return num.toExponential(digits);
+}
+
+function parseParams(json_data) {
+    // Parses a json_data string (which comes from params.js), sorting it according to sort order
+    var out = JSON.parse(json_data);
+    out.sort(function(a,b) {return a.sortOrder - b.sortOrder});
+    return out;
 }
 
 

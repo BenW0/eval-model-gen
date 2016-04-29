@@ -22,7 +22,7 @@ TODO: see github
 
         $(document).ready(function () {
             // Parse the parameters structure which defines information about the different parameters we'll be testing
-            param_data = JSON.parse(params_json);
+            param_data = parseParams(params_json);
 
             // Parse the URL
             part_params = parseUrl();
@@ -32,17 +32,19 @@ TODO: see github
 
 
             // Generate rows in the Results section for each parameter, populated with defaults
-            var list = $("#data-area");
-            var template = list.html();
+            var list = $("#output");
+            var template = "<tr>" + $("#template").html() + "</tr>";
             var id;
             var new_html = "";
             for (id = 0; id < param_data.length; id++) {
                 new_html += template
                         .replace("__name", param_data[id].Name)
-                        .replace("__value", smartToString(part_params["final" + param_data[id].varBase]) +
-                                "  ± " + smartToString(part_params["error" + param_data[id].varBase]) + " mm");
+                        .replace("__yellow", smartToString(part_params["yellow_final" + param_data[id].varKey]) +
+                                "  ± " + smartToString(part_params["yellow_error" + param_data[id].varKey]) + " mm")
+                        .replace("__red", smartToString(part_params["red_final" + param_data[id].varKey]) +
+                                "  ± " + smartToString(part_params["red_error" + param_data[id].varKey]) + " mm");
             }
-            list.html(new_html);
+            list.append(new_html);
 
             $("#printer-type").selectmenu().css({"vertical-align": "-100%"});
 
@@ -73,14 +75,22 @@ TODO: see github
             var i;
             var layerHeight = params[LAYER_HEIGHT_VAR];      // needed for eval() below
             for(i = 0; i < param_data.length; i++) {
-                var base_name = param_data[i].varBase;
-                if (typeof params["final" + base_name] === "undefined")
-                        params["final" + base_name] = NaN;
-                if (typeof params["error" + base_name] === "undefined")
-                        params["error" + base_name] = NaN;
+                var key = String(param_data[i].varKey);
+                if (typeof params["yellow_final" + key] === "undefined")
+                        params["yellow_final" + key] = NaN;
+                if (typeof params["yellow_error" + key] === "undefined")
+                        params["yellow_error" + key] = NaN;
                 // convert everything to a number
-                params["final" + base_name] = Number(params["final" + base_name]);
-                params["error" + base_name] = Number(params["error" + base_name]);
+                params["yellow_final" + key] = parseFloat(params["yellow_final" + key]);
+                params["yellow_error" + key] = parseFloat(params["yellow_error" + key]);
+                
+                if (typeof params["red_final" + key] === "undefined")
+                        params["red_final" + key] = NaN;
+                if (typeof params["red_error" + key] === "undefined")
+                        params["red_error" + key] = NaN;
+                // convert everything to a number
+                params["red_final" + key] = parseFloat(params["red_final" + key]);
+                params["red_error" + key] = parseFloat(params["red_error" + key]);
             }
 
             return params;
@@ -110,11 +120,14 @@ TODO: see github
             </p>
             <br/>
             <div class="indent">
-                <div id="data-area">
-                    <p style="font-size: 18px">
-                        __name: __value
-                    </p>
-                </div>
+                <table id="output">
+                    <tr><th style="padding:0 6px 0 6px">Parameter</th><th style="padding:0 6px 0 6px">Minimum Printable</th><th style="padding:0 6px 0 6px">Minimum Acceptable</th></tr>
+                    <tr id="template" style="display:none">
+                        <td style="padding:0 6px 0 6px">__name</td>
+                        <td style="padding:0 6px 0 6px">__yellow</td>
+                        <td style="padding:0 6px 0 6px">__red</td>
+                    </tr>
+                </table>
             </div>
             <br/>
             <br/>

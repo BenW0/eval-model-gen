@@ -10,55 +10,75 @@ TODO: See github
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Printer Evaluation Model Generator</title>
     <link rel="stylesheet" href="static/external/jquery-ui-1.11.4.custom/jquery-ui.css" type="text/css">
+    <link href="static/external/nouislider.min.css" rel="stylesheet">
     <link rel="stylesheet" href="static/css/style.css" type="text/css">
     <script src="static/external/jquery.js" type="text/javascript"></script>
     <script src="static/external/jquery-ui-1.11.4.custom/jquery-ui.js" type="text/javascript"></script>
+    <script src="static/external/nouislider.min.js" type="text/javascript"></script>
     <script src="static/js/util.js" type="text/javascript"></script>
     <script src="static/js/params.js" type="text/javascript"></script>
 
     <script>
         var param_data = {};    // static reference data about each parameter
+        var slider;             // slider object.
         var var_id = 0;         // ID of the current variable in the param_data structure
+        var var_key;            // Key of the current variable (a number set by the server; not necessarily the id, depending on json parsers)
         var var_name = '';      // variable name for the current variable
-        var var_thresh = 0;     // threshold obtained for current variable
-        var var_zoom = 5;       // zoom factor for current variable
+        var yellow_thresh = 0;  // green/yellow threshold obtained for current variable
+        var red_thresh = 0;     // yellow/red threshold for current variable
+        var var_zoom = 5;       //  TODO: DELETE ME
         var ref_part_params = {};   // parameters from the current url.
         var load_timer;
+        var data_loaded = false;    // flag that gets flipped when the page is loaded enough that rendering can happen.
 
         $(document).ready(function () {
 
             // Parse the parameters structure which defines information about the different parameters we'll be testing
-            param_data = JSON.parse(params_json);
+            param_data = parseParams(params_json);
 
-            $("#slider").slider({
-                min: 0,
-                max: 10,
-                range: "min",
-                value: 0,
-                slide: function (event, ui) {
-                    var_thresh = ui.value;
-                    drawPic();
-                    updateText();
+            // Create the red/yellow/green noUI slider
+            slider = document.getElementById('slider');
+            noUiSlider.create(slider, {
+                start: [1,2],
+                connect: false,
+                step: 1,
+                range: {
+                    'min': 0,
+                    'max': 10
+                },
+                format: {
+                    to: function (value) { return Math.round(value); },
+                    from: function (value) { return Number(value) }
                 }
             });
 
-            $("#zoom-slider").slider({
-                min: 1,
-                max: 10,
-                value: 5,
-                slide: function (event, ui) {
-                    var_zoom = ui.value;
-                    drawPic();
-                    updateText();
+            slider.noUiSlider.on('update', function( values, handle, a, b, handlePositions ) {
+
+                var offset = handlePositions[handle];
+
+                // Right offset is 100% - left offset
+                if ( handle === 1 ) {
+                    $('#green-bar').css({'left': offset + '%'});
+                    offset = 100 - offset;
+                    $('#yellow-bar').css({'right': offset + '%'});
                 }
+                else
+                    $('#yellow-bar').css({'left': offset + '%'});
+
+                red_thresh = values[0];
+                yellow_thresh = values[1];
+
+                drawPic();
+                updateText();
             });
+
 
             $("#progressbar").progressbar({value: false, max: 100});
 
             $("#next").button().click( function(event) {
                 // Add the current selection to the url, increment varId, and reload the page
-                ref_part_params["cur" + var_name] = var_thresh;
-                ref_part_params["zoom" + var_name] = var_zoom;
+                ref_part_params["yellow" + var_key] = yellow_thresh;
+                ref_part_params["red" + var_key] = red_thresh;
                 //alert(var_zoom.toString());
                 ref_part_params.varId = var_id + 1;
 
@@ -72,8 +92,8 @@ TODO: See github
             });
             $("#previous").button().click( function(event) {
                 // Add the current selection to the url, decrement varId, and reload the page
-                ref_part_params["cur" + var_name] = var_thresh;
-                ref_part_params["zoom" + var_name] = var_zoom;
+                ref_part_params["yellow" + var_key] = yellow_thresh;
+                ref_part_params["red" + var_key] = red_thresh;
                 //alert(var_zoom.toString());
                 ref_part_params.varId = var_id - 1;
 
@@ -124,18 +144,18 @@ TODO: See github
                 $("html,body").scrollTop(0);
             });
 
-            // Detect a browser back button and reload the page
+            // Detect a browser back button and reload the page (this doesn't happen by default if it was just
+            // a hash change)
             window.addEventListener('popstate', function () {
                 location.reload();
                 $("html,body").scrollTop(0);
             });
 
-            // Fill in a bunch of bits in the page that change with each variable's parameters
-            populatePage();
-
             // set a timer to load some more images in a minute
             load_timer = window.setTimeout(loadMoreStuff, 6000);
 
+            // Fill in a bunch of bits in the page that change with each variable's parameters
+            populatePage();
         });
 
         $(window).load(function(){
@@ -148,6 +168,7 @@ TODO: See github
 
         function populatePage() {
             // Called on page load and on changing parameters to set the page up for a given parameter.
+            data_loaded = false;
 
             // Parse the information after the hash in the url and load it into the ref_part_params variable
             ref_part_params = parseUrl();
@@ -156,11 +177,15 @@ TODO: See github
             if (typeof ref_part_params.varId === "undefined") {
                 ref_part_params.varId = 0;
                 $("#intro").css({display:"block"});
+                $("#layer_height").html(smartToString(ref_part_params[LAYER_HEIGHT_VAR]));
             }
             else
                     $("#intro").css({display:"none"});
+
             var_id = parseInt(ref_part_params.varId);
             var_name = param_data[var_id].varBase;
+            var_key = param_data[var_id].varKey;
+
             if (ref_part_params.varId == 0)
                     $("#previous").css({display:"none"});
             else
@@ -185,39 +210,33 @@ TODO: See github
                 $("#next").css({"visibility":"visible"});
             }
 
-            $("#layer_height").html(ref_part_params[LAYER_HEIGHT_VAR].toString());
-
             var pd = param_data[var_id];
-            $("#name").html(pd.Name);
-            $("#name2").html(pd.Name);
+            $(".name").html(pd.Name);
             $("#desc").html(pd.Desc);
             $("#lost-label").html(pd.LowKeyword);
             $("#printed-label").html(pd.HighKeyword);
 
+            $("#min-size").html(smartToString(ref_part_params["min" + var_key]) + ' mm');
+            $("#max-size").html(smartToString(ref_part_params["max" + var_key]) + ' mm');
 
-            $("#min-size").html(smartToString(ref_part_params["min" + pd.varBase]) + ' mm');
-            $("#max-size").html(smartToString(ref_part_params["max" + pd.varBase]) + ' mm');
-
-            if (!(typeof ref_part_params["cur" + var_name] === "undefined")) {
-                var_thresh = parseInt(ref_part_params["cur" + var_name]);
+            if (!(typeof ref_part_params["yellow" + var_key] === "undefined")) {
+                yellow_thresh = parseInt(ref_part_params["yellow" + var_key]);
             }
             else {
-                var_thresh = 0;
+                yellow_thresh = 2;
             }
-            $("#slider").slider('value', var_thresh);
 
-
-            if (!(typeof ref_part_params["zoom" + var_name] === "undefined")) {
-                var_zoom = parseInt(ref_part_params["zoom" + var_name]);
-                if (var_zoom < 1 || var_zoom > 10)
-                        var_zoom = 5;
+            if (!(typeof ref_part_params["red" + var_key] === "undefined")) {
+                red_thresh = parseInt(ref_part_params["red" + var_key]);
             }
             else {
-                if (var_zoom == 0)
-                        var_zoom = 5;
+                red_thresh = 1;
             }
-            $("#zoom-slider").slider('value', var_zoom);
+            slider.noUiSlider.set([red_thresh, yellow_thresh]);
 
+            data_loaded = true;
+            updateText();
+            drawPic();
         }
 
         function loadMoreStuff() {
@@ -241,10 +260,13 @@ TODO: See github
 
         function drawPic() {
 
+            if (!data_loaded)
+                    return;
+
             // Draws the part image on the main canvas
             var canvas = $("#canvas")[0];
             var ctx = canvas.getContext("2d");
-            var img = $("#" + var_name + var_thresh.toString())[0];
+            var img = $("#" + var_name + red_thresh.toString())[0];
             var i;
             //ctx.setTransform(1, 0, 0, 1, 0, 0);     // Clear transformation matrix
             ctx.drawImage(img, 0, 0);
@@ -256,10 +278,10 @@ TODO: See github
             // draw the zoom visualization on the zoom canvas
             canvas = $("#zoom-canvas")[0];
             ctx = canvas.getContext("2d");
-            ctx.canvas.width = $("#zoom-slider").width();
-            var cur_min = parseFloat(ref_part_params["min" + var_name]),
-                cur_max = parseFloat(ref_part_params["max" + var_name]),
-                this_end_r = ctx.canvas.width / 35, this_start_r = Math.max(3, this_end_r * cur_min / cur_max),
+            ctx.canvas.width = $("#zoom-window").width();
+            var cur_min = parseFloat(ref_part_params["min" + var_key]),
+                cur_max = parseFloat(ref_part_params["max" + var_key]),
+                this_end_r = Math.max(5, ctx.canvas.width / 35), this_start_r = Math.max(3, this_end_r * cur_min / cur_max),
                 results = getVarResults(),
                 start_val = Math.min(results.new_min, cur_min),
                 end_val = Math.max(results.new_max, cur_max),
@@ -294,10 +316,13 @@ TODO: See github
                 ctx.stroke();
                 ctx.beginPath();
                 ctx.arc(oldx, 50, this_start_r + (this_end_r - this_start_r) * i / 9, 0, 2*Math.PI);
-                if (i >= var_thresh) {
-                    ctx.fillStyle = 'black';
-                    ctx.fill();
-                }
+                if (i >= yellow_thresh)
+                        ctx.fillStyle = 'green';
+                else if (i >= red_thresh)
+                        ctx.fillStyle = 'yellow';
+                else
+                        ctx.fillStyle = 'red';
+                ctx.fill();
                 ctx.stroke();
 
                 // draw next test part
@@ -319,8 +344,9 @@ TODO: See github
             ctx.textAlign = 'center';
             ctx.fillText("Feature Size (mm)", canvas.width / 2, canvas.height - 7);
             ctx.textAlign = 'left';
-            ctx.fillText("This Test Part", 10, 30);
-            ctx.fillText("Next Test Part", 10, 80);
+            ctx.fillText("This Test Part", this_start_x, 30);
+            ctx.textAlign = 'center';
+            ctx.fillText("Next Test Part", next_start_x + (next_end_x - next_start_x) * 0.5, 80);
             if (!do_all_next_circles) {
                 ctx.textAlign = 'center';
                 ctx.fillText("--10--", (next_start_x + next_end_x) * 0.5, 105);
@@ -329,57 +355,93 @@ TODO: See github
 
         function updateText() {
             // Updates all the text elements on the page when something changes
+            if (!data_loaded)
+                    return;
             var res = getVarResults();
 
-            $("#lost").html(var_thresh.toString());
-            $("#printed").html((10 - var_thresh).toString());
+            $("#lost").html(red_thresh.toString());
+            $("#marginal").html((yellow_thresh - red_thresh).toString());
+            $("#printed").html((10 - yellow_thresh).toString());
 
-            $("#output").html(smartToString(res.center) + "  ± " + smartToString(res.error) + " mm");
+            $("#yellow-output").html(smartToString(res.yellow_center) + "  ± " + smartToString(res.yellow_error) + " mm");
+            $("#red-output").html(smartToString(res.red_center) + "  ± " + smartToString(res.red_error) + " mm");
 
             $("#new-range").html(smartToString(res.new_min, 3) + " to " + smartToString(res.new_max, 3) +
-                    " mm (" + smartToString(res.center, 3) + "  ± " + smartToString(res.new_range / 2, 3) + ")");
+                    " mm (" + smartToString(res.yellow_center, 3) + "  ± " + smartToString(res.new_range / 2, 3) + ")");
             return res;
         }
 
-        function getVarResults(varName, varThresh, varZoom) {
+        function getVarResults(varID, varYellow, varRed) {
             // Returns an object with the following members based on the reference part parameters and
             // the parameters passed (name - variable name; thresh - threshold indicated by user; zoom - zoom factor to use)
             // Output:
-            // center: The center of the identified characteristic
-            // error: The approximate error on the identified characteristic
+            // yellow_center: The center of the identified characteristic green/yellow threshold
+            // yellow_error: The approximate error on the identified characteristic green/yellow threshold
+            // red_center: The center of the identified characteristic yellow/red threshold
+            // red_error: ...
             // new_min: If a new test part were generated now, this should be its min
             // new_max: '' ...max
+            //
+            // Generally, this method will zoom in on the green/yellow threshold, and use the distance between
+            // the varYellow and varRed to configure the amount of zoom.
             //
             // If all arguments are omitted, assumes we are using the current variable (var_id) and the current
             // settings of the sliders.
 
-            if (typeof varName === "undefined") {
-                varName = var_name;
-                varThresh = var_thresh;
-                varZoom = var_zoom;
+            if (typeof varID === "undefined") {
+                varID = var_id;
+                varYellow = yellow_thresh;
+                varRed = red_thresh;
             }
 
-            var old_min = ref_part_params["min" + varName];
-            var old_max = ref_part_params["max" + varName];
+            var old_min = ref_part_params["min" + param_data[varID].varKey];
+            var old_max = ref_part_params["max" + param_data[varID].varKey];
 
             var obj = {};
-            obj.center = Math.max(0, old_min + (old_max - old_min) * (varThresh - 0.5) / 9);
-            obj.error = (old_max - old_min) / 5;
-            if (varThresh == 0 || varThresh == 10)
-                    obj.error = NaN;
+            obj.new_range = (old_max - old_min) / 4;          // some situations will override this, but start here.
+            obj.yellow_center = Math.max(0, old_min + (old_max - old_min) * (varYellow - 0.5) / 9);
+            obj.yellow_error = (old_max - old_min) / 5;
+            if (varYellow == 0) {
+                obj.yellow_error = obj.yellow_center;
+                obj.new_range = obj.yellow_center * 1.25;
+            }
+            else if (varYellow == 10) {
+                obj.yellow_error = NaN;
+                obj.new_range = (old_max - old_min);        // don't zoom in -- it's off the charts.
+            }
 
-            // define the new ranges for the bars and columns
-            obj.new_range = (old_max - old_min) / (varZoom);
 
-            obj.new_min = Math.max(0, obj.center - obj.new_range * 0.5);
-            obj.new_max = obj.center + obj.new_range * 0.5;
+            // If varRed was set this time, or if we do not have previous results to go off of...
+            if (varRed > 0) {
+                // Set the red threshold based on this run
+                obj.red_center = Math.max(0, old_min + (old_max - old_min) * (varRed - 0.5) / 9);
+                obj.red_error = (old_max - old_min) / 5;
+                if (varRed == 10)
+                        obj.red_error = NaN;
+            }
+            else {
+                if (typeof ref_part_params["old_red" + param_data[varID].varKey] === "undefined") {
+                    // varRed == 0; use half way between the min and 0 as the center and error
+                    obj.red_center = old_min / 2;
+                    obj.red_error = old_min / 2 + (old_max - old_min) / 5;
+                }
+                else {
+                    // Set the red threshold based on previous results, since no new info was acquired
+                    obj.red_center = ref_part_params["old_red" + param_data[varID].varKey];
+                    obj.red_error = ref_part_params["old_red_error" + param_data[varID].varKey];
+                }
+            }
+
+            // define the new ranges for the bars and columns, zooming in on the yellow portion
+            obj.new_min = Math.max(0, obj.yellow_center - obj.new_range * 0.5);
+            obj.new_max = obj.yellow_center + obj.new_range * 0.5;
 
             return obj;
 
         }
 
         function getAllResults() {
-            // Effectively does getVarResults() on every variable, used for computing the next step or reporting
+            // Does getVarResults() on every variable, used for computing the next step or reporting
             // final results. The structure of the result is split depending on the intended use:
             // output.new_params is a structure containing the parameters to pass to a new test part
             // output.results is a structure containing the final values and errors for each parameter.
@@ -391,24 +453,28 @@ TODO: See github
             results[LAYER_HEIGHT_VAR] = ref_part_params[LAYER_HEIGHT_VAR];
 
             // First, save off the current values in the ref_part_params structure
-            ref_part_params["cur" + var_name] = var_thresh;
-            ref_part_params["zoom" + var_name] = var_zoom;
+            ref_part_params["yellow" + var_key] = yellow_thresh;
+            ref_part_params["red" + var_key] = red_thresh;
 
             // Now, go through and generate results for each variable.
             for(i = 0; i < param_data.length; i++) {
-                var name = param_data[i].varBase;
 
                 // Make sure we have the parameters we're about to need!
-                if (typeof ref_part_params["cur" + name] === "undefined" || typeof ref_part_params["zoom" + name] === "undefined") {
-                    alert("Something strange is going on -- I'm missing a url parameter! I'm using my best guess!");
-                    ref_part_params["cur" + name] = 5;
-                    ref_part_params["zoom" + name] = 5;
+                var varKey = param_data[i].varKey;
+                if (typeof ref_part_params["yellow" + varKey] === "undefined" || typeof ref_part_params["red" + varKey] === "undefined") {
+                    alert("Something strange is going on -- I'm missing a url parameter! I'm using random numbers!");
+                    ref_part_params["yellow" + varKey] = 5;
+                    ref_part_params["red" + varKey] = 0;
                 }
-                var obj = getVarResults(name, ref_part_params["cur" + name], ref_part_params["zoom" + name]);
-                new_params["min" + name] = obj.new_min;
-                new_params["max" + name] = obj.new_max;
-                results["final" + name] = obj.center;
-                results["error" + name] = obj.error;
+                var obj = getVarResults(i, ref_part_params["yellow" + varKey], ref_part_params["red" + varKey]);
+                new_params["min" + varKey] = obj.new_min;
+                new_params["max" + varKey] = obj.new_max;
+                new_params["old_red" + varKey] = obj.red_center;
+                new_params["old_red_error" + varKey] = obj.red_error;
+                results["red_final" + varKey] = obj.red_center;
+                results["red_error" + varKey] = obj.red_error;
+                results["yellow_final" + varKey] = obj.yellow_center;
+                results["yellow_error" + varKey] = obj.yellow_error;
             }
 
             var out = {};
@@ -432,18 +498,22 @@ TODO: See github
             var i;
             var layerHeight = params[LAYER_HEIGHT_VAR];      // needed for eval() below
             for(i = 0; i < param_data.length; i++) {
-                var varName = param_data[i].varBase;
-                if (typeof params["min" + varName] === "undefined")
-                        params["min" + varName] = eval(String(param_data[i].minDefault));
-                if (typeof params["max" + varName] === "undefined")
-                        params["max" + varName] = eval(String(param_data[i].maxDefault));
+                var varKey = param_data[i].varKey;
+                if (typeof params["min" + varKey] === "undefined")
+                        params["min" + varKey] = eval(String(param_data[i].minDefault));
+                if (typeof params["max" + varKey] === "undefined")
+                        params["max" + varKey] = eval(String(param_data[i].maxDefault));
                 // convert everything to a number
-                params["min" + varName] = Number(params["min" + varName]);
-                params["max" + varName] = Number(params["max" + varName]);
-                if (!(typeof params["cur" + varName] === "undefined"))
-                        params["cur" + varName] = Number(params["cur" + varName]);
-                if (!(typeof params["zoom" + varName] === "undefined"))
-                        params["zoom" + varName] = Number(params["zoom" + varName]);
+                params["min" + varKey] = parseFloat(params["min" + varKey]);
+                params["max" + varKey] = parseFloat(params["max" + varKey]);
+                if (!(typeof params["yellow" + varKey] === "undefined"))
+                        params["yellow" + varKey] = parseFloat(params["yellow" + varKey]);
+                if (!(typeof params["red" + varKey] === "undefined"))
+                        params["red" + varKey] = parseFloat(params["red" + varKey]);
+                if (!(typeof params["old_red" + varKey] === "undefined"))
+                        params["old_red" + varKey] = parseFloat(params["old_red" + varKey]);
+                if (!(typeof params["old_red_error" + varKey] === "undefined"))
+                        params["old_red_error" + varKey] = parseFloat(params["old_red_error" + varKey]);
             }
 
             return params;
@@ -470,47 +540,63 @@ TODO: See github
         <div class="bodytext">
             <div id="intro" style="display:none">
                 <h1>Printer Qualification Wizard</h1>
-                <p>Look at the test part you printed. For each of a bunch of test parameters, the part contained 10 different
-                    sized features,
-                    but your printer probably didn't correctly reproduce all ten (if it did, that's OK!). In this
+                <p>Look at the test part you printed. For each of a bunch of test parameters, the part contained 10 copies
+                    of a feature, printed at different sizes.
+                    Your printer probably didn't correctly reproduce all 10 (if it did, that's OK!). In this
                     step, we will use the results of which bars did and didn't print to define a new test part that will
                     "zoom in" on your printer's capability. We will do this for each of the test features on your part.
                 </p>
                 <br/>
                 <p>
                     This qualification run is using <span id="layer_height">0</span> mm for layer height. Please do not change
-                    the layer height for successive prints.
+                    the layer height or slicer/printer settings for successive prints.
                 </p>
             </div>
-            <h1 id="name">Printer Qualification Wizard</h1>
+            <h1 class="name">Widgets</h1>
 
             <div>
                 <p id="desc">Use the slider to indicate how many columns printed acceptably.</p>
+
+                <div class="indent">
+                    <p><span style="color:red;text-shadow: 1px 1px 1px #333">Red Features</span> did not print at all.</p>
+                    <p><span style="color:yellow;text-shadow: 1px 1px 1px #333">Yellow Features</span> printed, but geometry was not well reproduced.</p>
+                    <p><span style="color:#00ff00;text-shadow: 1px 1px 1px #333">Green Features</span> printed and reflects original model.</p>
+                </div>
                 <br/>
                 <span id="min-size" style="margin-left: 0;">0</span>
                 <span id="max-size" style="text-align: right; float: right;">0</span>
-                <div id="slider" style="margin: 0 1em 3px 1em;"></div>
-                <span id="lost" style="margin-left: 1em;">0</span> <span id="lost-label">Lost</span>
-                <span style="text-align: right; float: right;"><span id="printed">10</span> <span id="printed-label">Printed</span></span>
+                <div id="slider" style="margin: 0 1em 3px 1em;">
+                    <div class="slider-bar" id="yellow-bar"></div>
+                    <div class="slider-bar" id="green-bar"></div>
+                </div>
+                <table style="width:100%">
+                    <tr>
+                        <td><span id="lost" style="margin-left: 1em;">0</span> <span id="lost-label">Lost</span></td>
+                        <td style="text-align: center"><span id="marginal">0</span> Marginal</td>
+                        <td style="text-align: right;"><span id="printed">10</span> <span id="printed-label">Printed</span></td>
+                    </tr>
+                </table>
+
+
             </div>
 
             <br/>
             <p style="font-size: 14px">
-                Minimum <span id="name2"></span>: <span id="output"></span>
+                Minimum Acceptable (yellow) <span class="name"></span>: <span id="yellow-output"></span>
+                <br/>
+                Minimum Printable (red) <span class="name"></span>: <span id="red-output"></span>
             </p>
             <br/>
-            <h3 class="section-head">Generation Options</h3>
-            <div class="section-body">
-                <p>How much should we zoom in around the failure region?</p>
-                <canvas id="zoom-canvas" height="150"></canvas>
-                <div id="zoom-slider" style="margin-right:1em"></div>
-                <span style="margin-left: 5px">No Zoom</span>
-                <span style="text-align: right; float: right;">High Zoom</span>
-                <p style="margin-top: 1em">Choose a higher zoom if you are confident the failure lies near the feature you indicated above.
-                Choose a lower zoom if the failure occured near the edge of the range to make sure it is visible in
-                the next test part.</p>
+            <h3 class="section-head">Part Refinement</h3>
+            <div class="section-body" id="zoom-window">
+                <p>The next test part will print 10 more <span class="name">widgets</span>, with dimensions near the
+                    yellow/green transition you selected above. A schematic of the old test part (top) and new test
+                    part (bottom) is shown below.
+                </p>
                 <br/>
-                <p>The new test part would have the following settings for this feature:</p>
+                <canvas id="zoom-canvas" height="150"></canvas>
+                <br/>
+                <p>The new test part will have the following settings for this feature:</p>
                 <div class="indent">
                     <p><span id="new-range"></span></p>
                 </div>

@@ -90,11 +90,16 @@ class ModelChooserEngine(object):
                                    'Notes']
 
         for item in ModelParams.json_parsed:
-            var = item['varBase']
-            self.output_fields.append('final' + var)
-            self.output_field_names.append(item['Name'] + ' Minimum')
-            self.output_fields.append('error' + var)
-            self.output_field_names.append(item['Name'] + ' Error')
+            key = str(item['varKey'])
+            self.output_fields.append('yellow_final' + key)
+            self.output_field_names.append(item['Name'] + ' Yellow Minimum')
+            self.output_fields.append('yellow_error' + key)
+            self.output_field_names.append(item['Name'] + ' Yellow Error')
+
+            self.output_fields.append('red_final' + key)
+            self.output_field_names.append(item['Name'] + ' Red Minimum')
+            self.output_fields.append('red_error' + key)
+            self.output_field_names.append(item['Name'] + ' Red Error')
 
         # If it doesn't exist, initialize the results file
         if not os.path.exists(OUTPUT_FILENAME):
