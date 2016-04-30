@@ -57,6 +57,7 @@ TODO: see github
                 out.feedstockType = $("#feedstock-type").val();
                 out.feedstockColor = $("#feedstock-color").val();
                 out.notes = $("#notes").val();
+                out.feedback = $("#feedback").val();
 
                 submitResult(out);
             })
@@ -165,6 +166,10 @@ TODO: see github
                     <p>Other Notes/Settings:</p>
                     <div class="indent">
                         <textarea name="notes" class="final-control" id="notes" rows=3 cols=55 ></textarea>
+                    </div>
+                    <p>Feedback on this process:</p>
+                    <div class="indent">
+                        <textarea name="notes" class="final-control" id="feedback" rows=3 cols=55 ></textarea>
                     </div>
                     <br/>
                     <button class="button" id="submit">

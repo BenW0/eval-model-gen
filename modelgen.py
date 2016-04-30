@@ -141,13 +141,15 @@ class Engine:
         """A script to generate the cache of images used to visualize the relevant feature on the front end"""
 
         for var, camera in ModelParams.camera_data.items():
+            procs = []
             for i in range(11):
                 outfile = os.path.join(IMAGES_PATH, "%s-%i.png" % (var, i))
                 popen_params = [Engine.openscad_exe, "-o", outfile, "-D", "skip%s=%i" % (var, i),
                                 "--camera=%s" % camera, "--autocenter", "--imgsize=440,440",
                                 "--projection=ortho", Engine.model_name]
                 print(repr(popen_params))
-                proc = subprocess.Popen(popen_params)
+                procs.append(subprocess.Popen(popen_params))
+            for proc in procs:
                 proc.wait()  # wait for the process to finish
 
 
@@ -298,92 +300,5 @@ if __name__ == "__main__":
     # load model parameters into modelparams
     ModelParams.init_settings(Engine.model_name)
 
-    # Check to see if images need to be generated...
-    if True or not os.path.exists(os.path.join(IMAGES_PATH, "%s-0.png" % ModelParams.camera_data.keys()[0])):
-        # Need to generate the images...
-        Engine._build_images()
-    else:
-        print "Running Modelgen tests"
-        # this script implements a test of the modelgen module.
-        automated = False
-        authoritative = False       # if True, the output from this script will be sent to the reference file.
-
-        if automated:
-            fout = open("temp.txt", "w")
-            #sys.stdout = fout
-        elif authoritative:
-            print "Authoritative test. Recording to file."
-            fout = open("modelgen.test", "w")
-            #sys.systdout = fout
-        else:
-            fout = sys.stdout
-
-
-        mymodel1 = ModelParams()
-        mymodel1.params[ModelParams.LAYER_HEIGHT_VAR] = 0.2
-        mymodel2 = ModelParams()
-        mymodel2.params[ModelParams.LAYER_HEIGHT_VAR] = 0.3
-
-        print >>fout, "Deleting cached models..."
-        if os.path.exists(Job.cache_path(mymodel1)):
-            os.remove(Job.cache_path(mymodel1))
-        if os.path.exists(Job.cache_path(mymodel2)):
-            os.remove(Job.cache_path(mymodel2))
-
-        start = time.time()
-        eng = Engine()
-        print >>sys.stderr, "Startup: %is" % (time.time() - start)
-        start = time.time()
-        print >>fout, "Model 1 exists? " + str(eng.check_exists(mymodel1)[0]) + " Model 2 exists? " + str(eng.check_exists(mymodel2)[0])
-        eng.start_job(mymodel1)
-        print >>fout, "Started"
-        print >>sys.stderr, "Start_job: %is" % (time.time() - start)
-        start = time.time()
-
-        def checkdone():
-            (done, pth, suc, errtxt) = eng.check_job(mymodel1)
-            print >>fout, "Model 1 done=%i fname=%s, success=%i, err='%s'" % (done, pth, suc, errtxt),
-            (done, pth, suc, errtxt) = eng.check_job(mymodel2)
-            print >>fout, "Model 2 done=%i fname=%s, success=%i, err='%s'" % (done, pth, suc, errtxt)
-
-        print >>fout, "Immediately after start: "
-        checkdone()
-        print >>sys.stderr, "Check done: %is" % (time.time() - start)
-        time.sleep(1)
-
-        print >>fout, "1s after start: "
-        start = time.time()
-        checkdone()
-        print >>sys.stderr, "Check done: %is" % (time.time() - start)
-        time.sleep(20)      # time enough for the process to finish
-
-        print >>fout, "11s after start:"
-        start = time.time()
-        checkdone()
-        print >>sys.stderr, "Check done: %is" % (time.time() - start)
-        start = time.time()
-        checkdone()
-        print >>sys.stderr, "Check done: %is" % (time.time() - start)
-
-        print >>fout, "Model 1 exists? " + str(eng.check_exists(mymodel1)[0]) + " Model 2 exists? " + str(eng.check_exists(mymodel2)[0])
-
-        if authoritative:
-            fout.close()
-        if automated:
-            fout.close()
-
-            # compare with autoritative output
-            with open("modelgen.test") as fauth:
-                with open("temp.txt") as fthis:
-                    auth = []
-                    for line in fauth:
-                        auth.append(line)
-                    this = []
-                    for line in fthis:
-                        this.append(line)
-                    diff = difflib.context_diff(auth, this, 'Reference', 'This run')
-                    sdiff = ''.join(diff)
-                    if sdiff == '':
-                        print "Tests passed!"
-                    print sdiff
-                    fthis.close()
+    # Generate the images...
+    Engine._build_images()
