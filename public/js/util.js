@@ -149,7 +149,7 @@ function submitResult(data) {
     postJSON("/engine", jQuery.extend({}, data, {"Command": "Submit"}), function (resp) {
         if (resp.Status == "OK") {
             $("#status").html("Submission Succeeded. Your confirmation number is " + String(resp.Confirm) +
-                                '. Click <a href="index">here to go home.</a>');
+                                '. <a href="index">Click here to go home.</a>');
         }
         else {
             if (typeof resp.ErrMessage === "undefined" )

@@ -135,6 +135,10 @@ TODO: See github
                     new_hash = $.param(part_params);
                 }
 
+                generated = false;
+                $("#iterate").button().css({"display":"none"});
+                $("#progress-area").button().css({"display":"none"});
+
                 // Redirect to the new url
                 history.pushState(null, "", '#' + new_hash);
                 // rebuild the dynamic bits of the page for the new set of variables
