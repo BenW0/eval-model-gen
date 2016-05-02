@@ -313,7 +313,7 @@ skipNegPillarDiaV = -1;
 <json>
     {
         "Name": "Inter-Layer Fillets",
-        "Desc": "How many rounded regions are visible on the part corner?",
+        "Desc": "How many rounded regions are visible on the part corner? Try using your fingernail to detect the changes.",
         "LowKeyword": "Lost",
         "HighKeyword": "Visible",
         "varBase": "YZRadius",

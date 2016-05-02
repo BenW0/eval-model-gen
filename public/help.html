@@ -73,21 +73,44 @@
 				notify you the part is ready to be downloaded. Go print the part on your printer with the associated
 				process/material/post-processing settings you wish to use, and then click the Next button.
 			</p>
-			<h3>Successive Parts</h3>
+			<a name="assessment"></a>
+			<h3>Assessing the Part</h3>
 			<p>
-				After printing a test part, the wizard will ask you to identify which features were not resolved. Note
-				that a printer may still produce the geometry, but it may be unstable, deformed, or unable to support
-				its own weight, and therefore should not be considered "resolved".
+				Print the test part, which contains sets of 10 features (columns, bars, holes, etc), each at different
+				sizes. Likely, some of these features didn't print at all, others printed, but didn't turn out looking
+				very nice, and others printed and look good. The wizard will ask you to classify the printed features
+				in each set into three categories:
 			</p>
 			<br/>
+			<div class="indent">
+				<p>
+					<span style="color:red;text-shadow: 1px 1px 1px #333">Red Features:</span> Nothing was printed, or the printed geometry can't support
+					itself at all. Looking at it, it seems as if there's nothing there that at all resembles your model.
+				</p>
+				<p>
+					<span style="color:yellow;text-shadow: 1px 1px 1px #333">Yellow Features:</span> Some geometry was printed, but the printer had trouble
+					reproducing the model geometry with any accuracy, either due to deformation of the printed component
+					or limitations of the print process. In hot melt extrusion printers, this is often caused by
+					overheating and resulting movement, or by over-extrusion in holes.
+				</p>
+				<p>
+					<span style="color:#00ff00;text-shadow: 1px 1px 1px #333">Green Features:</span> The printed geometry looks "acceptably" close to what
+					your model specified. The yellow/green transition is a judgement call, but in general, "green"
+					features are produced <i>controllably</i> and <i>reproducibly</i>, so similar-looking features
+					on objects you want to print in the future are likely to also print well.
+				</p>
+			</div>
+			<br/>
 			<p>
-				Use the sliders in each section to indicate how many columns and bars printed successfully. If you are
-				content with the error bounds listed in the Current Results section, click Finish Wizard to accept these
+				Use the slider in each section to indicate how many of that feature are green, yellow, and red. When you
+				have gone through all the pages, if you are
+				content with the error bounds listed below the slider, click Finish Wizard to accept these
 				figures. If another iteration is desired, click Generate Part to "zoom in" on the dimensions nearest the
 				failure point. A new part will be generated. Download it, print it, and click the Next button to
 				continue.
 			</p>
 			<br/>
+			<h3>Successive Parts</h3>
 			<p>
 				To alter how fast the algorithm zooms in on the failure region, use the Zoom entry boxes in the Generating
 				options section. The higher the number, the smaller the difference will be between the minimum and
