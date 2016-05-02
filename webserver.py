@@ -21,7 +21,7 @@ from cherrypy.process import plugins
 from modelparams import ModelParams
 import modelgen
 
-OUTPUT_FILENAME = 'result_log.txt'
+OUTPUT_FILENAME = 'logs/result_log.txt'
 
 
 class ModelChooserWeb(object):
@@ -110,13 +110,10 @@ class ModelChooserEngine(object):
             self.output_field_names.append(item['Name'] + ' Red Minimum')
             self.output_fields.append('red_error' + key)
             self.output_field_names.append(item['Name'] + ' Red Error')
-
-        # If it doesn't exist, initialize the results file
-        if not os.path.exists(OUTPUT_FILENAME):
-            with open(OUTPUT_FILENAME, 'w') as fout:
-                fout.write('ID\t' + reduce(lambda x,y:x + '\t' + y, self.output_field_names) + '\n')
-            self.next_submit_id = 1
-        else:
+		
+        # Open the results file and find the last entry
+        self.next_submit_id = 1
+        if os.path.exists(OUTPUT_FILENAME):
             with open(OUTPUT_FILENAME, 'r') as fin:
                 last_id = 0
                 for line in fin:
@@ -175,12 +172,21 @@ class ModelChooserEngine(object):
 
         elif in_data["Command"].lower() == 'submit':
             in_data.pop("Command")
-            str_out = '%i\t' % self.next_submit_id
+            str_out = ''
             for key in self.output_fields:
                 if key in in_data:
                     str_out += str(in_data[key]).replace('\n', '\\n')
                 str_out += '\t'
             try:
+
+		# If it doesn't exist, initialize the results file
+		if not os.path.exists(OUTPUT_FILENAME):
+		    with open(OUTPUT_FILENAME, 'w') as fout:
+			fout.write('ID\t' + reduce(lambda x,y:x + '\t' + y, self.output_field_names) + '\n')
+		    self.next_submit_id = 1
+
+                str_out = '%i\t%s' % (self.next_submit_id, str_out)
+                # Write out our entry
                 with open(OUTPUT_FILENAME, 'a') as fout:
                     fout.write(str_out + '\n')
                 out_data["Status"] = "OK"
