@@ -145,7 +145,7 @@ skipNegButtonDiaH = -1;
 <json>
     {
         "Name": "In-Layer Fillets",
-        "Desc": "On how many of the rectangular columns can you tell the difference between the bottom half and the top half? Check two corners in case of one being a start/stop point for the printer",
+        "Desc": "On how many of the rectangular columns can you tell the difference between the bottom half and the top half? Look from the side as shown in the picture and examine the profile - which ones jog inwards on the top half of the pillar?",
         "LowKeyword": "Look Different",
         "HighKeyword": "Look the Same",
         "varBase": "XYRadius",
@@ -153,7 +153,7 @@ skipNegButtonDiaH = -1;
         "maxDefault": 1,
         "minDefaultND": "0.5 * nozzleDiameter",
         "maxDefaultND": "2.5 * nozzleDiameter",
-        "cameraData": "-1.5,-27,",
+        "cameraData": "6.55,-17.89,13.56,90,0,324.8,95",
         "sortOrder": 5
     }
 </json>
@@ -279,7 +279,8 @@ skipPosFinThkV = -1;
         "maxDefault": 2,
         "minDefaultND": "0.5 * nozzleDiameter",
         "maxDefaultND": "5 * nozzleDiameter",
-        "cameraData": "-2.5,-4.3,6.5,47.3,0,169.5,95",
+        "cameraData": "-0.1,5.73,2.38,205.5,0,321.8,84",
+        "cameraData_Old": "-2.5,-4.3,6.5,47.3,0,169.5,95",
         "sortOrder": 11
     }
 </json>
@@ -449,18 +450,17 @@ difference()
         // positive horizontal fins
         translate([fgapX(posFinWidthH, posFinWidthH) * 0.5, 0, outriggerGapV + maxPosFinThkH / 2])
         hfins(minPosFinThkH, maxPosFinThkH, posFinWidthH, skipPosFinThkH);
-        
-        // vertical pillars
-        translate([0, foutriggerEndY() + maxPosPillarDiaV, outriggerHeight])
-            pillars(minPosPillarDiaV, maxPosPillarDiaV, pillarVSizeRatio, posPillarMinLengthV, skipPosPillarDiaV);
-            
         // vertical buttons
         translate([-(coreWidth + maxPosButtonDiaV) / 2 - connectingBarXGap, connectingBarCenterY, coreHeight])
         rotate([0, 0, 90])
             pillars(minPosButtonDiaV, maxPosButtonDiaV, 0, vButtonThk, skipPosButtonDiaV, overrideWidth=connectingBarLength);
         
+        // vertical pillars
+        translate([0, foutriggerEndY() + outriggerMinDepth - maxPosPillarDiaV / 2, outriggerHeight])
+            pillars(minPosPillarDiaV, maxPosPillarDiaV, pillarVSizeRatio, posPillarMinLengthV, skipPosPillarDiaV);
+            
         // xy fillets
-        translate([0, foutriggerEndY() + (outriggerMinDepth + 2 * maxPosPillarDiaV) / 2, outriggerHeight])
+        translate([0, foutriggerEndY() + xyFilletColumnWidth / 2, outriggerHeight])
             xyfillets(minXYRadius, maxXYRadius, coreWidth, skipXYRadius);
                 
     };
@@ -478,7 +478,7 @@ difference()
     
     // horizontal fins
     translate([0, -3 * fudge, 1.5 * outriggerGapV + max(maxPosFinThkH, maxNegButtonDiaH) + maxNegFinThkH / 2])
-        hfins(maxNegFinThkH, minNegFinThkH, negFinWidthH, skipNegFinThkH);
+        hfins(maxNegFinThkH, minNegFinThkH, negFinWidthH, skipNegFinThkH, backwards=true);
     
     // vertical fins
     translate([0, coreYGap, 0])
@@ -577,7 +577,7 @@ module pillars(minDia, maxDia, aspect, minLength, skipFirst=-1, onOutrigger=fals
 //   * minThk/maxThk - minimum and maximum thickness
 //   * width - fin width (in X direction)
 //   * skipFirst - skips the first X entries 
-module hfins(minThk, maxThk, width, skipFirst=-1)
+module hfins(minThk, maxThk, width, skipFirst=-1, backwards=false)
 {
     gapX = fgapX(width, width);
     finFirstX = -coreWidth / 2 + gapX / 2 + width / 2;
@@ -585,7 +585,7 @@ module hfins(minThk, maxThk, width, skipFirst=-1)
     // Build each horizontal fin
     for(i = [0:featureCount-1])
     {
-        if(i >= skipFirst)
+        if((backwards && (i < 10 - skipFirst)) || (!backwards && (i >= skipFirst)))
         {
             thk = fdia(i, minThk, maxThk);
             // length needs to match bottom pillars...

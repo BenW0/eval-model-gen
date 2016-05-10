@@ -39,7 +39,7 @@ TODO: See github
             // Create the red/yellow/green noUI slider
             slider = document.getElementById('slider');
             noUiSlider.create(slider, {
-                start: [1,2],
+                start: [0,2],
                 connect: false,
                 step: 1,
                 range: {
@@ -234,7 +234,10 @@ TODO: See github
                 red_thresh = parseInt(ref_part_params["red" + var_key]);
             }
             else {
-                red_thresh = 1;
+                if(var_id == 0)
+                    red_thresh = 1;
+                else 
+                        red_thresh = 0;
             }
             slider.noUiSlider.set([red_thresh, yellow_thresh]);
 
