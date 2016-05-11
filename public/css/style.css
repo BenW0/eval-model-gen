@@ -188,6 +188,11 @@ img {
 	font-weight: normal;
 	line-height: 24px;
 }
+.bodytext .message {
+	font-size: 16px;
+	font-weight: bold;
+	color: #5c9ccc;
+}
 .bodytext-bigger {
 	float: right;
 	margin: 0;

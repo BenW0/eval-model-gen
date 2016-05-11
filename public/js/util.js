@@ -44,6 +44,12 @@ function QueryStringToHash(query) {
   return hash;
 }
 
+// Function for converting special characters that could be interpreted as html to their escaped equivalent
+// Thanks to https://css-tricks.com/snippets/javascript/htmlentities-for-javascript/
+function htmlEntities(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 
 function smartToString(number, digits) {
     // Rounds the number sort-of-automatically based on the magnitude. This is also used to sanitize strings obtained
@@ -65,6 +71,23 @@ function parseParams(json_data) {
     var out = JSON.parse(json_data);
     out.sort(function(a,b) {return a.sortOrder - b.sortOrder});
     return out;
+}
+
+function encodeURIstring(str) {
+    // Encodes a string using a url-safe and unicode-safe version of base64.
+    // Code tweaked from from https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#The_.22Unicode_Problem.22
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+        return String.fromCharCode('0x' + p1);
+    })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.');
+}
+
+function decodeURIstring(str) {
+    // Decodes a string using a url-safe and unicode-safe version of base64.
+    // Code tweaked from from https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#The_.22Unicode_Problem.22
+    return decodeURIComponent(Array.prototype.map.call(atob(str.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '=')),
+        function(c) {
+            return '%' + c.charCodeAt(0).toString(16);
+        }).join(''));
 }
 
 
@@ -148,8 +171,10 @@ function submitResult(data) {
     // Submits results and form data from finish.html to the server
     postJSON("/engine", jQuery.extend({}, data, {"Command": "Submit"}), function (resp) {
         if (resp.Status == "OK") {
-            $("#status").html("Submission Succeeded. Your confirmation number is " + String(resp.Confirm) +
-                                '. <a href="index">Click here to go home.</a>');
+            alert("Submission Succeeded. Your confirmation number is " +
+                    String(resp.Confirm) + '.');
+            location.href = "index#message=" + encodeURIstring("Submission Succeeded. Your confirmation number is " +
+                    String(resp.Confirm) + '.');
         }
         else {
             if (typeof resp.ErrMessage === "undefined" )

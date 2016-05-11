@@ -9,11 +9,17 @@
 	<link rel="stylesheet" href="static/css/style.css" type="text/css">
     <script src="static/external/jquery.js" type="text/javascript"></script>
     <script src="static/external/jquery-ui-1.11.4.custom/jquery-ui.js" type="text/javascript"></script>
+	<script src="static/js/util.js" type="text/javascript"></script>
 	<script>
 		$(document).ready(function() {
-			 $("#startbutton").button().click(function() {
-				 location.href = "start"
-			 });
+			$("#startbutton").button().click(function () {
+				location.href = "start"
+			});
+
+			// Parse the information after the # in the url and populate the "output" field as needed.
+			var params = QueryStringToHash(window.location.hash.substring(1));
+			if (!(typeof params.message === "undefined"))
+				$("#output").html(decodeURIstring(params.message));
 		});
 	</script>
 </head>
@@ -35,6 +41,7 @@
 		<div id="body" class="home">
         <img class="bigimage" src="static/images/index.png" width="220" height="600" style="width:220px; height:600px;">
         <div class="bodytext">
+			<p id="output" class="message"></p>
             <h1>Printer Qualification Wizard</h1>
             <p>This wizard will generate a series of parts which, when printed, can determine the
 					smallest size features producible by the printer.
