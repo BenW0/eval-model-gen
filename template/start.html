@@ -54,12 +54,11 @@ TODO: see Github
             }
 			
 			var pbGen = $("#progressbar").progressbar({value: false, max: 100});
-			
+
 			
 			bGenD.click(function(event) {
-                var part_params = {};
+                var part_params = getUniversalParams();
                 var i;
-                part_params[LAYER_HEIGHT_VAR] = $("#layerheight").val();
 				// fill in the default parameters from the config file, using layerHeight as a valid variable name
                 var layerHeight = part_params[LAYER_HEIGHT_VAR];
                 // TODO: Find a more secure alternative. Maybe new Function as here:http://www.everythingfrontend.com/posts/studying-javascript-eval.html
@@ -76,8 +75,7 @@ TODO: see Github
 			bGenG.click(function(event) {
 				// Generate a test part based on supplied printer resolution... Defaults are applied in the server
                 // (ModelParams.load_json())
-                var part_params = {};
-                part_params[LAYER_HEIGHT_VAR] = $("#layerheight").val();
+                var part_params = getUniversalParams();
                 part_params[NOZZLE_DIAMETER_VAR] = $("#resolution").val();
 				// fill in the default parameters from the config file, using layerHeight and nozzleDiameter
                 // as valid variable names
@@ -95,8 +93,7 @@ TODO: see Github
 
 			bGenC.click(function(event) {
 				// Generate a test part based on specified parameters
-                var part_params = {};
-                part_params[LAYER_HEIGHT_VAR] = $("#layerheight").val();
+                var part_params = getUniversalParams();
                 var id;
                 for (id = 0; id < param_data.length; id++) {
                     part_params["min" + param_data[id].varKey] = param_data[id].sMin.val();
@@ -124,6 +121,16 @@ TODO: see Github
                 location.href = "iterate#" + $.param(part_params);
             });
 		});
+
+		function getUniversalParams() {
+			// Returns an object with the parameters that are used by all "Generate" buttons
+			var part_params = {};
+
+			part_params[LAYER_HEIGHT_VAR] = $("#layerheight").val();
+			part_params[GROUP_NAME_VAR] = encodeURIstring($("#groupname").val());
+
+			return part_params;
+		}
 	</script>
 </head>
 <body>
@@ -151,6 +158,21 @@ TODO: see Github
                     range of feature sizes. Each successive part will zero in on your printer's capabilities
                     based on the results of the previous test part.
                 </p>
+
+				<h4>Group Name</h4>
+				<p>
+					Enter your group name (or group member's names or identifying information about this evaluation run).
+                    This information will be displayed at the top of each page of the wizard to make it easy to keep
+                    track of multiple concurrent processes.
+				</p>
+				<br/>
+				<div class="indent">
+					<p>
+						<input class="text-entry" type="text" id="groupname" name="groupname" placeholder="Group Name">
+					</p>
+				</div>
+                <br/>
+
 				<h4>Layer Height</h4>
 				<p>
 					What is the layer height you'll use? (This needs to be the same across all test prints)
@@ -159,7 +181,7 @@ TODO: see Github
 				<div class="indent">
 					<p>
 						Layer Height:
-						<input class="inputbox" id="layerheight" name="layerheight" step="0.1" min="0" value="0.2">
+						<input class="number-entry" id="layerheight" name="layerheight" step="0.1" min="0" value="0.2" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
 						<!--<input class="formfield" type="text" name="layerheight" value="0.2" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">-->
 						mm
 					</p>
@@ -197,7 +219,7 @@ TODO: see Github
 						<div class="indent">
 							<p>
 								Printer Resolution:
-								<input class="inputbox" id="resolution" name="resolution" value="0.4" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+								<input class="number-entry" id="resolution" name="resolution" value="0.4" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
 								<!--<input class="formfield" type="text" name="printerres" value="0.4" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">-->
 								mm
 							</p>
@@ -216,9 +238,9 @@ TODO: see Github
 							<table id="model-params-area">
                                 <tr>
                                     <td>__name</td>
-                                    <td><input class="inputbox" id="__min_id" value="0.1" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+                                    <td><input class="number-entry" id="__min_id" value="0.1" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
                                     mm to  </td>
-                                    <td><input class="inputbox" id="__max_id" value="1.0" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+                                    <td><input class="number-entry" id="__max_id" value="1.0" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
                                     mm</td>
                                 </tr>
 							</table>

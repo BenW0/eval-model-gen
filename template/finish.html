@@ -29,6 +29,7 @@ TODO: see github
 
 
             $("#layer_height").html(part_params[LAYER_HEIGHT_VAR].toString());
+            $("#group-id").html(htmlEntities(decodeURIstring(part_params[GROUP_NAME_VAR])));
 
 
             // Generate rows in the Results section for each parameter, populated with defaults
@@ -49,15 +50,29 @@ TODO: see github
             $("#printer-type").selectmenu().css({"vertical-align": "-100%"});
 
             $("#submit").button().click(function(event) {
+
                 var out = $.extend({}, part_params);
                 out.printerType = $("#printer-type").val();
                 out.printerModel = $("#printer-model").val();
                 out.printerName = $("#printer-name").val();
-                out.groupName = $("#group-id").val();
+                out.groupName = htmlEntities(decodeURIstring(part_params[GROUP_NAME_VAR])); //$("#group-id").val();
                 out.feedstockType = $("#feedstock-type").val();
                 out.feedstockColor = $("#feedstock-color").val();
                 out.notes = $("#notes").val();
                 out.feedback = $("#feedback").val();
+
+                if (out.printerModel == "") {
+                    alert("Please enter a printer model");
+                    return;
+                }
+                if (out.printerName == "") {
+                    alert("Please enter a printer name");
+                    return;
+                }
+                if (out.feedstockType == "") {
+                    alert("Please enter a feedstock type");
+                    return;
+                }
 
                 submitResult(out);
             })
@@ -94,6 +109,9 @@ TODO: see github
                 params["red_final" + key] = parseFloat(params["red_final" + key]);
                 params["red_error" + key] = parseFloat(params["red_error" + key]);
             }
+
+            if (typeof params[GROUP_NAME_VAR] === "undefined")
+                    params[GROUP_NAME_VAR] = "";
 
             return params;
         }
@@ -142,7 +160,7 @@ TODO: see github
                 <div class="section-body final-form">
                     <p>Printer Type:</p>
                     <p class="indent">
-                        <select name="printer-type" id="printer-type" class="final-control">
+                        <select name="printer-type" id="printer-type" class="text-entry">
 							<option value="Powder">Binder Jetting (3D Powder Printing)</option>
                             <option value="DED">Directed Energy Deposition</option>
                             <option value="Extrusion">Material Extrusion (FDM, FFF, syringe, etc.)</option>
@@ -154,22 +172,22 @@ TODO: see github
 							<option value="Other">Other (specify in Notes)</option>
                         </select></p><br/>
                     <p>Printer Model: </p>
-                        <p class="indent" ><input type="text" id="printer-model" class="final-control"></p><br/>
+                        <p class="indent" ><input type="text" id="printer-model" class="text-entry"></p><br/>
                     <p>Printer Name/Number:</p>
-                        <p class="indent"><input type="text" id="printer-name" class="final-control"></p><br/>
+                        <p class="indent"><input type="text" id="printer-name" class="text-entry"></p><br/>
                     <p>Group Member Names (ME 480 only):</p>
-                        <p class="indent"><input type="text" id="group-id" class="final-control" ></p><br/>
+                        <p class="indent"><span id="group-id"></span><!-- input type="text" id="group-id" class="text-entry" --></p><br/>
                     <p>Filament/Resin/Feedstock Material:</p>
-                        <p class="indent"><input type="text" id="feedstock-type" class="final-control"></p><br/>
+                        <p class="indent"><input type="text" id="feedstock-type" class="text-entry"></p><br/>
                     <p>Filament/Resin/Feedstock Vendor/Color:</p>
-                        <p class="indent"><input type="text" id="feedstock-color" class="final-control"></p><br/>
+                        <p class="indent"><input type="text" id="feedstock-color" class="text-entry"></p><br/>
                     <p>Other Notes/Settings:</p>
                     <div class="indent">
-                        <textarea name="notes" class="final-control" id="notes" rows=3 cols=55 ></textarea>
+                        <textarea name="notes" class="text-entry" id="notes" rows=3 cols=55 ></textarea>
                     </div>
                     <p>Feedback on this process:</p>
                     <div class="indent">
-                        <textarea name="notes" class="final-control" id="feedback" rows=3 cols=55 ></textarea>
+                        <textarea name="notes" class="text-entry" id="feedback" rows=3 cols=55 ></textarea>
                     </div>
                     <br/>
                     <button class="button" id="submit">

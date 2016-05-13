@@ -241,6 +241,12 @@ TODO: See github
             }
             slider.noUiSlider.set([red_thresh, yellow_thresh]);
 
+            // Load the group name
+            if (ref_part_params[GROUP_NAME_VAR] != "")
+                    $(".groupname").html("Group " + htmlEntities(decodeURIstring(ref_part_params[GROUP_NAME_VAR])));
+            else
+                    $(".groupname").html("");
+
             data_loaded = true;
             updateText();
             drawPic();
@@ -456,8 +462,10 @@ TODO: See github
             var i;
             var new_params = {};
             new_params[LAYER_HEIGHT_VAR] = ref_part_params[LAYER_HEIGHT_VAR];
+            new_params[GROUP_NAME_VAR] = ref_part_params[GROUP_NAME_VAR];
             var results = {};
             results[LAYER_HEIGHT_VAR] = ref_part_params[LAYER_HEIGHT_VAR];
+            results[GROUP_NAME_VAR] = ref_part_params[GROUP_NAME_VAR];
 
             // First, save off the current values in the ref_part_params structure
             ref_part_params["yellow" + var_key] = yellow_thresh;
@@ -523,6 +531,10 @@ TODO: See github
                         params["old_red_error" + varKey] = parseFloat(params["old_red_error" + varKey]);
             }
 
+            if (typeof params[GROUP_NAME_VAR] === "undefined") {
+                params[GROUP_NAME_VAR] = "";
+            }
+
             return params;
         }
     </script>
@@ -543,7 +555,8 @@ TODO: See github
         </div>
     </div>
     <div id="body" class="home">
-        <canvas class="bigimage" id="canvas" width="440" height="440"></canvas>
+        <h2 class="groupname orphan-h2"></h2>
+        <canvas class="bigimage" id="canvas" width="440" height="440" style="clear:left; margin-top:20px;"></canvas>
         <div class="bodytext">
             <div id="intro" style="display:none">
                 <h1>Printer Qualification Wizard</h1>

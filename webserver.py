@@ -20,6 +20,7 @@ from cherrypy.lib.static import serve_file
 from cherrypy.process import plugins
 from modelparams import ModelParams
 import modelgen
+import datetime
 
 OUTPUT_FILENAME = 'logs/result_log.txt'
 
@@ -179,13 +180,13 @@ class ModelChooserEngine(object):
                 str_out += '\t'
             try:
 
-		# If it doesn't exist, initialize the results file
-		if not os.path.exists(OUTPUT_FILENAME):
-		    with open(OUTPUT_FILENAME, 'w') as fout:
-			fout.write('ID\t' + reduce(lambda x,y:x + '\t' + y, self.output_field_names) + '\n')
-		    self.next_submit_id = 1
+                # If it doesn't exist, initialize the results file
+                if not os.path.exists(OUTPUT_FILENAME):
+                    with open(OUTPUT_FILENAME, 'w') as fout:
+                        fout.write('ID\tTimestamp\t' + reduce(lambda x, y: x + '\t' + y, self.output_field_names) + '\n')
+                    self.next_submit_id = 1
 
-                str_out = '%i\t%s' % (self.next_submit_id, str_out)
+                str_out = '%i\t%s\t%s' % (self.next_submit_id, '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()), str_out)
                 # Write out our entry
                 with open(OUTPUT_FILENAME, 'a') as fout:
                     fout.write(str_out + '\n')

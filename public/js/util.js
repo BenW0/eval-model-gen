@@ -5,6 +5,7 @@
 
 LAYER_HEIGHT_VAR = "layerHeight";
 NOZZLE_DIAMETER_VAR = "nozzleDiameter";
+GROUP_NAME_VAR = "group";
 
 /* QueryStringToHash() - converts a query string (parameters) back into an object.
  * From user 太極者無極而生 on stackoverflow:
