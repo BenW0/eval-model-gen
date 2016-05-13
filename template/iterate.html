@@ -208,10 +208,12 @@ TODO: See github
             if (var_id == param_data.length - 1) {
                 $("#final-section").css({"display": "block"});
                 $("#next").css({"visibility": "hidden"});
+                $("#post-message").css({"display": "none"});
             }
             else {
                 $("#final-section").css({"display": "none"});
                 $("#next").css({"visibility":"visible"});
+                $("#post-message").css({"display": "none"});
             }
 
             var pd = param_data[var_id];
