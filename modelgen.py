@@ -54,8 +54,6 @@ class Engine:
             os.mkdir("logs")
         if not os.path.exists("modelcache"):
             os.mkdir("modelcache")
-        if not os.path.exists("openscad"):
-            print("Error! Can't find openscad! Model creation will fail!")
 
     @staticmethod
     def modelgen_settings(key, value):
