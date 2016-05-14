@@ -417,8 +417,17 @@ TODO: See github
             obj.yellow_center = Math.max(0, old_min + (old_max - old_min) * (varYellow - 0.5) / 9);
             obj.yellow_error = (old_max - old_min) / 5;
             if (varYellow == 0) {
-                obj.yellow_error = obj.yellow_center;
-                obj.new_range = obj.yellow_center * 1.25;
+                if (old_min > (old_max - old_min) / 2) {
+                    obj.new_range = (old_max - old_min);
+                    obj.yellow_error = NaN;
+                }
+                else {
+                    obj.yellow_center = old_min / 2;
+                    obj.yellow_error = Math.max(old_min / 2, (old_max - old_min) / 5);
+                    obj.new_range = old_min + (old_max - old_min) / 7;
+                }
+                //obj.yellow_error = obj.yellow_center;
+                //obj.new_range = obj.yellow_center * 1.25;
             }
             else if (varYellow == 10) {
                 obj.yellow_error = NaN;
@@ -438,7 +447,7 @@ TODO: See github
                 if (typeof ref_part_params["old_red" + param_data[varID].varKey] === "undefined") {
                     // varRed == 0; use half way between the min and 0 as the center and error
                     obj.red_center = old_min / 2;
-                    obj.red_error = old_min / 2 + (old_max - old_min) / 5;
+                    obj.red_error = Math.max(old_min / 2, (old_max - old_min) / 5);
                 }
                 else {
                     // Set the red threshold based on previous results, since no new info was acquired
