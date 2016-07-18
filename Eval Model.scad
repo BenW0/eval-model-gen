@@ -138,7 +138,7 @@ skipNegFinThkH = -1;
 </json>
 */
 minNegButtonDiaH = 0.5 * layerHeight;
-maxNegButtonDiaH = 10 * layerHeight;
+maxNegButtonDiaH = 7 * layerHeight;
 skipNegButtonDiaH = -1;
 
 /*
@@ -433,6 +433,10 @@ difference()
         core();
         outrigger();
         
+        // TEMP!!!
+        //translate([-coreWidth / 2 - connectingBarWidth, foutriggerEndY(), -6])
+        //cube(size=[coreWidth + connectingBarWidth, -foutriggerEndY() + coreDepth, 6]);
+        
         // Vertical fins
         translate([0,coreYGap,coreHeight])
             vfins(true, skipPosFinThkV);
@@ -460,7 +464,7 @@ difference()
             pillars(minPosPillarDiaV, maxPosPillarDiaV, pillarVSizeRatio, posPillarMinLengthV, skipPosPillarDiaV);
             
         // xy fillets
-        translate([0, foutriggerEndY() + xyFilletColumnWidth / 2, outriggerHeight])
+        translate([0, foutriggerEndY() + xyFilletColumnWidth / 2, outriggerHeight - fudge])
             xyfillets(minXYRadius, maxXYRadius, coreWidth, skipXYRadius);
                 
     };
