@@ -16,6 +16,9 @@ This server uses [OpenSCAD](openscad.org) binaries, which is assumed by default 
 
 The front end is written in javascript and HTML5, with help from JQuery, JQuery UI, and [noUiSlider](http://refreshless.com/nouislider/)
 
+Though not necessary to the functioning of any other components of the system, the results log visualizer misc/resultVis.py
+uses pandas in an Anaconda environment.
+
 ## Usage
 Most configuration options are in server.conf. See example_server.conf for a sample.
 

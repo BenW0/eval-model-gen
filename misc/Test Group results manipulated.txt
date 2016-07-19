@@ -1,0 +1,69 @@
+ID	Timestamp	Printer Type	Printer Model	Printer Name	Group Name	Feedstock Material	Feedstock Vendor/Color	Notes	Feedback	Vertical Pillars Yellow Minimum	Vertical Pillars Yellow Error	Vertical Pillars Red Minimum	Vertical Pillars Red Error	Horizontal Circular Holes Yellow Minimum	Horizontal Circular Holes Yellow Error	Horizontal Circular Holes Red Minimum	Horizontal Circular Holes Red Error	Horizontal Bosses Yellow Minimum	Horizontal Bosses Yellow Error	Horizontal Bosses Red Minimum	Horizontal Bosses Red Error	Horizontal Slots Yellow Minimum	Horizontal Slots Yellow Error	Horizontal Slots Red Minimum	Horizontal Slots Red Error	Horizontal Pockets Yellow Minimum	Horizontal Pockets Yellow Error	Horizontal Pockets Red Minimum	Horizontal Pockets Red Error	In-Layer Fillets Yellow Minimum	In-Layer Fillets Yellow Error	In-Layer Fillets Red Minimum	In-Layer Fillets Red Error	Horizontal Circular Bars Yellow Minimum	Horizontal Circular Bars Yellow Error	Horizontal Circular Bars Red Minimum	Horizontal Circular Bars Red Error	Horizontal Fins Yellow Minimum	Horizontal Fins Yellow Error	Horizontal Fins Red Minimum	Horizontal Fins Red Error	Vertical Pockets Yellow Minimum	Vertical Pockets Yellow Error	Vertical Pockets Red Minimum	Vertical Pockets Red Error	Vertical Bosses Yellow Minimum	Vertical Bosses Yellow Error	Vertical Bosses Red Minimum	Vertical Bosses Red Error	Vertical Fins Yellow Minimum	Vertical Fins Yellow Error	Vertical Fins Red Minimum	Vertical Fins Red Error	Vertical Slots Yellow Minimum	Vertical Slots Yellow Error	Vertical Slots Red Minimum	Vertical Slots Red Error	Vertical Circular Holes Yellow Minimum	Vertical Circular Holes Yellow Error	Vertical Circular Holes Red Minimum	Vertical Circular Holes Red Error	Inter-Layer Fillets Yellow Minimum	Inter-Layer Fillets Yellow Error	Inter-Layer Fillets Red Minimum	Inter-Layer Fillets Red Error
+1	5/13/2016 6:34	Extrusion	Test Model	Test Name	Ben Test Group	Test Feedstock	Test Color	Test Notes	Test Feedback	0.891666667	0.095	0.838888889	0.095	1.472222222	0.38	0.416666667	0.38	0.258333333	0.095	0.05	0.43	0.208333333	0.065	0.05	0.31	0.208333333	0.065	0.05	0.31	0.175	0.045	0.05	0.23	0.258333333	0.095	0.05	0.43	0.208333333	0.065	0.05	0.31	0.258333333	0.095	0.05	0.43	0.258333333	0.095	0.05	0.43	0.258333333	0.095	0.05	0.43	0.258333333	0.095	0.05	0.43	0.258333333	0.095	0.05	0.43	0.175	0.045	0.05	0.23
+2	5/13/2016 22:10	Extrusion	Test model	Test Printer	Test Group	Test Filament	Test Color	"This is the entry that corresponds to ""Test Group choices and answers.txt"""		1.947222222	0.095	1.788888889	0.095	1.894444444	0.38	0.05	0.43	1.313888889	None	1.05	0.38	1.291666667	0.065	1.219444444	0.065	0.063888889	0.065	0.05	0.31	0.625	0.045	0.45	0.045	0.258333333	0.095	0.05	0.43	1.761111111	0.26	1.327777778	0.26	1.472222222	0.38	2.105555556	None	1.102777778	0.095	0.838888889	0.38	2.95	0.38	1.472222222	0.38	1.472222222	0.095	1.05	0.38	0.891666667	0.095	0.891666667	0.095	0.975	None	0.85	0.18
+ID	1	2																																																															
+Timestamp	5/13/2016 6:34	5/13/2016 22:10																																																															
+Printer Type	Extrusion	Extrusion																																																															
+Printer Model	Test Model	Test model																																																															
+Printer Name	Test Name	Test Printer																																																															
+Group Name	Ben Test Group	Test Group																																																															
+Feedstock Material	Test Feedstock	Test Filament																																																															
+Feedstock Vendor/Color	Test Color	Test Color																																																															
+Notes	Test Notes	"This is the entry that corresponds to ""Test Group choices and answers.txt"""																																																															
+Feedback	Test Feedback																																																																
+Vertical Pillars Yellow Minimum	0.891666667	1.947222222																																																															
+Vertical Pillars Yellow Error	0.095	0.095																																																															
+Vertical Pillars Red Minimum	0.838888889	1.788888889																																																															
+Vertical Pillars Red Error	0.095	0.095																																																															
+Horizontal Circular Holes Yellow Minimum	1.472222222	1.894444444																																																															
+Horizontal Circular Holes Yellow Error	0.38	0.38																																																															
+Horizontal Circular Holes Red Minimum	0.416666667	0.05																																																															
+Horizontal Circular Holes Red Error	0.38	0.43																																																															
+Horizontal Bosses Yellow Minimum	0.258333333	1.313888889																																																															
+Horizontal Bosses Yellow Error	0.095	None																																																															
+Horizontal Bosses Red Minimum	0.05	1.05																																																															
+Horizontal Bosses Red Error	0.43	0.38																																																															
+Horizontal Slots Yellow Minimum	0.208333333	1.291666667																																																															
+Horizontal Slots Yellow Error	0.065	0.065																																																															
+Horizontal Slots Red Minimum	0.05	1.219444444																																																															
+Horizontal Slots Red Error	0.31	0.065																																																															
+Horizontal Pockets Yellow Minimum	0.208333333	0.063888889																																																															
+Horizontal Pockets Yellow Error	0.065	0.065																																																															
+Horizontal Pockets Red Minimum	0.05	0.05																																																															
+Horizontal Pockets Red Error	0.31	0.31																																																															
+In-Layer Fillets Yellow Minimum	0.175	0.625																																																															
+In-Layer Fillets Yellow Error	0.045	0.045																																																															
+In-Layer Fillets Red Minimum	0.05	0.45																																																															
+In-Layer Fillets Red Error	0.23	0.045																																																															
+Horizontal Circular Bars Yellow Minimum	0.258333333	0.258333333																																																															
+Horizontal Circular Bars Yellow Error	0.095	0.095																																																															
+Horizontal Circular Bars Red Minimum	0.05	0.05																																																															
+Horizontal Circular Bars Red Error	0.43	0.43																																																															
+Horizontal Fins Yellow Minimum	0.208333333	1.761111111																																																															
+Horizontal Fins Yellow Error	0.065	0.26																																																															
+Horizontal Fins Red Minimum	0.05	1.327777778																																																															
+Horizontal Fins Red Error	0.31	0.26																																																															
+Vertical Pockets Yellow Minimum	0.258333333	1.472222222																																																															
+Vertical Pockets Yellow Error	0.095	0.38																																																															
+Vertical Pockets Red Minimum	0.05	2.105555556																																																															
+Vertical Pockets Red Error	0.43	None																																																															
+Vertical Bosses Yellow Minimum	0.258333333	1.102777778																																																															
+Vertical Bosses Yellow Error	0.095	0.095																																																															
+Vertical Bosses Red Minimum	0.05	0.838888889																																																															
+Vertical Bosses Red Error	0.43	0.38																																																															
+Vertical Fins Yellow Minimum	0.258333333	2.95																																																															
+Vertical Fins Yellow Error	0.095	0.38																																																															
+Vertical Fins Red Minimum	0.05	1.472222222																																																															
+Vertical Fins Red Error	0.43	0.38																																																															
+Vertical Slots Yellow Minimum	0.258333333	1.472222222																																																															
+Vertical Slots Yellow Error	0.095	0.095																																																															
+Vertical Slots Red Minimum	0.05	1.05																																																															
+Vertical Slots Red Error	0.43	0.38																																																															
+Vertical Circular Holes Yellow Minimum	0.258333333	0.891666667																																																															
+Vertical Circular Holes Yellow Error	0.095	0.095																																																															
+Vertical Circular Holes Red Minimum	0.05	0.891666667																																																															
+Vertical Circular Holes Red Error	0.43	0.095																																																															
+Inter-Layer Fillets Yellow Minimum	0.175	0.975																																																															
+Inter-Layer Fillets Yellow Error	0.045	None																																																															
+Inter-Layer Fillets Red Minimum	0.05	0.85																																																															
+Inter-Layer Fillets Red Error	0.23	0.18																																																															

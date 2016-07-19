@@ -10,6 +10,7 @@
      - Create a test script that generates a model for each variable bigger and smaller than
        its default for validating model integrity.
      - Add an overhang angle test
+     - For SPEED, consider changing the main construct to union all the positive features, then union in the difference between the (core + outrigger) and the negative features.
  */ 
  
 // Special variable set explicitly by the eval server. Don't change this name without also changing it in
