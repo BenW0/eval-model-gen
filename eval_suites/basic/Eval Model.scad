@@ -30,11 +30,14 @@ nozzleDiameter = 0.4;   // mm, only supplied in a default mode
 //  - LowKeyword: Keyword to show at the low end of the slider
 //  - HighKeyword: Keyword to show at the high end of the slider
 //  - varBase: Variable names. OpenSCAD should include these variables: min<varBase>, max<varBase>, skip<varBase>
+//    NOTE: These names are also the database keys, so changeing them will break compatibility with old data.
 //  - min/maxDefault: Values to use for a default test part. These may be 
 //  - min/maxDefaultLH: Values to use if all we are given is a characteristic diameter and layer height.
 //    These may be functions of layerHeight and nozzleDiameter.
 //  - sortOrder: This (optional) variable specifies an ordering number for sorting the parameters on the front end
 //    (otherwise they will be sorted arbitrarily). Low value is higher in the list of parameters.
+//  - instanceCount: Number of copies of the feature present in the test part. For this model, these are all 10,
+//    because featureCount = 10.
 
 /*
 <json>
@@ -49,7 +52,8 @@ nozzleDiameter = 0.4;   // mm, only supplied in a default mode
         "minDefaultND": "0.5 * nozzleDiameter",
         "maxDefaultND": "5 * nozzleDiameter",
         "cameraData": "9.57,-17.9,8.45,57.8,0,314.8,85",
-        "sortOrder": 0
+        "sortOrder": 0,
+				"instanceCount": 10
     }
 </json>
 */
@@ -71,7 +75,8 @@ skipPosPillarDiaV = -1;      // skip the first <> items when building (for visua
         "minDefaultND": "0.5 * layerHeight",
         "maxDefaultND": "10 * layerHeight",
         "cameraData": "-26.8,6,-4.5,71.8,0,36.7,90",
-        "sortOrder": 1
+        "sortOrder": 1,
+				"instanceCount": 10
     }
 </json>
 */
@@ -92,7 +97,8 @@ skipNegPillarDiaH = -1;
         "minDefaultND": "0.5 * layerHeight",
         "maxDefaultND": "10 * layerHeight",
         "cameraData": "-26.8,6,-4.5,71.8,0,36.7,90",
-        "sortOrder": 2
+        "sortOrder": 2,
+				"instanceCount": 10
     }
 </json>
 */
@@ -113,7 +119,8 @@ skipPosButtonDiaH = -1;
         "minDefaultND": "0.5 * layerHeight",
         "maxDefaultND": "10 * layerHeight",
         "cameraData": "-26.8,6,-4.5,71.8,0,36.7,90",
-        "sortOrder": 3
+        "sortOrder": 3,
+				"instanceCount": 10
     }
 </json>
 */
@@ -134,7 +141,8 @@ skipNegFinThkH = -1;
         "minDefaultND": "0.5 * layerHeight",
         "maxDefaultND": "7 * layerHeight",
         "cameraData": "-26.8,6,-4.5,71.8,0,36.7,90",
-        "sortOrder": 4
+        "sortOrder": 4,
+				"instanceCount": 10
     }
 </json>
 */
@@ -155,7 +163,8 @@ skipNegButtonDiaH = -1;
         "minDefaultND": "0.5 * nozzleDiameter",
         "maxDefaultND": "2.5 * nozzleDiameter",
         "cameraData": "6.55,-17.89,13.56,90,0,324.8,95",
-        "sortOrder": 5
+        "sortOrder": 5,
+				"instanceCount": 10
     }
 </json>
 */
@@ -176,7 +185,8 @@ skipXYRadius = -1;
         "minDefaultND": "0.5 * layerHeight",
         "maxDefaultND": "10 * layerHeight",
         "cameraData": "1,-10,8,55,0,89.2,90",
-        "sortOrder": 6
+        "sortOrder": 6,
+				"instanceCount": 10
     }
 </json>
 */
@@ -197,7 +207,8 @@ skipPosPillarDiaH = -1;
         "minDefaultND": "0.5 * layerHeight",
         "maxDefaultND": "7 * layerHeight",
         "cameraData": "-4.56,-10.53,5.75,125,0,105.3,91.85",
-        "sortOrder": 7
+        "sortOrder": 7,
+				"instanceCount": 10
     }
 </json>
 */
@@ -218,7 +229,8 @@ skipPosFinThkH = -1;
         "minDefaultND": "0.5 * nozzleDiameter",
         "maxDefaultND": "5 * nozzleDiameter",
         "cameraData": "-18,-13,10.7,66.2,0,211.7,92",
-        "sortOrder": 8
+        "sortOrder": 8,
+				"instanceCount": 10
     }
 </json>
 */
@@ -239,7 +251,8 @@ skipNegButtonDiaV = -1;
         "minDefaultND": "0.5 * nozzleDiameter",
         "maxDefaultND": "5 * nozzleDiameter",
         "cameraData": "-18,-13,10.7,66.2,0,211.7,92",
-        "sortOrder": 9
+        "sortOrder": 9,
+				"instanceCount": 10
     }
 </json>
 */
@@ -260,7 +273,8 @@ skipPosButtonDiaV = -1;
         "minDefaultND": "0.5 * nozzleDiameter",
         "maxDefaultND": "5 * nozzleDiameter",
         "cameraData": "-11,-10.4,1,43.8,0,148.7,96",
-        "sortOrder": 10
+        "sortOrder": 10,
+				"instanceCount": 10
     }
 </json>
 */
@@ -282,7 +296,8 @@ skipPosFinThkV = -1;
         "maxDefaultND": "5 * nozzleDiameter",
         "cameraData": "-0.1,5.73,2.38,205.5,0,321.8,84",
         "cameraData_Old": "-2.5,-4.3,6.5,47.3,0,169.5,95",
-        "sortOrder": 11
+        "sortOrder": 11,
+				"instanceCount": 10
     }
 </json>
 */
@@ -303,7 +318,8 @@ skipNegFinThkV = -1;
         "minDefaultND": "0.5 * nozzleDiameter",
         "maxDefaultND": "5 * nozzleDiameter",
         "cameraData": "-5.87,11.25,0.15,15.8,0,139.4,84",
-        "sortOrder": 12
+        "sortOrder": 12,
+				"instanceCount": 10
     }
 </json>
 */
@@ -324,7 +340,8 @@ skipNegPillarDiaV = -1;
         "minDefaultND": "0.5 * nozzleDiameter",
         "maxDefaultND": "2.5 * nozzleDiameter",
         "cameraData": "-3.07,11.93,0.4,32.6,0,135.2,91.85",
-        "sortOrder": 13
+        "sortOrder": 13,
+				"instanceCount": 10
     }
 </json>
 */

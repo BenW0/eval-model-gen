@@ -1,0 +1,33 @@
+{
+  "Comment":"This file contains configuration information describing the setup for the evaluation model(s) in each subdirectory. Each subdirectory to be used should have a key in the dictionary below.",
+
+  "basic": {
+    "Name":"Feature Size Evaluation",
+    "Subtitle":"Most common evaluation: get information about the smallest features your printer can produce.",
+    "Rank":1,
+    "Models": {
+      "basic": {
+        "Filename": "Eval Model.scad"
+      }
+    }
+  },
+
+  "angle_interp": {
+    "Name": "Tilt Interpolation Evaluation",
+    "Subtitle": "Evaluates features at different angles between vertical and horizontal, creating an interpolation that can be used to supplement a Feature Size Evaluation",
+    "Rank": 2,
+    "Dependencies": [
+      "basic"
+    ],
+    "Models": {
+      "aitm-fins": {
+        "Name": "Fin Angle",
+        "Filename": "aitm-fins.scad"
+      },
+      "aitm-other": {
+        "Name": "Some other file",
+        "Filename": "other_model.scad"
+      }
+    }
+  }
+}

@@ -18,7 +18,7 @@ import os
 import cherrypy
 from cherrypy.lib.static import serve_file
 from cherrypy.process import plugins
-from modelparams import ModelParams
+from modelparams import ModelParams, EvalSuite
 import modelgen
 import datetime
 
@@ -74,12 +74,12 @@ class ModelChooserEngine(object):
     def __init__(self):
         # Create the engine which will actually do the model construction.
         self.engine = modelgen.Engine()
-        # Initialize modelparams settings (loaded from openscad)
-        ModelParams.init_settings(self.engine.model_name)
+        # Load the list of evaluation suites and parse the parameters for each model file
+        EvalSuite.populate_suites()
         # Save off a copy of the json that we just loaded from the openscad 
         with open("public/js/params.js", "w") as fout:
             fout.write("//This is a generated code file. All changes will be lost on next server load!\n")
-            fout.write("params_json = '%s';\n" % ModelParams.json_str.replace("\n", " "))
+            fout.write("params_json = '%s';\n" % EvalSuite.get_params_json().replace("\n", " "))
 
         # Save the heading fields in the order they should be saved for writing the output file.
         # You would think we would use a dict, but I want to preserve list ordering...
@@ -100,18 +100,19 @@ class ModelChooserEngine(object):
                                    'Notes',
                                    'Feedback']
 
-        for item in ModelParams.json_parsed:
-            key = str(item['varKey'])
-            self.output_fields.append('yellow_final' + key)
-            self.output_field_names.append(item['Name'] + ' Yellow Minimum')
-            self.output_fields.append('yellow_error' + key)
-            self.output_field_names.append(item['Name'] + ' Yellow Error')
+        # TODO: This code is now out of date...need to update to use a database now that we have multiple models.
+        #for item in ModelParams.json_parsed:
+        #    key = str(item['varKey'])
+        #    self.output_fields.append('yellow_final' + key)
+        #    self.output_field_names.append(item['Name'] + ' Yellow Minimum')
+        #    self.output_fields.append('yellow_error' + key)
+        #    self.output_field_names.append(item['Name'] + ' Yellow Error')
 
-            self.output_fields.append('red_final' + key)
-            self.output_field_names.append(item['Name'] + ' Red Minimum')
-            self.output_fields.append('red_error' + key)
-            self.output_field_names.append(item['Name'] + ' Red Error')
-		
+        #    self.output_fields.append('red_final' + key)
+        #    self.output_field_names.append(item['Name'] + ' Red Minimum')
+        #    self.output_fields.append('red_error' + key)
+        #    self.output_field_names.append(item['Name'] + ' Red Error')
+
         # Open the results file and find the last entry
         self.next_submit_id = 1
         if os.path.exists(OUTPUT_FILENAME):
@@ -140,8 +141,13 @@ class ModelChooserEngine(object):
         if in_data["Command"].lower() == 'start':
             # Check to see if this model is already cached
             in_data.pop("Command")
-            model = ModelParams()
-            model.load_json(in_data)
+            model, success, errtext = ModelParams.from_json(in_data)
+            if not success:
+                out_data["Status"] = "Error"
+                out_data["ErrMessage"] = "Invalid query. %s" % errtext
+                cherrypy.log("Engine Error - could not parse json. %s" % errtext)
+                return out_data
+
             exists, path = self.engine.check_exists(model)
             if exists:
                 out_data["Status"] = "Ready"
@@ -158,8 +164,14 @@ class ModelChooserEngine(object):
 
         elif in_data["Command"].lower() == 'check':
             in_data.pop("Command")
-            model = ModelParams()
-            model.load_json(in_data)
+
+            model, success, errtext = ModelParams.from_json(in_data)
+            if not success:
+                out_data["Status"] = "Error"
+                out_data["ErrMessage"] = "Invalid query. %s" % errtext
+                cherrypy.log("Engine Error - could not parse json. %s" % errtext)
+                return out_data
+
             done, path, success, errtext = self.engine.check_job(model)
             out_data["Status"] = "Working"
             if done:

@@ -10,6 +10,8 @@ This web application (server and client) work to evaluate a suite of minimum fea
 ## Dependencies
 This program requires Python 2.7.x or later.
 
+It was developed against SQLAlchemy 1.0.14.
+
 The server depends on [CherryPy](cherrypy.org), which needs to be installed in your Python implementation (built against version 5.0.1)
 
 This server uses [OpenSCAD](openscad.org) binaries, which is assumed by default to reside in a local folder named "openscad" (built against version 2015.03-2). The default location can be changed using server.conf

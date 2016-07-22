@@ -19,7 +19,7 @@ import os
 import time
 import difflib
 
-from modelparams import ModelParams
+from modelparams import ModelParams, EvalSuite, Model, EvalSuites
 
 # Default settings. Override these with the modelgen namespace of server.conf
 if os.name == 'posix':      # linux and mac
@@ -31,8 +31,6 @@ MODEL_NAME = "Eval Model.scad"
 
 # path to images used for visualization
 IMAGES_PATH = "public/images"
-
-
 
 
 class Engine:
@@ -62,8 +60,6 @@ class Engine:
         try:
             if key.lower() == 'openscad':
                 Engine.openscad_exe = value
-            if key.lower() == 'model':
-                Engine.model_name = value
         finally:
             pass
 
@@ -138,17 +134,21 @@ class Engine:
     def _build_images():
         """A script to generate the cache of images used to visualize the relevant feature on the front end"""
 
-        for var, camera in ModelParams.camera_data.items():
-            procs = []
-            for i in range(11):
-                outfile = os.path.join(IMAGES_PATH, "%s-%i.png" % (var, i))
-                popen_params = [Engine.openscad_exe, "-o", outfile, "-D", "skip%s=%i" % (var, i),
-                                "--camera=%s" % camera, "--autocenter", "--imgsize=440,440",
-                                "--projection=ortho", Engine.model_name]
-                print(repr(popen_params))
-                procs.append(subprocess.Popen(popen_params))
-            for proc in procs:
-                proc.wait()  # wait for the process to finish
+        for ste_key, ste in EvalSuites:
+            for model_key, model in ste.models:
+                print "Working on suite-model %s-%s" % (ste_key, model_key)
+
+                for var, camera in model.camera_data.items():
+                    procs = []
+                    for i in range(11):
+                        outfile = os.path.join(IMAGES_PATH, "%s-%i.png" % (var, i))
+                        popen_params = [Engine.openscad_exe, "-o", outfile, "-D", "skip%s=%i" % (var, i),
+                                        "--camera=%s" % camera, "--autocenter", "--imgsize=440,440",
+                                        "--projection=ortho", Engine.model_name]
+                        print(repr(popen_params))
+                        procs.append(subprocess.Popen(popen_params))
+                    for proc in procs:
+                        proc.wait()  # wait for the process to finish
 
 
 class Job:
