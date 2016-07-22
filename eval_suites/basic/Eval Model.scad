@@ -489,14 +489,14 @@ difference()
     
     // Negative features get subtracted out!
     // horizontal pillars
-    translate([0,-fudge * 2,outriggerHeight - outriggerGapV - maxNegPillarDiaH / 2])
+    translate([0,-abs(foutriggerEndY()) * 0.1,outriggerHeight - outriggerGapV - maxNegPillarDiaH / 2])
     rotate([90,0,0])
-        pillars(minNegPillarDiaH, maxNegPillarDiaH, 0, abs(foutriggerEndY()) + 3 * fudge, skipNegPillarDiaH, backwards=true);
+        pillars(minNegPillarDiaH, maxNegPillarDiaH, 0, abs(foutriggerEndY()) * 1.1, skipNegPillarDiaH, backwards=true);
     
     // horizontal buttons
     translate([0, foutriggerEndY() + hButtonThk, outriggerGapV + maxNegButtonDiaH / 2])
     rotate([90,0,0])
-        pillars(minNegButtonDiaH, maxNegButtonDiaH, 0, hButtonThk + 2 * fudge, skipNegButtonDiaH);
+        pillars(minNegButtonDiaH, maxNegButtonDiaH, 0, hButtonThk * 2, skipNegButtonDiaH);
     
     // horizontal fins
     translate([0, -3 * fudge, 1.5 * outriggerGapV + max(maxPosFinThkH, maxNegButtonDiaH) + maxNegFinThkH / 2])

@@ -14,7 +14,8 @@
  * for a printer. 
  *******************************************/
 
-angleCount = 10;       // number of different fin angles to produce, including vertical and horizontal
+angleCount = 21;       // number of different fin angles to produce, including vertical and horizontal
+onlyHalf = false;
 // That parameter will need to become hard-coded here pretty quick in order to match the front end
 
 
@@ -25,16 +26,18 @@ angleCount = 10;       // number of different fin angles to produce, including v
 		"Imports": {
 			"basic.yellow_final_PosFinThkV":"greenVFinThk",
 			"basic.yellow_final_NegFinThkV":"greenVSlotThk",
-			"basic.yellow_final_PosFinThkH":"greenHSlotThk"
+			"basic.yellow_final_PosFinThkH":"greenHSlotThk",
+			"basic.yellow_final_PosBarDiaH":"greenHBarDia"
 		}
 	}
 </json>
 */
 
 // Results from the main eval model needed here, to be overridden by the GUI.
-greenVFinThk = 0.1;
-greenVSlotThk = 0.1;
-greenHSlotThk = 0.1;
+greenVFinThk = 0.125;
+greenVSlotThk = 1.5;
+greenHSlotThk = 1.5;
+greenHBarDia = 0.125;
 
 
 /*
@@ -56,8 +59,8 @@ greenHSlotThk = 0.1;
 */
 
 // Range of thicknesses 
-minThk = 0.1;
-maxThk = 0.3;
+minThk = 0.125 - 0.05;
+maxThk = 0.125 + 0.05;
 skipThk = -1;
 
 pi = 3.1416;
@@ -71,45 +74,72 @@ option_count = 6;       // number of different thicknesses to produce
 
 
 // Derived parameters for the object
-minGap = max(minThk, maxThk);
+minGap = greenVSlotThk / 2;
 meanThk = 0.5 * (minThk + maxThk);
 
-coreDia = (angleCount * maxThk) * 2.5 / pi;
+coreDia = angleCount * (maxThk + greenHSlotThk / 2) * 2.5 / pi * (onlyHalf ? 1 : 0.5);
 coreLen = option_count * meanThk * finLenThkRatioV * finDepthLenRatioV + (option_count - 1) * minGap;
+echo(coreDia=coreDia);
 
-fudge = minThk * 0.02;
+mountDia = pow(2, round(ln(coreDia / 4 * (onlyHalf ? 1 : 2)) / ln(2)));
+echo(MountDiameter=mountDia);
+
+fudge = minThk * 0.02;		// diameter to use for the mounting holes
 
 // Render the geometry
-union()
+difference()
 {
-	core();
-
-	for(i = [0:angleCount - 1])
+	union()
 	{
-		angle = 90 * i / (angleCount - 1);
-		translate([0, i == 0 ? maxThk * 0.33 : 0, 0])	// offset just the vertical fins so it fits better.
-		fin_set(angle, i % 2);
-	}
-}
+		core();
 
+		for(i = [0:angleCount - 1])
+		{
+			angle = 90 * i / (angleCount - 1) * (onlyHalf ? 1 : 2);
+			translate([0, i == 0 ? maxThk * 0.33 : 0, 0])	// offset just the vertical fins so it fits better.
+			fin_set(minThk, maxThk, angle, i % 2);
+		}
+	}
+	core_diff();
+}
 // Draws the core of the object
 module core()
 {
-	difference()
+	union()
 	{
-		union()
+		rotate([0, 90, 0])
+			cylinder(h=coreLen, d=coreDia, center=true, $fn=20);
+		translate([0, 0, -maxThk * 0.5])
+			cube(size=[coreLen, coreDia, maxThk], center=true);
+	}
+}
+
+// Subtract out some unused space at the center of the core
+module core_diff()
+{
+	union()
+	{
+		if(onlyHalf)
 		{
-			rotate([0, 90, 0])
-				cylinder(h=coreLen, d=coreDia, center=true, $fn=20);
-			translate([0, 0, -maxThk * 0.5])
-				cube(size=[coreLen, coreDia, maxThk], center=true);
+			translate([0, 0, -coreDia * 0.5 - maxThk])
+				cube(size=[coreLen * 2, coreDia * 2, coreDia], center=true);
 		}
-		translate([0, 0, -coreDia * 0.5 - maxThk])
-			cube(size=[coreLen * 2, coreDia * 2, coreDia], center=true);
-		translate([greenVFinThk * 2, 0, -maxThk])
-		scale([1, (coreDia - greenVFinThk * 4) / coreDia, (coreDia + maxThk) / coreDia])
+		
+		wallThk = greenVFinThk * 4;
+		translate([0, 0, -maxThk])
+		scale([1, (coreDia - wallThk) / coreDia, (coreDia - maxThk) / coreDia])
 		rotate([45, 0, 0])
-			cube(size=[coreLen, coreDia * 0.7071, coreDia * 0.7071], center=true);
+			cube(size=[coreLen - wallThk * 2, coreDia * 0.7071, coreDia * 0.7071], center=true);
+		
+		// Add holes for clamping this piece to each end of the part
+		translate([-coreLen / 2, 0, onlyHalf ? coreDia / 5 : 0])
+		{
+		rotate([0, 90, 0])
+			cylinder(h=coreLen / 2, d=mountDia, center=true, $fn=20);
+		translate([coreLen, 0, 0])
+		rotate([0, -90, 0])
+			cylinder(h=coreLen / 2, d = mountDia * 1.25, center=true, $fn=3);
+		}
 	}
 }
 
@@ -119,7 +149,7 @@ module fin_set(min_thk, max_thk, angle, mirror=false)
 	for(i = [0:option_count - 1])
 	{
 		fin_thk = fdia(i, min_thk, max_thk);
-		fin_len = finThk * finLenThkRatioV;
+		fin_len = fin_thk * finLenThkRatioV;
 		fin_width = fin_len * finDepthLenRatioV;
 		
 		rotate([mirror ? angle : -angle, 0, 0])
