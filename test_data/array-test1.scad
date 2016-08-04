@@ -6,7 +6,7 @@ cube(size=[10,20,30]);
 /*
 <json>
     {
-        "Name": "Vertical Pillars",
+        "Name": ["Vertical Pillars"],
         "Desc": "Use the slider to indicate how many columns printed acceptably.",
         "LowKeyword": "Lost",
         "HighKeyword": "Printed",

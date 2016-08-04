@@ -11,7 +11,8 @@
         "minDefaultND": "0.5 * nozzleDiameter",
         "maxDefaultND": "5 * nozzleDiameter",
         "cameraData": "-2.28,2.59,6.06,59.9,0,13.8,113.4",
-        "sortOrder": 0
+        "sortOrder": 0,
+		"instanceCount": 10
     }
 </json>
 */
@@ -31,7 +32,8 @@ sphere(d=4);
         "minDefaultND": "0.5 * nozzleDiameter",
         "maxDefaultND": "5 * nozzleDiameter",
         "cameraData": "-2.28,2.59,6.06,59.9,0,13.8,113.4",
-        "sortOrder": 0
+        "sortOrder": 0,
+		"instanceCount": 10
     }
 </json>
 */

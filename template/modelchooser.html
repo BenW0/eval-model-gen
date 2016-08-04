@@ -1,0 +1,277 @@
+<!doctype html>
+<!-- Website template by freewebsitetemplates.com -->
+<!-- Start.html - the first really interesting page in the wizard.
+Thanks to W3Schools docs, and especially the following: 
+ * http://stackoverflow.com/questions/2015065/how-does-one-do-async-ajax-calls-using-cherrypy
+
+TODO: see Github
+ -->
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>3D Printer Evaluation Model Generator</title>
+    <link rel="stylesheet" href="static/external/jquery-ui-1.11.4.custom/jquery-ui.css" type="text/css">
+	<link rel="stylesheet" href="static/css/style.css" type="text/css">
+    <script src="static/external/jquery.js" type="text/javascript"></script>
+    <script src="static/external/jquery-ui-1.11.4.custom/jquery-ui.js" type="text/javascript"></script>
+    <script src="static/js/util.js" type="text/javascript"></script>
+    <script src="static/js/params.js" type="text/javascript"></script>
+
+	<script>
+		$(document).ready(function() {
+            // Parse the parameters structure which defines information about the different parameters we'll be testing
+            var param_data = parseParams(params_json);
+
+			$("#layerheight").spinner();
+			$("#resolution").spinner();
+			var bGenD = $("#generate-default").button();
+			var bGenG = $("#generate-guided").button();
+			var bGenC = $("#generate-custom").button();
+			var bNext = $("#next").button();
+			$("#accordion").accordion({
+				heightStyle: "content"
+			});
+            //var sColMin = $("#a-col-min").spinner();
+			//var sColMax = $("#a-col-max").spinner();
+
+            // Generate rows in the Custom section for each parameter, populated with defaults
+            var list = $("#model-params-area");
+            var template = list.html();
+            var id;
+            var new_html = "";
+            for (id = 0; id < param_data.length; id++) {
+                new_html += template
+                        .replace("__min_id", param_data[id].varBase + "-min")
+                        .replace("__max_id", param_data[id].varBase + "-max")
+                        .replace("__name", param_data[id].Name);
+            }
+            list.html(new_html);
+
+            for (id = 0; id < param_data.length; id++) {
+                param_data[id].sMin = $("#" + param_data[id].varBase + "-min").spinner();
+                param_data[id].sMax = $("#" + param_data[id].varBase + "-max").spinner();
+            }
+			
+			var pbGen = $("#progressbar").progressbar({value: false, max: 100});
+
+			
+			bGenD.click(function(event) {
+                var part_params = getUniversalParams();
+                var i;
+				// fill in the default parameters from the config file, using layerHeight as a valid variable name
+                var layerHeight = part_params[LAYER_HEIGHT_VAR];
+                // TODO: Find a more secure alternative. Maybe new Function as here:http://www.everythingfrontend.com/posts/studying-javascript-eval.html
+                for(i = 0; i < param_data.length; i++) {
+                    part_params["min" + param_data[i].varKey] = eval(String(param_data[i].minDefault));
+                    part_params["max" + param_data[i].varKey] = eval(String(param_data[i].maxDefault));
+                }
+				// Generate a generic test part...
+				startGenerate(part_params, $("#status"), $("#progressbar"));
+				// show the "working" status bar and field
+				$("#progress-area").css({"display": "block"});
+			});
+
+			bGenG.click(function(event) {
+				// Generate a test part based on supplied printer resolution... Defaults are applied in the server
+                // (ModelParams.load_json())
+                var part_params = getUniversalParams();
+                part_params[NOZZLE_DIAMETER_VAR] = $("#resolution").val();
+				// fill in the default parameters from the config file, using layerHeight and nozzleDiameter
+                // as valid variable names
+                var layerHeight = part_params[LAYER_HEIGHT_VAR];
+                var nozzleDiameter = part_params[NOZZLE_DIAMETER_VAR];
+                // TODO: Find a more secure alternative. Maybe new Function as here:http://www.everythingfrontend.com/posts/studying-javascript-eval.html
+                for(i = 0; i < param_data.length; i++) {
+                    part_params["min" + param_data[i].varKey] = eval(String(param_data[i].minDefaultND));
+                    part_params["max" + param_data[i].varKey] = eval(String(param_data[i].maxDefaultND));
+                }
+				startGenerate(part_params, $("#status"), $("#progressbar"));
+				// show the "working" status bar and field
+				$("#progress-area").css({"display": "block"});
+			});
+
+			bGenC.click(function(event) {
+				// Generate a test part based on specified parameters
+                var part_params = getUniversalParams();
+                var id;
+                for (id = 0; id < param_data.length; id++) {
+                    part_params["min" + param_data[id].varKey] = param_data[id].sMin.val();
+                    part_params["max" + param_data[id].varKey] = param_data[id].sMax.val();
+                }
+				startGenerate(part_params, $("#status"), $("#progressbar"));
+				// show the "working" status bar and field
+				$("#progress-area").css({"display": "block"});
+			});
+
+            bNext.click(function(event) {
+                // Check to see if a part has been generated (data is not null)
+                // FUTURE: Also check for a bookmarked page by looking for # metadata in the url. Use
+                // window.location.hash.substring(1) to retrieve
+                if (!generated)  {
+                    if((typeof part_params["layer_height"] === "undefined")) {
+                        alert("Please generate a test part");
+                        return;
+                    }
+                    else
+                        if (!confirm("The test part has not finished generating. Continue anyway?"))
+                            return;
+                }
+                // Redirect to the new url
+                location.href = "iterate#" + $.param(part_params);
+            });
+		});
+
+		function getUniversalParams() {
+			// Returns an object with the parameters that are used by all "Generate" buttons
+			var part_params = {};
+
+			part_params[LAYER_HEIGHT_VAR] = $("#layerheight").val();
+			part_params[GROUP_NAME_VAR] = encodeURIstring($("#groupname").val());
+
+			return part_params;
+		}
+	</script>
+</head>
+<body>
+	<div id="page">
+		<div id="header">
+			<div>
+				<a href="index" class="logo"><img src="static/images/logo.png" alt=""></a>
+				<ul id="navigation">
+					<li class="selected">
+						<a href="index">Home</a>
+					</li>
+					<li class="menu">
+						<a href="static/help.html">Help</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div id="body" class="home">
+            <img class="bigimage" src="static/images/Start.png" style="width:250px">
+            <div class="bodytext">
+                <h1>Printer Qualification Wizard: Step 1</h1>
+                <h2>First Test Part</h2>
+                <p>The first
+                    test part is based on your printer's manufacturer's specifications, and covers a very wide
+                    range of feature sizes. Each successive part will zero in on your printer's capabilities
+                    based on the results of the previous test part.
+                </p>
+
+				<h4>Group Name</h4>
+				<p>
+					Enter your group name (or group member's names or identifying information about this evaluation run).
+                    This information will be displayed at the top of each page of the wizard to make it easy to keep
+                    track of multiple concurrent processes.
+				</p>
+				<br/>
+				<div class="indent">
+					<p>
+						<input class="text-entry" type="text" id="groupname" name="groupname" placeholder="Group Name">
+					</p>
+				</div>
+                <br/>
+
+				<h4>Layer Height</h4>
+				<p>
+					What is the layer height you'll use? (This needs to be the same across all test prints)
+				</p>
+				<br/>
+				<div class="indent">
+					<p>
+						Layer Height:
+						<input class="number-entry" id="layerheight" name="layerheight" step="0.1" min="0" value="0.2" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+						<!--<input class="formfield" type="text" name="layerheight" value="0.2" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">-->
+						mm
+					</p>
+				</div>
+                <br/>
+				<p>Use one of the following sections, depending on how much you know about your printer:</p>
+				<div id="accordion">
+					<h3>Use Defaults</h3>
+					<div>
+						<p>Click the button to generate the first test part</p>
+						
+						<button class="button" id="generate-default">
+							<span class="ui-button-text">Generate Part</span>
+						</button>
+					</div>
+					<h3>Use Guided Settings</h3>
+					<div>
+						<h4>Printer Resolution</h4>
+						<p>What is the resolution specified by your printer manufacturer? Different technologies have
+							different definitions of "resolution", which may or may not reflect reality, but don't worry,
+							we'll zoom in on the actual capabilities of your printer, we just need a first guess.
+						</p>
+						<br/>
+						<p>
+							If you have a...
+						</p>
+						<ul>
+							<li><b>Extrusion Printer:</b> Enter nozzle diamter</li>
+							<li><b>Powder Binding Printer:</b> Enter pixel size (round up to nearest 0.1mm)</li>
+							<li><b>Energy Beam-based Printer (SLA, SLS, EBM, etc):</b> Enter the laser line width</li>
+							<li><b>Patterning Photopolymerization Printer (DLP):</b> Enter the effective pixel size</li>
+							<li><b>PolyJet Printer:</b> This process does not work well with our tool. Not recommended.</li>
+							<li><b>Other Printers:</b> Estimate the minimum achievable line width, and round down.</li>
+						</ul>
+						<div class="indent">
+							<p>
+								Printer Resolution:
+								<input class="number-entry" id="resolution" name="resolution" value="0.4" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+								<!--<input class="formfield" type="text" name="printerres" value="0.4" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">-->
+								mm
+							</p>
+						</div>
+						<br/>
+						<button class="button" id="generate-guided">
+							<span class="ui-button-text">Generate Part</span>
+						</button>
+					</div>
+					
+					<h3>Use Custom Settings</h3>
+					<div>
+						<p>Control the settings for the minimum and maximum sizes of various features here</p>
+                        <br/>
+						<div>
+							<table id="model-params-area">
+                                <tr>
+                                    <td>__name</td>
+                                    <td><input class="number-entry" id="__min_id" value="0.1" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+                                    mm to  </td>
+                                    <td><input class="number-entry" id="__max_id" value="1.0" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
+                                    mm</td>
+                                </tr>
+							</table>
+						</div>
+						<br/>
+						<button class="button" id="generate-custom">
+							<span class="ui-button-text">Generate Part</span>
+						</button>
+					</div>
+				</div>
+                <p>
+                </p>
+				<div id="progress-area">
+					<p id="message">Generating part...<span id="status"></span></p>
+					<div id="progressbar"></div>
+				</div>
+				<div id="post-message" style="display:none">
+                    <p style="display:none;">Go print this part on your printer, then click Next to continue.</p>
+					<br/>
+					<p></p>
+					<button class="button" id="next">
+						<span class="ui-button-text">Next</span>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="footer">
+		<div>
+			<p>&copy; 2016 Ben Weiss; University of Washington</p>
+		</div>
+	</div>
+</body>
+</html>

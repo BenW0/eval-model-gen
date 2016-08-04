@@ -1,0 +1,65 @@
+{
+    "Models": {
+      "two-valid": {
+        "Params": [
+          {
+            "sortOrder": 0,
+            "instanceCount": 10,
+            "Name": "Test Param 1",
+            "HighKeyword": "Printed",
+            "cameraData": "9.57,-17.9,8.45,57.8,0,314.8,85",
+            "LowKeyword": "Lost",
+            "maxDefaultND": "5 * nozzleDiameter",
+            "minDefault": 0.1,
+            "varBase": "TestParam1",
+            "minDefaultND": "0.5 * nozzleDiameter",
+            "maxDefault": 2,
+            "varKey": 0,
+            "Desc": "Use the slider to indicate how many columns printed acceptably."
+          },
+          {
+            "sortOrder": 1,
+            "instanceCount": 10,
+            "Name": "Test Param 2",
+            "HighKeyword": "Printed",
+            "cameraData": "9.57,-17.9,8.45,57.8,0,314.8,85",
+            "LowKeyword": "Lost",
+            "maxDefaultND": "5 * nozzleDiameter",
+            "minDefault": 0.1,
+            "varBase": "TestParam2",
+            "minDefaultND": "0.5 * nozzleDiameter",
+            "maxDefault": 2,
+            "varKey": 1,
+            "Desc": "Use the slider to indicate how many columns printed acceptably."
+          }
+        ],
+        "Name": "Part 1"
+      },
+      "one-valid": {
+        "Params": [
+          {
+            "sortOrder": 0,
+            "instanceCount": 10,
+            "Name": "Test Param 0",
+            "HighKeyword": "Printed",
+            "cameraData": "9.57,-17.9,8.45,57.8,0,314.8,85",
+            "LowKeyword": "Lost",
+            "maxDefaultND": "5 * nozzleDiameter",
+            "minDefault": 0.1,
+            "varBase": "TestParam0",
+            "minDefaultND": "0.5 * nozzleDiameter",
+            "maxDefault": 2,
+            "varKey": 0,
+            "Desc": "Use the slider to indicate how many columns printed acceptably."
+          }
+        ],
+        "Name": "Some other model"
+      }
+    },
+    "Dependencies": [
+      "test1"
+    ],
+    "Subtitle": "Test suite 1 subtitle",
+    "Name": "Test suite 2",
+    "Rank": 2
+}

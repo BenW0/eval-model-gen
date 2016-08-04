@@ -423,8 +423,8 @@ pillarSpacing = coreWidth / featureCount;
 posPillarMinLengthH = maxPosPillarDiaV * 2;
 posPillarMinLengthV = maxPosPillarDiaH * 2;
 
-hButtonThk = max(meanPosPillarDiaH / 2, layerHeight * 3);
-vButtonThk = max(meanPosPillarDiaH / 2, layerHeight * 3);      // TODO: limit this with layer height?
+hButtonThk = max(meanPosPillarDiaH / 2, nozzleDiameter * 1.5);
+vButtonThk = max(meanPosPillarDiaV / 2, layerHeight * 3);
 
 // My experience is setting the gap to meanPosFinThkV is too small when zoomed in, so I'm being a bit more conservative
 posFinWidthH = coreWidth / featureCount - meanNegFinThkV * 1.5;
