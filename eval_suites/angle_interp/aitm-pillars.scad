@@ -14,26 +14,28 @@
  * for a printer. 
  *******************************************/
 
-use<../../misc/barcode.scad>
+use <../include/vector_math.scad>;
+include <../include/features.scad>;
 
-testNo = 4;
+serialNo = 13;
 
-option_count = 6;       // number of different thicknesses to produce
+optionCount = 6;       // number of different thicknesses to produce
 onlyHalf = false;
 // That parameter will need to become hard-coded here pretty quick in order to match the front end
 
+// Special variables set by front end.
 layerHeight = 0.1;      // mm
-nozzleDiameter = 0.1;   // mm, only supplied in a default mode
+nozzleDiameter = 0.1;   // mm
 
 
 /*
 <json>
 	{
 		"Imports": {
-			"basic.yellow_final_PosPillarDiaV":"greenVPillarDia",
-			"basic.yellow_error_PosPillarDiaV":"greenVPillarError",
-			"basic.yellow_final_PosPillarDiaH":"greenHPillarDia",
-			"basic.yellow_error_PosPillarDiaH":"greenHPillarError",
+			"basic.yellow_final_PosPillarDiaV":"vSizeMean",
+			"basic.yellow_error_PosPillarDiaV":"vSizeSpread",
+			"basic.yellow_final_PosPillarDiaH":"hSizeMean",
+			"basic.yellow_error_PosPillarDiaH":"hSizeSpread",
 			
 			"basic.yellow_final_NegFinThkV":"greenVSlotThk",
 			"basic.yellow_final_NegFinThkH":"greenHSlotThk",
@@ -45,15 +47,15 @@ nozzleDiameter = 0.1;   // mm, only supplied in a default mode
 */
 
 // Results from the main eval model needed here, to be overridden by the GUI.
-greenVPillarDia = 0.2;
-greenVPillarError = 0.15;
-greenHPillarDia = 0.3;
-greenHPillarError = 0.2;
+vSizeMean = 0.3;
+vSizeSpread = 0.2;
+hSizeMean = 0.3;
+hSizeSpread = 0.2;
 
 greenVSlotThk = 1.5;
 greenHSlotThk = 0.65;
 greenVFinThk = 0.5;
-greenHFinThk = 0.5;
+greenHFinThk = 0.3;
 
 /*
 This is an array variable declaration. It will be expanded into a set of variables
@@ -63,26 +65,26 @@ The variables min[varBase], max[varBase], and skip[varBase] will be arrays.
 Note that the angles reported are 90° from the angle variable when they are actually computed. the angle variable stores the angle away from vertical.
 <json>
     {
-        "Name": ["90° Vertical Bosses", 
-								 "80° Bosses",
-								 "70° Bosses",
-								 "60° Bosses",
-								 "50° Bosses",
-								 "40° Bosses",
-								 "30° Bosses",
-								 "20° Bosses",
-								 "10° Bosses",
-								 "0° Horizontal Bosses",
-								 "-10° Bosses",
-								 "-20° Bosses",
-								 "-30° Bosses",
-								 "-40° Bosses",
-								 "-50° Bosses",
-								 "-60° Bosses",
-								 "-70° Bosses",
-								 "-80° Bosses",
-								 "-90° Vertical Bosses"],
-        "Desc": "Use the slider to indicate how many bosses printed acceptably.",
+        "Name": ["90° Vertical Pillars", 
+								 "80° Pillars",
+								 "70° Pillars",
+								 "60° Pillars",
+								 "50° Pillars",
+								 "40° Pillars",
+								 "30° Pillars",
+								 "20° Pillars",
+								 "10° Pillars",
+								 "0° Horizontal Pillars",
+								 "-10° Pillars",
+								 "-20° Pillars",
+								 "-30° Pillars",
+								 "-40° Pillars",
+								 "-50° Pillars",
+								 "-60° Pillars",
+								 "-70° Pillars",
+								 "-80° Pillars",
+								 "-90° Vertical Pillars"],
+        "Desc": "Use the slider to indicate how many pillars printed acceptably.",
         "LowKeyword": "Lost",
         "HighKeyword": "Printed",
         "varBase": "Dias",
@@ -100,56 +102,34 @@ Note that the angles reported are 90° from the angle variable when they are act
 // Range of thicknesses. These arrays will be overridden by the front end.
 angleCount = onlyHalf ? 10 : 19;       // number of different fin angles to produce, including vertical and horizontal. Needs to match number of elements in the json Names vector.
 angles = [ for (i = [0 : angleCount - 1]) 90 * i / (angleCount - 1) * (onlyHalf ? 1 : 2) ];
-minDias = [ for (i = [0 : 1 : angleCount - 1]) 
-				0.5 * (
-					(greenVPillarDia - greenVPillarError) * pow(cos(angles[i]), 2) + 
-					(greenHPillarDia - greenHPillarError) * pow(sin(angles[i]), 2)
-				) ];
-maxDias = [ for (i = [0 : 1 : angleCount - 1]) 
-				0.5 * (
-					(greenVPillarDia + greenVPillarError) * pow(cos(angles[i]), 2) + 
-					(greenHPillarDia + greenHPillarError) * pow(sin(angles[i]), 2)
-				) ];
-skipDias = [ for (i = [0 : 1 : angleCount - 1]) -1 ];
+minDias = fangleSpread(angles, vSizeMean - vSizeSpread, hSizeMean - hSizeSpread);
+maxDias = fangleSpread(angles, vSizeMean + vSizeSpread, hSizeMean + hSizeSpread);
+skipDias = ones(angleCount) * -1;
 
 
+echo(minDias=minDias);
+echo(maxDias=maxDias);
 
-pi = 3.1416;
 
-// Constants from the main evaluation model
-// TODO: Link these somehow to the main file!
-positiveHSizeRatio = 12;        // ratio of height to diameter/thickness for horizontal pillars/fins
-pillarVSizeRatio = 7;         // ratio of height to diameter/thickness for vertical pillars
 
 
 // Derived parameters for the object
-pillarAspectRatio = (positiveHSizeRatio + pillarVSizeRatio) * 0.5;		// take the average.
+
 maxDia = max(maxDias);
 minDia = min(minDias);
 minGap = max([greenVSlotThk, greenHSlotThk]);
 meanDia = max([ for (i=[0:len(maxDias)-1]) (minDias[i] + maxDias[i]) * 0.5]);
 
 coreDia = angleCount * (maxDia + minGap / 2) * 2 / pi * (onlyHalf ? 1 : 0.5);
-coreLen = option_count * meanDia + (option_count - 1) * minGap;
-echo(coreDia=coreDia);
+coreLen = optionCount * meanDia + (optionCount - 1) * minGap;
 
-mountDia = pow(2, round(ln(coreDia / 4 * (onlyHalf ? 1 : 2)) / ln(2)));
-echo(MountDiameter=mountDia);
+mountDia = coreDia * 0.5; //pow(2, round(ln(coreDia / 4 * (onlyHalf ? 1 : 2)) / ln(2)));
 
-fudge = meanDia * 0.01;		// diameter to use for the mounting holes
+lowestZ = -minGap + (onlyHalf ? 0 : (-coreDia * 0.5 + min([ for (i = [0:angleCount-1]) maxDias[i] * cos(angles[i]) * pillarLenDiaRatio])));
+wallThk = max(greenHFinThk, greenVFinThk) * 4;
 
-// Barcode variables. TODO: Parameterize these!
-draw_barcode = true;
-barcode_linewidth = 0.5;
-barcode_height = 5;
-barcode_border = 3;
-barcode_end_pad = 8;
-barcode_digits = 8;
-barcode_thk = 2;
-
-// Color parameters
-normalColor = [125/255, 156/255, 159/255, 1];
-highlightColor = [255/255, 230/255, 160/255, 1];
+fudge = coreDia * 0.01;		// diameter to use for the mounting holes
+barcode_thk = greenHFinThk * 4;
 
 // Render the geometry
 color(normalColor)
@@ -159,14 +139,17 @@ difference()
 	{
 		core();
 
+        echo(NEGATIVE=false);
+
 		for(i = [0:angleCount-1])
 		{
+		    echo(str("SERIES=", i, "Dias"));
 			angle = angles[i];
 			translate([0, angle == 0 ? maxDias[0] * 0.33 : 0, 0])	// offset just the vertical fins so it fits better.
 			translate([0, angle == 180 ? -maxDias[0] * 0.33 : 0, 0])	// offset just the vertical fins so it fits better.
 			rotate([i % 2 ? angle : -angle, 0, 0])
 			translate([0, 0, coreDia * 0.5 - fudge])
-			pillar_set(minDias[i], maxDias[i], pillarAspectRatio, skipDias[i]);
+			pillar_set(minDias[i], maxDias[i], pillarLenDiaRatio, coreLen, optionCount, skipDias[i], pad_len=fudge, do_echo=true);
 		}
 	}
 	core_diff();
@@ -176,19 +159,20 @@ module core()
 {
 	union()
 	{
+		translate([-wallThk * 0.5, 0, 0])
 		rotate([0, 90, 0])
-			cylinder(h=coreLen, d=coreDia, center=true, $fn=40);
+			cylinder(h=coreLen + wallThk, d=coreDia, center=true, $fn=40);
 		if(onlyHalf)
 			translate([0, 0, -maxDia * 0.5])
 				cube(size=[coreLen, coreDia, maxDia], center=true);
 		
 		// draw the barcode
-		if(draw_barcode)
-		{
-			echo(barcode_length(barcode_digits, barcode_linewidth));
-			translate([-barcode_length(barcode_digits, barcode_linewidth) * 0.5 - barcode_border * 2 - coreLen * 0.5 + fudge, 0, 0])
-			barcode_block(testNo, barcode_digits, line_width=barcode_linewidth, bar_height=barcode_height, bar_depth=barcode_thk, center=true, x_margin=barcode_border * 2, y_margin=barcode_border);
-		}
+		translate([-0.5 * (barcode_block_length(serialNo) + coreLen), barcode_block_height * 0.5, barcode_thk * 0.5 + lowestZ])
+		draw_barcode(serialNo, barcode_thk);
+		
+		// draw the connecting bar that links the barcode and the body
+		translate([-0.5 * (coreLen + wallThk), 0, lowestZ * 0.5])
+		    cube(size=[wallThk, coreDia, abs(lowestZ)], center=true);
 	}
 }
 
@@ -203,11 +187,10 @@ module core_diff()
 				cube(size=[coreLen * 2, coreDia * 2, coreDia], center=true);
 		}
 		
-		wallDia = max(greenHFinThk, greenVFinThk) * 4;
 		translate([0, 0, -maxDia * (onlyHalf ? 1 : 0)])
-		scale([1, (coreDia - wallDia) / coreDia, (coreDia - maxDia * (onlyHalf ? 1 : 2)) / coreDia])
+		scale([1, (coreDia - wallThk) / coreDia, (coreDia - maxDia * (onlyHalf ? 1 : 2)) / coreDia])
 		rotate([45, 0, 0])
-			cube(size=[coreLen - wallDia * 2, coreDia * 0.7071, coreDia * 0.7071], center=true);
+			cube(size=[coreLen - wallThk * 2, coreDia * 0.7071, coreDia * 0.7071], center=true);
 		
 		// Add holes for clamping this piece to each end of the part
 		translate([-coreLen / 2, 0, onlyHalf ? coreDia / 5 : 0])
@@ -220,54 +203,7 @@ module core_diff()
 		}
 		// add the bottom of the arrow
 		translate([coreLen / 2, 0, -mountDia * 0.5 * 0.71828])
-			cube(size=[wallDia * 4, mountDia / 3, mountDia / 3], center=true);
+			cube(size=[wallThk * 4, mountDia / 3, mountDia / 3], center=true);
 	}
 }
 
-// Draws one set of fins at a given angle
-module pillar_set(min_dia, max_dia, aspect, skip=-1)
-{
-	color(skip >= 0 ? highlightColor : normalColor)
-	for(i = [0:option_count - 1])
-	{
-		if(i > skip)
-		{
-			dia = fdia(i, min_dia, max_dia);
-			height = aspect * dia;
-			
-			locateX(i, min_dia, max_dia, coreLen)
-			translate([0, 0, height * 0.5 - fudge])
-				cylinder(d=dia, h=height, center=true, $fn=20);
-		}
-	}
-}
-
-
-// ==============================================================
-// Resource Functions
-// ==============================================================
-
-function fdiaStep(minDia, maxDia) = (maxDia - minDia) / (option_count - 1);
-function fdia(idx, minDia, maxDia) = minDia + idx * fdiaStep(minDia, maxDia);
-function fgapX(minDia, maxDia, seriesWidth) = (seriesWidth - 0.5 * (maxDia + minDia) * option_count) / option_count;
-
-
-// ==============================================================
-// Resource Modules
-// ==============================================================
-
-// operator module that translates to the x coordinate of feature idx in
-// the series that targets constant gap widths
-module locateX(idx, minDia, maxDia, seriesWidth, backwards=false)
-{
-    gap = fgapX(minDia, maxDia, seriesWidth);
-    fudge = (minDia);    // this is enough extra height to fully intersect the base feature.
-    diaStep = fdiaStep(minDia, maxDia);
-    pillarFirstX = -seriesWidth / 2 + gap / 2 + minDia / 2;
-    dia = fdia(idx, minDia, maxDia);
-    
-    cx = (pillarFirstX + idx * 0.5 * (dia + minDia) + idx * gap) * (backwards ? -1 : 1);
-    
-    translate([cx, 0, 0])
-    children();
-}

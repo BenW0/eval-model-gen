@@ -4,7 +4,8 @@ from modelgen import *
 
 
 # load model parameters into modelparams
-ModelParams.init_settings(Engine.model_name)
+EvalSuite.populate_suites()
+model = EvalSuites["basic"].models["basic"]
 print "Running Modelgen tests"
 # this script implements a test of the modelgen module.
 automated = False
@@ -20,10 +21,10 @@ elif authoritative:
 else:
     fout = sys.stdout
 
-mymodel1 = ModelParams()
-mymodel1.params[ModelParams.LAYER_HEIGHT_VAR] = 0.2
-mymodel2 = ModelParams()
-mymodel2.params[ModelParams.LAYER_HEIGHT_VAR] = 0.3
+mymodel1 = ModelParams(model)
+mymodel1.params[model.LAYER_HEIGHT_VAR] = 0.2
+mymodel2 = ModelParams(model)
+mymodel2.params[model.LAYER_HEIGHT_VAR] = 0.3
 
 print >> fout, "Deleting cached models..."
 if os.path.exists(Job.cache_path(mymodel1)):

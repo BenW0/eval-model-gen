@@ -14,26 +14,28 @@
  * for a printer. 
  *******************************************/
 
-use<../../misc/barcode.scad>
+use <../include/vector_math.scad>;
+include <../include/features.scad>;
 
-testNo = 7;
+serialNo = 14;
 
-option_count = 6;       // number of different thicknesses to produce
+optionCount = 6;       // number of different thicknesses to produce
 onlyHalf = false;
 // That parameter will need to become hard-coded here pretty quick in order to match the front end
 
+// Special variables set by front end.
 layerHeight = 0.1;      // mm
-nozzleDiameter = 0.1;   // mm, only supplied in a default mode
+nozzleDiameter = 0.1;   // mm
 
 
 /*
 <json>
 	{
 		"Imports": {
-			"basic.yellow_final_NegButtonDiaV":"greenVPocketDia",
-			"basic.yellow_error_NegButtonDiaV":"greenVPocketError",
-			"basic.yellow_final_NegButtonDiaH":"greenHPocketDia",
-			"basic.yellow_error_NegButtonDiaH":"greenHPocketError",
+			"basic.yellow_final_NegButtonDiaV":"vSizeMean",
+			"basic.yellow_error_NegButtonDiaV":"vSizeSpread",
+			"basic.yellow_final_NegButtonDiaH":"hSizeMean",
+			"basic.yellow_error_NegButtonDiaH":"hSizeSpread",
 			
 			"basic.yellow_final_PosPillarDiaH":"greenHBarDia",
 			"basic.yellow_final_PosPillarDiaV":"greenVBarDia",
@@ -47,10 +49,10 @@ nozzleDiameter = 0.1;   // mm, only supplied in a default mode
 */
 
 // Results from the main eval model needed here, to be overridden by the GUI.
-greenVPocketDia = 1;
-greenVPocketError = 0.5;
-greenHPocketDia = 1;
-greenHPocketError = 0.5;
+vSizeMean = 1;
+vSizeSpread = 0.5;
+hSizeMean = 1;
+hSizeSpread = 0.5;
 
 greenHBarDia = 0.125;
 greenVBarDia = 0.125;
@@ -103,28 +105,15 @@ Note that the angles reported are 90° from the angle variable when they are act
 */
 
 // Range of thicknesses. These arrays will be overridden by the front end.
-angleCount = 19;       // number of different fin angles to produce, including vertical and horizontal. Needs to match number of elements in the json Names vector.
+angleCount = onlyHalf ? 10 : 19;       // number of different fin angles to produce, including vertical and horizontal. Needs to match number of elements in the json Names vector.
 angles = [ for (i = [0 : angleCount - 1]) 90 * i / (angleCount - 1) * (onlyHalf ? 1 : 2) ];
-minDias = [ for (i = [0 : 1 : angleCount - 1]) 
-				0.5 * (
-					(greenVPocketDia - greenVPocketError) * pow(cos(angles[i]), 2) + 
-					(greenHPocketDia - greenHPocketError) * pow(sin(angles[i]), 2)
-				) ];
-maxDias = [ for (i = [0 : 1 : angleCount - 1]) 
-				0.5 * (
-					(greenVPocketDia + greenVPocketError) * pow(cos(angles[i]), 2) + 
-					(greenHPocketDia + greenHPocketError) * pow(sin(angles[i]), 2)
-				) ];
-skipDias = [ for (i = [0 : 1 : angleCount - 1]) -1 ];
+minDias = fangleSpread(angles, vSizeMean - vSizeSpread, hSizeMean - hSizeSpread);
+maxDias = fangleSpread(angles, vSizeMean + vSizeSpread, hSizeMean + hSizeSpread);
+skipDias = ones(angleCount) * -1;
 
 
-
-pi = 3.1416;
-
-// Constants from the main evaluation model
-// TODO: Link these somehow to the main file!
-hButtonThk = max(greenHBarDia / 2, layerHeight * 3);
-vButtonThk = max(greenHBarDia / 2, nozzleDiameter * 3);
+echo(minDias=minDias);
+echo(maxDias=maxDias);
 
 
 
@@ -134,29 +123,19 @@ maxDia = max(maxDias);
 minDia = min(minDias);
 minGap = max([greenVFinThk, greenHFinThk]) * 3;
 meanDia = max([ for (i=[0:len(maxDias)-1]) (minDias[i] + maxDias[i]) * 0.5]);
-maxHeight = max(hButtonThk, vButtonThk);
+maxHeight = max(hButtonThk(greenHBarDia, layerHeight), vButtonThk(greenVBarDia, nozzleDiameter));
 
 coreDia = angleCount * (maxDia + minGap / 2) * 2 / pi * (onlyHalf ? 1 : 0.5) + 2 * maxHeight;
-coreLen = option_count * meanDia + (option_count - 1) * minGap;
-echo(coreDia=coreDia);
+coreLen = optionCount * meanDia + (optionCount - 1) * minGap;
 
-mountDia = pow(2, round(ln(coreDia / 4 * (onlyHalf ? 1 : 2)) / ln(2)));
-echo(MountDiameter=mountDia);
+
+mountDia = coreDia * 0.5; //pow(2, round(ln(coreDia / 4 * (onlyHalf ? 1 : 2)) / ln(2)));
+
+lowestZ = -minGap + (onlyHalf ? 0 : (-coreDia * 0.5));
+wallThk = max(greenHFinThk, greenVFinThk) * 4;
 
 fudge = meanDia * 0.01;		// diameter to use for the mounting holes
-
-// Barcode variables. TODO: Parameterize these!
-draw_barcode = true;
-barcode_linewidth = 0.5;
-barcode_height = 5;
-barcode_border = 3;
-barcode_end_pad = 8;
-barcode_digits = 8;
-barcode_thk = 2;
-
-// Color parameters
-normalColor = [125/255, 156/255, 159/255, 1];
-highlightColor = [255/255, 230/255, 160/255, 1];
+barcode_thk = greenHFinThk * 4;
 
 // Render the geometry
 color(normalColor)
@@ -164,14 +143,23 @@ difference()
 {
 	core();
 
+    echo(NEGATIVE=true);
+
 	for(i = [0:angleCount-1])
 	{
+		echo(str("SERIES=", i, "Dias"));
+
 		angle = angles[i];
+		length = fbossHeight(angle, greenHBarDia, greenVBarDia, layerHeight, nozzleDiameter);
 		//translate([0, angle == 0 ? minGap * 0.25 : 0, 0])	// offset just the vertical fins so it fits better.
 		//translate([0, angle == 180 ? minGap * 0.25 : 0, 0])	// offset just the vertical fins so it fits better.
 		rotate([i % 2 ? angle : -angle, 0, 0])
-		translate([0, 0, coreDia * 0.5 + fudge - fbossHeight(angle)])
-		pillar_set(minDias[i], maxDias[i], 2 * fbossHeight(angle), skipDias[i]);
+		translate([0, 0, coreDia * 0.5 + fudge - length])
+		pillar_set(minDias[i], maxDias[i], 0, coreLen, optionCount,
+		        override_len=length,
+		        pad_len=length,
+		        skip=skipDias[i],
+		        do_echo=true);
 	}
 	core_diff();
 }
@@ -180,19 +168,20 @@ module core()
 {
 	union()
 	{
+		translate([-wallThk * 0.5, 0, 0])
 		rotate([0, 90, 0])
-			cylinder(h=coreLen, d=coreDia, center=true, $fn=40);
+			cylinder(h=coreLen + wallThk, d=coreDia, center=true, $fn=40);
 		if(onlyHalf)
 			translate([0, 0, -maxDia * 0.5])
 				cube(size=[coreLen, coreDia, maxDia], center=true);
 		
 		// draw the barcode
-		if(draw_barcode)
-		{
-			echo(barcode_length(barcode_digits, barcode_linewidth));
-			translate([-barcode_length(barcode_digits, barcode_linewidth) * 0.5 - barcode_border * 2 - coreLen * 0.5 + fudge, 0, 0])
-			barcode_block(testNo, barcode_digits, line_width=barcode_linewidth, bar_height=barcode_height, bar_depth=barcode_thk, center=true, x_margin=barcode_border * 2, y_margin=barcode_border);
-		}
+		translate([-0.5 * (barcode_block_length(serialNo) + coreLen), barcode_block_height * 0.5, barcode_thk * 0.5 + lowestZ])
+		draw_barcode(serialNo, barcode_thk);
+
+		// draw the connecting bar that links the barcode and the body
+		translate([-0.5 * (coreLen + wallThk), 0, lowestZ * 0.5])
+		    cube(size=[wallThk, coreDia, abs(lowestZ)], center=true);
 	}
 }
 
@@ -206,12 +195,11 @@ module core_diff()
 			translate([0, 0, -coreDia * 0.5 - maxDia])
 				cube(size=[coreLen * 2, coreDia * 2, coreDia], center=true);
 		}
-		
-		wallDia = max(greenHFinThk, greenVFinThk) * 4 + maxHeight;
+
 		translate([0, 0, -maxDia * (onlyHalf ? 1 : 0)])
-		scale([1, (coreDia - wallDia) / coreDia, (coreDia - maxDia * (onlyHalf ? 1 : 2)) / coreDia])
+		scale([1, (coreDia - wallThk) / coreDia, (coreDia - maxDia * (onlyHalf ? 1 : 2)) / coreDia])
 		rotate([45, 0, 0])
-			cube(size=[coreLen - wallDia * 2, coreDia * 0.7071, coreDia * 0.7071], center=true);
+			cube(size=[coreLen - wallThk * 2, coreDia * 0.7071, coreDia * 0.7071], center=true);
 		
 		// Add holes for clamping this piece to each end of the part
 		translate([-coreLen / 2, 0, onlyHalf ? coreDia / 5 : 0])
@@ -224,54 +212,7 @@ module core_diff()
 		}
 		// add the bottom of the arrow
 		translate([coreLen / 2, 0, -mountDia * 0.5 * 0.71828])
-			cube(size=[wallDia * 4, mountDia / 3, mountDia / 3], center=true);
+			cube(size=[wallThk * 4, mountDia / 3, mountDia / 3], center=true);
 	}
 }
 
-// Draws one set of fins at a given angle
-module pillar_set(min_dia, max_dia, height, skip=-1)
-{
-	color(skip >= 0 ? highlightColor : normalColor)
-	for(i = [0:option_count - 1])
-	{
-		if(i > skip)
-		{
-			boss_dia = fdia(i, min_dia, max_dia);
-			
-			locateX(i, min_dia, max_dia, coreLen)
-			translate([0, 0, height * 0.5 - fudge])
-				cylinder(d=boss_dia, h=height, center=true, $fn=20);
-		}
-	}
-}
-
-
-// ==============================================================
-// Resource Functions
-// ==============================================================
-
-function fdiaStep(minDia, maxDia) = (maxDia - minDia) / (option_count - 1);
-function fdia(idx, minDia, maxDia) = minDia + idx * fdiaStep(minDia, maxDia);
-function fgapX(minDia, maxDia, seriesWidth) = (seriesWidth - 0.5 * (maxDia + minDia) * option_count) / option_count;
-
-// function to tell us how high to make the bosses
-function fbossHeight(angle) = (vButtonThk * abs(90 - angle) + hButtonThk * (90 - abs(90 - angle))) / 90;
-// ==============================================================
-// Resource Modules
-// ==============================================================
-
-// operator module that translates to the x coordinate of feature idx in
-// the series that targets constant gap widths
-module locateX(idx, minDia, maxDia, seriesWidth, backwards=false)
-{
-    gap = fgapX(minDia, maxDia, seriesWidth);
-    fudge = (minDia);    // this is enough extra height to fully intersect the base feature.
-    diaStep = fdiaStep(minDia, maxDia);
-    pillarFirstX = -seriesWidth / 2 + gap / 2 + minDia / 2;
-    dia = fdia(idx, minDia, maxDia);
-    
-    cx = (pillarFirstX + idx * 0.5 * (dia + minDia) + idx * gap) * (backwards ? -1 : 1);
-    
-    translate([cx, 0, 0])
-    children();
-}

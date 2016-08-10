@@ -1,0 +1,60 @@
+{
+  "Comment":[
+    "This file is the version of config.json used for unit tests. It does not represent a REAL configuration!"
+  ],
+
+  "test1": {
+    "Models": {
+      "basic": {
+      }
+    }
+  },
+
+  "test1b": {
+    "Models": {
+      "basic": {
+        "Filename": "two-valid-json.scad"
+      }
+    }
+  },
+
+  "test2": {
+    "Name": "Test suite 2",
+    "Subtitle": "Test suite 2 subtitle",
+    "Rank": 2,
+    "Dependencies": [
+      "test1"
+    ],
+    "Models": {
+      "two-valid": {
+        "Name": "Part 1",
+        "Filename": "two-valid-json.scad"
+      },
+      "one-valid": {
+        "Name": "Some other model",
+        "Filename": "one-valid-json.scad"
+      }
+    }
+  },
+
+  "test3": {
+    "Name": "Test suite 3 - ModelParams",
+    "Subtitle": "Test suite 3 subtitle",
+    "Rank": 3,
+    "Models": {
+      "one-valid-json": {
+        "Name": "Some other model",
+        "Filename": "one-valid-json.scad"
+      },
+      "test": {
+        "Name": "Some other model",
+        "Filename": "test.scad"
+      },
+      "two-valid-json": {
+        "Name": "Some other model",
+        "Filename": "two-valid-json.scad"
+      }
+    }
+  }
+
+}

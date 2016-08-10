@@ -1,8 +1,12 @@
  {
 	"Defaults":{
+		"suite":"test3",
+		"model":"test",
 		"layerHeight":0.1
 	},
 	"Normal":{
+		"suite":"test3",
+		"model":"test",
 		"layerHeight":0.1,
 		"min0":0,
 		"max0":1,
@@ -12,6 +16,8 @@
 		"max2":3
 	},
 	"MissingParam":{
+		"suite":"test3",
+		"model":"test",
 		"layerHeight":0.1,
 		"min0":0,
 		"max0":1,
@@ -20,6 +26,8 @@
 		"max2":3
 	},
 	"MissingLayerHeight":{
+		"suite":"test3",
+		"model":"test",
 		"min0":6,
 		"max0":7,
 		"min1":2,
@@ -28,6 +36,8 @@
 		"max2":3
 	},
 	"DuplicateParam":{
+		"suite":"test3",
+		"model":"test",
 		"layerHeight":0.1,
 		"min0":6,
 		"min0":7,
@@ -37,6 +47,8 @@
 		"max2":3
 	},
 	"StringParam":{
+		"suite":"test3",
+		"model":"test",
 		"layerHeight":"0.1",
 		"min0":0,
 		"max0":1,
@@ -46,6 +58,8 @@
 		"max2":3
 	},
 	"InvalidParam":{
+		"suite":"test3",
+		"model":"test",
 		"layerHeight":"Cheeseburger",
 		"min0":0,
 		"max0":1,
@@ -55,6 +69,8 @@
 		"max2":3
 	},
 	"ExtraParam":{
+		"suite":"test3",
+		"model":"test",
 		"layerHeight":0.1,
 		"min0":0,
 		"max0":1,
@@ -65,10 +81,14 @@
 		"favorite color":"turquoise"
 	},
 	"NDParamSet":{
+		"suite":"test3",
+		"model":"test",
 		"layerHeight":0.1,
 		"nozzleDiameter":0.1
 	},
 	"NDParamOverride":{
+		"suite":"test3",
+		"model":"test",
 		"layerHeight":0.1,
 		"nozzleDiameter":0.1,
 		"min0":0

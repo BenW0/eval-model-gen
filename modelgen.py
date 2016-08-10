@@ -41,7 +41,6 @@ class Engine:
     """
 
     openscad_exe = OPENSCAD_EXE
-    model_name = MODEL_NAME
 
     def __init__(self):
         """Engine constructor."""
@@ -75,21 +74,21 @@ class Engine:
         path = Job.cache_path(model)
         return os.path.exists(path), fname
 
-    def start_job(self, model):
+    def start_job(self, model_params):
         """
         Starts a Modelgen job using ModelParams object model. This will start it regardless of whether a cached
         solution already exists.
 
-        :param model: ModelParams object defining the model to be created
+        :param model_params: ModelParams object defining the model to be created
         :return: (success, errortext), where success is a Boolean and errortext is a string explaining the error if
                 success == False
         """
-        key = model.to_hash()
+        key = model_params.to_hash()
         if key in self.mgs:
             # This key is duplicate; a job is already running.
             return True, ""
 
-        mg = Job(model)
+        mg = Job(model_params)
         ret = mg.start()
         if not ret[0]:
             return ret
@@ -134,17 +133,17 @@ class Engine:
     def _build_images():
         """A script to generate the cache of images used to visualize the relevant feature on the front end"""
 
-        for ste_key, ste in EvalSuites:
-            for model_key, model in ste.models:
+        for ste_key, ste in EvalSuites.iteritems():
+            for model_key, model in ste.models.iteritems():
                 print "Working on suite-model %s-%s" % (ste_key, model_key)
 
-                for var, camera in model.camera_data.items():
+                for var, camera in model.camera_data.iteritems():
                     procs = []
-                    for i in range(11):
-                        outfile = os.path.join(IMAGES_PATH, "%s-%i.png" % (var, i))
+                    for i in range(model.instance_counts[var] + 1):
+                        outfile = os.path.join(IMAGES_PATH, "%s-%s-%s-%i.png" % (ste_key, model_key, var, i))
                         popen_params = [Engine.openscad_exe, "-o", outfile, "-D", "skip%s=%i" % (var, i),
                                         "--camera=%s" % camera, "--autocenter", "--imgsize=440,440",
-                                        "--projection=ortho", Engine.model_name]
+                                        "--projection=ortho", model.filename]
                         print(repr(popen_params))
                         procs.append(subprocess.Popen(popen_params))
                     for proc in procs:
@@ -170,18 +169,18 @@ class Job:
 
     CACHE_DIR = "modelcache"
 
-    def __init__(self, model):
+    def __init__(self, model_params):
         """ Modelgen constructor
-        :param model: A ModelParam object associated with this Modelgen instance.
+        :param model_params: A ModelParam object associated with this Modelgen instance.
         :return:
         """
-        self.model = model
+        self.model_params = model_params
         self.proc = None
-        self.fname = self.cache_name(self.model)
+        self.fname = self.cache_name(self.model_params)
         self.haveError = False
         self.lastError = ""
         self.logfile = None
-        self.logfilename = "logs/%i-%i.log" % (model.to_hash(), time.time())      # make sure it's unique
+        self.logfilename = "logs/%i-%i.log" % (model_params.to_hash(), time.time())      # make sure it's unique
 
     def __del__(self):
         try:
@@ -218,8 +217,8 @@ class Job:
 
         try:
             popen_params = [Engine.openscad_exe, "-o", os.path.join(Job.CACHE_DIR, self.fname)]
-            popen_params.extend(self.model.to_openscad_defines())
-            popen_params.append(Engine.model_name)
+            popen_params.extend(self.model_params.to_openscad_defines())
+            popen_params.append(self.model_params.parent.filename)
             print popen_params
         except Exception as e:
             self.haveError = True
@@ -295,8 +294,8 @@ class Job:
 
 
 if __name__ == "__main__":
-    # load model parameters into modelparams
-    ModelParams.init_settings(Engine.model_name)
+    # load model parameters for each model in the different test suites
+    EvalSuite.populate_suites()
 
     # Generate the images...
     Engine._build_images()

@@ -1,5 +1,10 @@
 {
-  "Comment":"This file contains configuration information describing the setup for the evaluation model(s) in each subdirectory. Each subdirectory to be used should have a key in the dictionary below.",
+  "Comment":[
+    "This file contains configuration information describing the setup for the evaluation model(s) in each subdirectory.",
+    "Each subdirectory to be used should have a key in the dictionary below.",
+    "In each file, special json blocks will call out the variables that should be evaluated by the user and",
+    "changed by the program. Note that there are two hard-coded special variables, 'layerHeight' and 'nozzleDiameter'"
+  ],
 
   "basic": {
     "Name":"Feature Size Evaluation",
@@ -25,7 +30,7 @@
         "Filename": "aitm-fins.scad"
       },
       "aitm-other": {
-        "Name": "Some other file",
+        "Name": "Some other model",
         "Filename": "other_model.scad"
       }
     }

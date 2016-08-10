@@ -1,10 +1,8 @@
 <!doctype html>
 <!-- Website template by freewebsitetemplates.com -->
-<!-- Start.html - the first really interesting page in the wizard.
-Thanks to W3Schools docs, and especially the following: 
- * http://stackoverflow.com/questions/2015065/how-does-one-do-async-ajax-calls-using-cherrypy
+<!-- ModelChooser.html - select which evaluation suite and model the user wants to perform.
 
-TODO: see Github
+TODO: see Github Issues
  -->
 <html>
 <head>
@@ -21,19 +19,20 @@ TODO: see Github
 	<script>
 		$(document).ready(function() {
             // Parse the parameters structure which defines information about the different parameters we'll be testing
-            var param_data = parseParams(params_json);
+            var suite_data = getSuites();
 
-			$("#layerheight").spinner();
-			$("#resolution").spinner();
-			var bGenD = $("#generate-default").button();
-			var bGenG = $("#generate-guided").button();
-			var bGenC = $("#generate-custom").button();
-			var bNext = $("#next").button();
+			// populate the table with elements from suite_data:
+			var i;
+			for(i = 0; i < suite_data.length; i++) {
+				console.log(suite_data[i].Name);
+			}
+
+			// Initial styling with jqueryui
 			$("#accordion").accordion({
 				heightStyle: "content"
 			});
-            //var sColMin = $("#a-col-min").spinner();
-			//var sColMax = $("#a-col-max").spinner();
+
+			return;
 
             // Generate rows in the Custom section for each parameter, populated with defaults
             var list = $("#model-params-area");
@@ -151,119 +150,25 @@ TODO: see Github
 		<div id="body" class="home">
             <img class="bigimage" src="static/images/Start.png" style="width:250px">
             <div class="bodytext">
-                <h1>Printer Qualification Wizard: Step 1</h1>
-                <h2>First Test Part</h2>
-                <p>The first
-                    test part is based on your printer's manufacturer's specifications, and covers a very wide
-                    range of feature sizes. Each successive part will zero in on your printer's capabilities
-                    based on the results of the previous test part.
+                <h1>Select a Test Suite and Model</h1>
+                <p>A variety of test models can be used with this wizard interface to test different aspects of your
+					printer's capabilities. The models are organized into Test Suites based on the kinds of characteristics
+					they evaluate.
                 </p>
-
-				<h4>Group Name</h4>
-				<p>
-					Enter your group name (or group member's names or identifying information about this evaluation run).
-                    This information will be displayed at the top of each page of the wizard to make it easy to keep
-                    track of multiple concurrent processes.
-				</p>
-				<br/>
-				<div class="indent">
-					<p>
-						<input class="text-entry" type="text" id="groupname" name="groupname" placeholder="Group Name">
-					</p>
-				</div>
-                <br/>
-
-				<h4>Layer Height</h4>
-				<p>
-					What is the layer height you'll use? (This needs to be the same across all test prints)
-				</p>
-				<br/>
-				<div class="indent">
-					<p>
-						Layer Height:
-						<input class="number-entry" id="layerheight" name="layerheight" step="0.1" min="0" value="0.2" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
-						<!--<input class="formfield" type="text" name="layerheight" value="0.2" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">-->
-						mm
-					</p>
-				</div>
-                <br/>
-				<p>Use one of the following sections, depending on how much you know about your printer:</p>
 				<div id="accordion">
-					<h3>Use Defaults</h3>
-					<div>
-						<p>Click the button to generate the first test part</p>
-						
-						<button class="button" id="generate-default">
-							<span class="ui-button-text">Generate Part</span>
-						</button>
-					</div>
-					<h3>Use Guided Settings</h3>
-					<div>
-						<h4>Printer Resolution</h4>
-						<p>What is the resolution specified by your printer manufacturer? Different technologies have
-							different definitions of "resolution", which may or may not reflect reality, but don't worry,
-							we'll zoom in on the actual capabilities of your printer, we just need a first guess.
-						</p>
-						<br/>
-						<p>
-							If you have a...
-						</p>
-						<ul>
-							<li><b>Extrusion Printer:</b> Enter nozzle diamter</li>
-							<li><b>Powder Binding Printer:</b> Enter pixel size (round up to nearest 0.1mm)</li>
-							<li><b>Energy Beam-based Printer (SLA, SLS, EBM, etc):</b> Enter the laser line width</li>
-							<li><b>Patterning Photopolymerization Printer (DLP):</b> Enter the effective pixel size</li>
-							<li><b>PolyJet Printer:</b> This process does not work well with our tool. Not recommended.</li>
-							<li><b>Other Printers:</b> Estimate the minimum achievable line width, and round down.</li>
-						</ul>
-						<div class="indent">
-							<p>
-								Printer Resolution:
-								<input class="number-entry" id="resolution" name="resolution" value="0.4" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
-								<!--<input class="formfield" type="text" name="printerres" value="0.4" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">-->
-								mm
-							</p>
+					<h3 id="template-suite-heading">Use Defaults</h3>
+					<div id="template-suite-body">
+						<p id="template-suite-description">Suite Description</p>
+
+						<div id="template-model" style="clear:left">
+							<img id="template-model-image" class="modelchooser-image" src="__src" width="50" height="50">
+							<h4><a href="__nextpage" id="template-model-name"></a></h4>
+							<p id="template-model-description">Model Description</p>
+							<button class="button" id="generate-default">
+								<span class="ui-button-text">Generate Part</span>
+							</button>
 						</div>
-						<br/>
-						<button class="button" id="generate-guided">
-							<span class="ui-button-text">Generate Part</span>
-						</button>
 					</div>
-					
-					<h3>Use Custom Settings</h3>
-					<div>
-						<p>Control the settings for the minimum and maximum sizes of various features here</p>
-                        <br/>
-						<div>
-							<table id="model-params-area">
-                                <tr>
-                                    <td>__name</td>
-                                    <td><input class="number-entry" id="__min_id" value="0.1" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
-                                    mm to  </td>
-                                    <td><input class="number-entry" id="__max_id" value="1.0" min="0" step="0.05" pattern="([0-9]*\.?[0-9]+)|([0-9]+\.)">
-                                    mm</td>
-                                </tr>
-							</table>
-						</div>
-						<br/>
-						<button class="button" id="generate-custom">
-							<span class="ui-button-text">Generate Part</span>
-						</button>
-					</div>
-				</div>
-                <p>
-                </p>
-				<div id="progress-area">
-					<p id="message">Generating part...<span id="status"></span></p>
-					<div id="progressbar"></div>
-				</div>
-				<div id="post-message" style="display:none">
-                    <p style="display:none;">Go print this part on your printer, then click Next to continue.</p>
-					<br/>
-					<p></p>
-					<button class="button" id="next">
-						<span class="ui-button-text">Next</span>
-					</button>
 				</div>
 			</div>
 		</div>

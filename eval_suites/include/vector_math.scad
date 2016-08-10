@@ -29,6 +29,10 @@ function reverse(list) = [ for (i = [0:len(list)-1]) list[len(list) - 1 - i] ];
 function sumv(v,i,s=0) = (i==s ? v[i] : v[i] + sumv(v,i-1,s));
 function sum(v) = sumv(v, len(v) - 1);
 function sucsum(v) = [ for (i = [0 : len(v) - 1]) sumv(v, i)];
+
+// Similar to the above, but recursively combines all elements into a single string, without commas.
+function strconcatv(v, i, s=0) = (i==s ? str(v[i]) : str(str(v[i]), strconcatv(v,i-1,s)));
+function strconcat(v) = strconcatv(v, len(v) - 1);
 	
 // Take the first or last few elements of a vector. Use negative n to read from the end.
 function take(vec, n=1) = [ for (i = [0 : abs(n)-1]) n < 0 ? vec[len(vec) - i - 1] : vec[i] ];

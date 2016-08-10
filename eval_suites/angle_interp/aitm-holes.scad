@@ -17,7 +17,7 @@
 use <../include/vector_math.scad>;
 include <../include/features.scad>;
 
-testNo = 13;						// test number to encode in barcode
+serialNo = 25;						// test number to encode in barcode
 
 optionCount = 6;       // number of different thicknesses to produce
 onlyHalf = true;
@@ -33,9 +33,9 @@ nozzleDiameter = 0.1;   // mm
 	{
 		"Imports": {
 			"basic.yellow_final_NegHoleDiaV":"vSizeMean",
-			"basic.yellow_error_NegHoleDiaV":"vSizeOffset",
+			"basic.yellow_error_NegHoleDiaV":"vSizeSpread",
 			"basic.yellow_final_NegHoleDiaH":"hSizeMean",
-			"basic.yellow_error_NegHoleDiaH":"hSizeOffset",
+			"basic.yellow_error_NegHoleDiaH":"hSizeSpread",
 
 			"basic.yellow_final_NegFinThkV":"greenVSlotThk",
 			"basic.yellow_final_NegFinThkH":"greenHSlotThk",
@@ -47,10 +47,10 @@ nozzleDiameter = 0.1;   // mm
 */
 
 // Results from the main eval model needed here, to be overridden by the GUI.
-vSizeMean = 3.2;
-vSizeOffset = 0.5;
+vSizeMean = 3.5;
+vSizeSpread = 1;
 hSizeMean = 2;
-hSizeOffset = 0.3;
+hSizeSpread = 0.5;
 
 greenVFinThk = 0.125;
 greenHFinThk = 0.125;
@@ -95,15 +95,21 @@ Note that the angles reported are 90° from the angle variable when they are act
 angleCount = 10;
 angles = [ for (i = [0:angleCount-1]) 90 * i / (angleCount - 1) * (onlyHalf ? 1 : 2) ];
 
-minDias = fspread(count=angleCount, 
-								low=vSizeMean - vSizeOffset,
-								high=hSizeMean - hSizeOffset);
+/*minDias = fspread(count=angleCount, 
+								low=vSizeMean - vSizeSpread,
+								high=hSizeMean - hSizeSpread);
 maxDias = fspread(count=angleCount, 
-								low=vSizeMean + vSizeOffset,
-								high=hSizeMean + hSizeOffset);
-								
+								low=vSizeMean + vSizeSpread,
+								high=hSizeMean + hSizeSpread);
+*/
+
+minDias=[4.5,2.99409098772906,2.38889,3.13279565695739,2.27778,2.62,2.583335,1.98758263989,2.57407666666667,2.28027703001625,2.3055525,2.1516809050441,2.27777666666667,2.70964067096207,1.92592333333333,1.94771372493474,1.8888875,1.47255406440453,1.25189743381003];
+maxDias=[8.5,4.91409098772906,6.16667,4.97279565695739,5.83334,3.5,4.249995,3.66758263989,4.12962666666667,3.17919975824393,3.7500025,3.06553186333568,3.61111666666667,4.14964067096207,3.14814333333333,2.47942649739809,2.9999975,2.59209743693078,3.03435463993906];
 skipDias = ones(angleCount) * -1;
 
+echo(angles=angles);
+echo(minDias=minDias);
+echo(maxDias=maxDias);
 
 
 
@@ -119,9 +125,9 @@ meanDia = max([ for (i=[0:len(maxDias)-1]) (minDias[i] + maxDias[i]) * 0.5]);
 optionWidths = [ for (option=[0:optionCount-1]) max([ for (i=[0:angleCount-1]) fdia(option, minDias[i], maxDias[i], optionCount) ]) + minGap ];
 
 coreDia = angleCount * (maxDia + minGap / 2) * 2.5 / pi * (onlyHalf ? 1 : 0.5);
-coreLen = sum(optionWidths);
+coreLen = sum(optionWidths) + 2 * minGap;
 
-optionXCenters = [ for (option=[0:optionCount-1]) -coreLen * 0.5 + sumv(optionWidths, option) - optionWidths[option] * 0.5 ];
+optionXCenters = [ for (option=[0:optionCount-1]) -coreLen * 0.5 + minGap + sumv(optionWidths, option) - optionWidths[option] * 0.5 ];
 
 symbolSize = maxDias[0] * pillarLenDiaRatio * 0.5;
 
@@ -137,6 +143,7 @@ difference()
 	for(i = [0:angleCount-1])
 	{
 		angle = angles[i];
+		echo(ANGLE=angle);
 		translate([0, i == 0 ? maxDias[0] * 0.33 : 0, 0])	// offset just the vertical hole so it fits better.
 		rotate([i % 2 ? angle : -angle, 0, 0])
 		translate([0, 0, fOffsetHeight(coreDia, angle)])
@@ -169,16 +176,30 @@ module core()
 					
 					last_two_xs = [elem(tip_verts, -1)[0], elem(tip_verts, -2)[0]];
 					edge_verts = [[min(last_two_xs), -minGap * 2], [max(last_two_xs), -minGap * 2]];
-					echo(elem(tip_verts, -1));
+					//echo(elem(tip_verts, -1));
 					
 					verts = concat(tip_verts, edge_verts);
 					order = concat(series(0, 2, n-1), n + 1, n, reverse(series(1, 2, n-1)));
-					echo(order);
+					//echo(order);
 					
 					translate([optionXCenters[option], 0, 0])
 					rotate([90, 0, 90])
-					linear_extrude(height=optionWidths[option] + fudge, center=true, slices=1)
-						polygon(verts, [order], convexity=optionCount);
+					{
+						linear_extrude(height=optionWidths[option] + fudge, center=true, slices=1)
+							polygon(verts, [order], convexity=optionCount);
+						if(option == 0)
+						{
+							translate([0, 0, -optionWidths[option] * 0.5 - minGap])
+							linear_extrude(height=minGap + fudge, center=false, slices=1)
+								polygon(verts, [order], convexity=optionCount);
+						}
+						if(option == optionCount-1)
+						{
+							translate([0, 0, optionWidths[option] * 0.5 - fudge])
+							linear_extrude(height=minGap + fudge, center=false, slices=1)
+								polygon(verts, [order], convexity=optionCount);
+						}
+					}
 				}
 					
 			}
@@ -198,7 +219,7 @@ module core()
 		}
 			
 		// Add a marking to the big end in case it's hard to tell
-		translate([(coreLen + minGap) * 0.5 - fudge, 0, (coreDia + maxLen) * 0.5])
+		translate([(coreLen + minGap) * 0.5 - fudge, 0, (coreDia + maxDias[0] * pillarLenDiaRatio) * 0.5])
 		{
 			rotate([0, -90, 0])
 				cylinder(h=minGap, d = symbolSize, center=true, $fn=3);
@@ -207,10 +228,10 @@ module core()
 				cube(size=[minGap, symbolSize / 3, symbolSize / 3], center=true);
 		}
 		// Add a barcode
-		translate([0, coreDia > barcode_length2 ? (coreDia - barcode_length2) * 0.5 : 0, 0])		// move the barcode if the object is too big.
+		translate([0, coreDia > barcode_block_length(serialNo) ? (-coreDia + barcode_block_length(serialNo)) * 0.5  - maxDias[angleCount-1] * pillarLenDiaRatio : 0, 0])		// move the barcode if the object is too big.
 		rotate([0, 0, 90])
 		translate([0, -coreLen * 0.5 + fudge, -minGap * 2 + greenHFinThk * 2])
-		draw_barcode(testNo, greenHFinThk * 4);
+		draw_barcode(serialNo, greenHFinThk * 4);
 
 	}
 }

@@ -16,7 +16,8 @@
 
 include <../include/features.scad>;
 
-testNo = 0;						// test number to encode in barcode
+serialNo = 17;						// test number to encode in barcode
+
 
 optionCount = 6;       // number of different thicknesses to produce
 
@@ -29,9 +30,9 @@ nozzleDiameter = 0.1;   // mm
 	{
 		"Imports": {
 			"basic.yellow_final_PosPillarDiaV":"maxSizeMean",
-			"basic.yellow_error_PosPillarDiaV":"maxSizeOffset",
+			"basic.yellow_error_PosPillarDiaV":"maxSizeSpread",
 			"basic.yellow_final_PosButtonDiaV":"minSizeMean",
-			"basic.yellow_error_PosButtonDiaV":"minSizeOffset",
+			"basic.yellow_error_PosButtonDiaV":"minSizeSpread",
 			
 			"basic.yellow_final_PosPillarDiaH":"greenHFinThk",
 			"basic.yellow_final_PosFinThkH":"greenHFinThk",
@@ -42,10 +43,10 @@ nozzleDiameter = 0.1;   // mm
 */
 
 // Results from the main eval model needed here, to be overridden by the GUI.
-maxSizeMean = 0.75;
-maxSizeOffset = 0.25;
-minSizeMean = 0.33;
-minSizeOffset = 0.38-0.33;
+maxSizeMean = 0.5;
+maxSizeSpread = 0.4;
+minSizeMean = 0.3;
+minSizeSpread = 0.2;
 
 greenHBarDia = 0.35;
 greenHFinThk = 0.25;
@@ -93,20 +94,23 @@ ratioCount = len(aspectRatios);
 
 // Range of thicknesses. These arrays will be overridden by the front end.
 
-absMinDia = min(minSizeMean - minSizeOffset, maxSizeMean - maxSizeOffset) / 2;
+absMinDia = min(minSizeMean - minSizeSpread, maxSizeMean - maxSizeSpread) / 2;
 ref_index = 8;		// index of aspectRatios that contains the maxSizeMean datapoint.
 minDias = fspread(count=ratioCount, 
-								low=minSizeMean - minSizeOffset,
-								high=maxSizeMean - maxSizeOffset,
+								low=minSizeMean - minSizeSpread,
+								high=maxSizeMean - maxSizeSpread,
 								highIdx=ref_index,
 								minVal=absMinDia);
 maxDias = fspread(count=ratioCount, 
-								low=minSizeMean + minSizeOffset,
-								high=maxSizeMean + maxSizeOffset,
+								low=minSizeMean + minSizeSpread,
+								high=maxSizeMean + maxSizeSpread,
 								highIdx=ref_index,
 								minVal=absMinDia * 2);
 								
 skipDias = ones(ratioCount) * -1;
+
+echo(minDias=minDias);
+echo(maxDias=maxDias);
 
 // Derived variables
 maxDia = max(maxDias);
@@ -125,14 +129,13 @@ fudge = greenHFinThk * 0.02;
 union()
 {
 	core();
-	
-	echo(NEGATIVE=true);
+
+	echo(NEGATIVE=false);
 	
 	translate([0, 0, coreThk - fudge])
 	for(i = [0:ratioCount-1])
 	{
-		
-		echo(str("SERIES=", i, "Dias"));
+        echo(str("SERIES=", i, "Dias"));
 		
 		locateY(i, coreLen, minGap, maxDias)
 		pillar_set(minDias[i], maxDias[i], aspectRatios[i], coreWidth, optionCount, skipDias[i], do_echo=true);
@@ -150,7 +153,7 @@ module core()
 		// add a barcode
 		translate([coreWidth * 0.50 - fudge, 0, coreThk * 0.5])
 		rotate([0, 0, 90])
-			draw_barcode(testNo, coreThk);
+			draw_barcode(serialNo, coreThk);
 	}
 }
 

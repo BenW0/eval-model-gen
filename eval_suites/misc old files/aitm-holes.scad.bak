@@ -1,0 +1,253 @@
+/********************************************
+ * Angle Interpolation Test Model for Holes
+ *
+ * Ben Weiss, University of Washington 2016
+ *
+ * This model is used to determine the minimum
+ * thickness required to obtain printable and
+ * acceptable results for hole
+ * features at various angles between horizontal
+ * and vertical.
+ *
+ * This model is part of a collection of models
+ * for determining angle interpolation information
+ * for a printer. 
+ *******************************************/
+
+use <../include/vector_math.scad>;
+include <../include/features.scad>;
+
+testNo = 13;						// test number to encode in barcode
+
+optionCount = 6;       // number of different thicknesses to produce
+onlyHalf = true;
+// That parameter will need to become hard-coded here pretty quick in order to match the front end
+
+// Special variables set by front end.
+layerHeight = 0.1;      // mm
+nozzleDiameter = 0.1;   // mm
+
+
+/*
+<json>
+	{
+		"Imports": {
+			"basic.yellow_final_NegHoleDiaV":"vSizeMean",
+			"basic.yellow_error_NegHoleDiaV":"vSizeOffset",
+			"basic.yellow_final_NegHoleDiaH":"hSizeMean",
+			"basic.yellow_error_NegHoleDiaH":"hSizeOffset",
+
+			"basic.yellow_final_NegFinThkV":"greenVSlotThk",
+			"basic.yellow_final_NegFinThkH":"greenHSlotThk",
+			"basic.yellow_final_PosFinThkH":"greenHFinThk",
+			"basic.yellow_final_PosFinThkV":"greenVFinThk"
+		}
+	}
+</json>
+*/
+
+// Results from the main eval model needed here, to be overridden by the GUI.
+vSizeMean = 3.2;
+vSizeOffset = 0.5;
+hSizeMean = 2;
+hSizeOffset = 0.3;
+greenVFinThk = 0.125;
+greenHFinThk = 0.125;
+greenVSlotThk = 1.5;
+greenHSlotThk = 0.65;
+
+
+/*
+This is an array variable declaration. It will be expanded into a set of variables
+by the backend on load and re-condensed only for communicating with openscad.
+The variables min[varBase], max[varBase], and skip[varBase] will be arrays.
+
+Note that the angles reported are 90° from the angle variable when they are actually computed. the angle variable stores the angle away from vertical.
+<json>
+    {
+        "Name": ["90° Vertical Holes", 
+								 "80° Holes",
+								 "70° Holes",
+								 "60° Holes",
+								 "50° Holes",
+								 "40° Holes",
+								 "30° Holes",
+								 "20° Holes",
+								 "10° Holes",
+								 "0° Horizontal Holes"],
+        "Desc": "Use the slider to indicate how many fins printed acceptably.",
+        "LowKeyword": "Lost",
+        "HighKeyword": "Printed",
+        "varBase": "Dias",
+        "minDefault": 0.075,
+        "maxDefault": 0.175,
+        "minDefaultND": "0.5 * nozzleDiameter",
+        "maxDefaultND": "5 * nozzleDiameter",
+        "cameraData": "9.57,-17.9,8.45,57.8,0,314.8,85",
+        "sortOrder": 0,
+				"instanceCount": 6
+    }
+</json>
+*/
+
+// Range of thicknesses. These arrays will be overridden by the front end.
+angleCount = 10;
+angles = [ for (i = [0:angleCount-1]) 90 * i / (angleCount - 1) * (onlyHalf ? 1 : 2) ];
+
+minThks = fspread(count=angleCount, 
+								low=vSizeMean - vSizeOffset,
+								high=hSizeMean - hSizeOffset);
+maxThks = fspread(count=angleCount, 
+								low=vSizeMean + vSizeOffset,
+								high=hSizeMean + hSizeOffset);
+								
+skipThks = ones(angleCount) * -1;
+
+
+
+
+
+// Derived parameters for the object
+maxDia = max(maxDias);
+maxLen = maxDia * pillarLenDiaRatio;
+minDia = min(minDias);
+minGap = max([greenVSlotThk, greenHSlotThk, greenVFinThk, greenHFinThk]) * 2;
+meanDia = max([ for (i=[0:len(maxDias)-1]) (minDias[i] + maxDias[i]) * 0.5]);
+
+// Tally up the biggest chunk in x for each option
+optionWidths = [ for (option=[0:optionCount-1]) max([ for (i=[0:angleCount-1]) fdia(option, minThks[i], maxThks[i], optionCount) ]) + minGap ];
+
+coreDia = angleCount * (maxDia + minGap / 2) * 2.5 / pi * (onlyHalf ? 1 : 0.5);
+coreLen = sum(optionWidths);
+
+optionXCenters = [ for (option=[0:optionCount-1]) -coreLen * 0.5 + sumv(optionWidths, option) - optionWidths[option] * 0.5 ];
+
+symbolSize = maxDias[0] * negativeHSizeRatio / 2;
+
+fudge = minDia * 0.02;		// diameter to use for the mounting holes
+
+
+// Render the geometry
+color(normalColor)
+difference()
+{
+	core();
+	
+	for(i = [0:angleCount-1])
+	{
+		angle = angles[i];
+		translate([0, i == 0 ? maxDias[0] * 0.33 : 0, 0])	// offset just the vertical hole so it fits better.
+		rotate([i % 2 ? angle : -angle, 0, 0])
+		translate([0, 0, fOffsetHeight(coreDia, angle)])
+			hole_set(minDias[i], maxDias[i], coreLen, optionCount, skipDias[i], padLen=coreDia, do_echo=true, overrideXs=optionXCenters);
+	}
+	
+}
+// Draws the core of the object
+module core()
+{
+	union()
+	{
+		difference()
+		{
+			hull()
+			{
+				for(i = [0:angleCount-1])
+				{
+					angle = 90 * i / (angleCount - 1) * (onlyHalf ? 1 : 2);
+					translate([0, i == 0 ? maxDias[0] * 0.33 : 0, 0])	// offset just the vertical fins so it fits better.
+					rotate([i % 2 ? angle : -angle, 0, 0])
+					translate([0, 0, fOffsetHeight(coreDia, angle)])
+						hole_set(minDias[i], maxDias[i], forceWidth=maxDia + minGap * 2);
+				}
+				// Add feet to the hull to make it flat on the bottom
+				translate([-coreLen * 0.5 + minGap, 0, -minGap])
+					cube(size=[minGap * 2, coreDia + 2 * minDias[len(maxDias)-1] * negativeHSizeRatio,  2 * minGap], center=true);
+				translate([coreLen * 0.5 - minGap, 0, -minGap ])
+					cube(size=[minGap * 2, coreDia + 2 * maxDias[len(maxDias)-1] * negativeHSizeRatio, 2 * minGap], center=true);
+			}
+			// core hollow
+			rotate([45, 0, 0])
+			cube(size=[coreLen * 2, coreDia * 0.7071, coreDia * 0.7071], center=true);
+			
+			// a wall at the small end to chop off unneeded extra geometry
+			translate([-(coreLen + maxLen) * 0.5, 0, 0])
+			cube(size=[maxLen, (maxLen + coreDia) * 2, (maxLen + coreDia) * 2], center=true);
+			
+			// a wall at the big end to chop off unneeded extra geometry
+			translate([(coreLen + maxLen) * 0.5, 0, 0])
+			cube(size=[maxLen, (maxLen + coreDia) * 2, (maxLen + coreDia) * 2], center=true);
+			
+		}
+			
+		// Add a marking to the big end in case it's hard to tell
+		translate([(coreLen + minGap) * 0.5 - fudge, 0, (coreDia + maxLen) * 0.5])
+		{
+			rotate([0, -90, 0])
+				cylinder(h=minGap, d = symbolSize, center=true, $fn=3);
+			// add the bottom of the arrow
+			translate([0, 0, -symbolSize * 0.5 * 0.71828])
+				cube(size=[minGap, symbolSize / 3, symbolSize / 3], center=true);
+		}
+	}
+}
+
+
+// Draws one set of fins at a given angle.
+// forceWidth is used for creating the hull and causes the holes to be
+// renderd as rectangles exactly forceWidth wide.
+// padLen is used for creating the slots and causes the fins to be <padLen>
+// longer than they would otherwise be.
+module hole_set(min_dia, max_dia, skip=-1, forceWidth=0, padLen=0)
+{
+	color(skip >= 0 ? highlightColor : normalColor)
+	for(i = [0:option_count - 1])
+	{
+		if(i > skip)
+		{
+			dia = fdia(i, min_dia, max_dia);
+			length = dia * negativeHSizeRatio;
+			
+			locateX(i, min_dia, max_dia, coreLen)
+			translate([0, 0, length * 0.5])
+			if(forceWidth > 0)
+				cube(size=[forceWidth, dia, length + padLen], center=true);
+			else
+				cylinder(d=dia, h=length + padLen, center=true, $fn=20);
+		}
+	}
+}
+
+
+// ==============================================================
+// Resource Functions
+// ==============================================================
+
+function fdiaStep(minDia, maxDia) = (maxDia - minDia) / (option_count - 1);
+function fdia(idx, minDia, maxDia) = minDia + idx * fdiaStep(minDia, maxDia);
+function fgapX(minDia, maxDia, seriesWidth) = (seriesWidth - 0.5 * (maxDia + minDia) * option_count) / option_count;
+
+// A special function for determining how far out from the centerline to trave
+// to intersect with the diamond-shaped core at a given angle.
+// This is derived from a law of Sines argument from the geometry.
+function fOffsetHeight(coreDia, angle) = coreDia * 1.4142 / 4 / sin(135 - angle);
+
+// ==============================================================
+// Resource Modules
+// ==============================================================
+
+// operator module that translates to the x coordinate of feature idx in
+// the series that targets constant gap widths
+module locateX(idx, minDia, maxDia, seriesWidth, backwards=false)
+{
+    gap = fgapX(minDia, maxDia, seriesWidth);
+    fudge = (minDia);    // this is enough extra height to fully intersect the base feature.
+    diaStep = fdiaStep(minDia, maxDia);
+    pillarFirstX = -seriesWidth / 2 + gap / 2 + minDia / 2;
+    dia = fdia(idx, minDia, maxDia);
+    
+    cx = (pillarFirstX + idx * 0.5 * (dia + minDia) + idx * gap) * (backwards ? -1 : 1);
+    
+    translate([cx, 0, 0])
+    children();
+}

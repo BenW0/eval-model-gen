@@ -18,7 +18,7 @@
 
 include <../include/features.scad>;
 
-testNo = 12;						// test number to encode in barcode
+serialNo = 27;						// test number to encode in barcode
 
 optionCount = 6;       // number of different thicknesses to produce
 
@@ -31,9 +31,9 @@ nozzleDiameter = 0.1;   // mm
 	{
 		"Imports": {
 			"basic.yellow_final_NegFinThkV":"maxSizeMean",
-			"basic.yellow_error_NegFinThkV":"maxSizeOffset",
+			"basic.yellow_error_NegFinThkV":"maxSizeSpread",
 			"basic.yellow_final_NegButtonDiaV":"minSizeMean",
-			"basic.yellow_error_NegButtonDiaV":"minSizeOffset",
+			"basic.yellow_error_NegButtonDiaV":"minSizeSpread",
 			
 			"basic.yellow_final_PosPillarDiaH":"greenHFinThk",
 			"basic.yellow_final_PosFinThkH":"greenHFinThk",
@@ -46,9 +46,9 @@ nozzleDiameter = 0.1;   // mm
 
 // Results from the main eval model needed here, to be overridden by the GUI.
 maxSizeMean = 1.5;
-maxSizeOffset = 0.75;
-minSizeMean = 0.5;
-minSizeOffset = 0.3;
+maxSizeSpread = 0.75;
+minSizeMean = 0.3;
+minSizeSpread = 0.2;
 
 greenHBarDia = 0.35;
 greenHFinThk = 0.25;
@@ -91,25 +91,31 @@ The variables min[varBase], max[varBase], and skip[varBase] will be arrays.
 */
 
 // These are roughly 2^[-1.6:0.4:3.6]
-aspectRatios = [0.5, 0.75, 1, 1.5, 2, 2.5, 3, 4, 5, 7, 9, 12, 16, 20]; 
+aspectRatios = [0.5, 1, 2, 3, 5, 9, 16, 20]; 
 ratioCount = len(aspectRatios);
 
 // Range of thicknesses. These arrays will be overridden by the front end.
 
-absMinDia = min(minSizeMean - minSizeOffset, maxSizeMean - maxSizeOffset) / 2;
-ref_index = 8;		// index of aspectRatios that contains the maxSizeMean datapoint.
-minDias = fspread(count=ratioCount, 
-								low=minSizeMean - minSizeOffset,
-								high=maxSizeMean - maxSizeOffset,
+absMinDia = min(minSizeMean - minSizeSpread, maxSizeMean - maxSizeSpread) / 2;
+ref_index = 5;		// index of aspectRatios that contains the maxSizeMean datapoint.
+/*minDias = fspread(count=ratioCount,
+								low=minSizeMean - minSizeSpread,
+								high=maxSizeMean - maxSizeSpread,
 								highIdx=ref_index,
 								minVal=absMinDia);
 maxDias = fspread(count=ratioCount, 
-								low=minSizeMean + minSizeOffset,
-								high=maxSizeMean + maxSizeOffset,
+								low=minSizeMean + minSizeSpread,
+								high=maxSizeMean + maxSizeSpread,
 								highIdx=ref_index,
 								minVal=absMinDia * 2);
-								
+*/
+minDias = [0.1,0.1,0.1,0.1,0.1,0.375,0.45,0.203537965006363];
+maxDias = [0.4,0.85,1.2,1.55,1.9,1.875,2.17,2.14353796500636];
+
 skipDias = ones(ratioCount) * -1;
+
+echo(minDias=minDias);
+echo(maxDias=maxDias);
 
 // Derived variables
 maxFinWidths = [ for (i = [0 : ratioCount - 1]) maxDias[i] * finWidthThkRatio ];
@@ -118,14 +124,14 @@ minDia = min(minDias);
 minGap = max([greenVSlotThk, greenHFinThk, greenVFinThk]) * 2;
 meanDia = max([ for (i=[0:len(maxDias)-1]) (minDias[i] + maxDias[i]) * 0.5]);
 
-coreWidth = optionCount * meanDia + (optionCount + 1) * minGap;
+coreWidth = optionCount * meanDia + (optionCount + 2) * minGap;
 coreLen = sum(maxFinWidths) + (ratioCount) * minGap;
 coreThk = greenHFinThk * 6;
 
 fudge = greenHFinThk * 0.02;
 
 
-
+color(normalColor)
 union()
 {
 	core();
@@ -141,12 +147,17 @@ union()
 			translate([0, 0, fudge])
 			union()
 			{
-				fin_set(minDias[i], maxDias[i], aspectRatios[i], finWidthThkRatio, coreWidth, optionCount, cube_pad_x=fgapX(minDias[i], maxDias[i], optionCount, coreWidth) + fudge, force_width_y=maxFinWidths[i] + minGap + 2 * fudge);
+				fin_set(minDias[i], maxDias[i], aspectRatios[i], finWidthThkRatio, coreWidth - minGap * 2, optionCount, cube_pad_x=fgapX(minDias[i], maxDias[i], optionCount, coreWidth) + fudge, force_width_y=maxFinWidths[i] + minGap + 2 * fudge);
 
+                // add some buffer on the ends to make SLS parts less biased because of heat transfer
+                translate([coreWidth * 0.5 - minGap * 0.5, 0, maxDias[i] * aspectRatios[i] * 0.5])
+                    cube(size=[minGap, maxDias[i] * finWidthThkRatio + minGap, maxDias[i] * aspectRatios[i]], center=true);
+                translate([-coreWidth * 0.5 + minGap * 0.5, 0, minDias[i] * aspectRatios[i] * 0.5])
+                    cube(size=[minGap, maxDias[i] * finWidthThkRatio + minGap, minDias[i] * aspectRatios[i]], center=true);
 			}
 			
 			scale([1, 1, 2])
-			fin_set(minDias[i], maxDias[i], aspectRatios[i], finWidthThkRatio, coreWidth, optionCount, skipDias[i], do_echo=true);
+			fin_set(minDias[i], maxDias[i], aspectRatios[i], finWidthThkRatio, coreWidth - minGap * 2, optionCount, skipDias[i], do_echo=true);
 		}
 	}
 }
@@ -156,7 +167,7 @@ module core()
 	// add a barcode
 	translate([coreWidth * 0.5 - fudge, 0, coreThk * 0.5])
 	rotate([0, 0, 90])
-		draw_barcode(testNo, coreThk);
+		draw_barcode(serialNo, coreThk);
 
 }
 

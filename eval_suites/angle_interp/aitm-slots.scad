@@ -17,7 +17,7 @@
 use <../include/vector_math.scad>;
 include <../include/features.scad>;
 
-testNo = 13;						// test number to encode in barcode
+serialNo = 26;						// test number to encode in barcode
 
 optionCount = 6;       // number of different thicknesses to produce
 onlyHalf = true;
@@ -34,9 +34,9 @@ nozzleDiameter = 0.1;   // mm
 		"Imports": {
 
 			"basic.yellow_final_NegFinThkV":"vSizeMean",
-			"basic.yellow_error_NegFinThkV":"vSizeOffset",
+			"basic.yellow_error_NegFinThkV":"vSizeSpread",
 			"basic.yellow_final_NegFinThkH":"hSizeMean",
-			"basic.yellow_error_NegFinThkH":"hSizeOffset",
+			"basic.yellow_error_NegFinThkH":"hSizeSpread",
 
 			"basic.yellow_final_NegFinThkV":"greenVSlotThk",
 			"basic.yellow_final_NegFinThkH":"greenHSlotThk",
@@ -49,9 +49,9 @@ nozzleDiameter = 0.1;   // mm
 
 // Results from the main eval model needed here, to be overridden by the GUI.
 vSizeMean = 1.5;
-vSizeOffset = 0.5;
+vSizeSpread = 0.5;
 hSizeMean = 0.65;
-hSizeOffset = 0.3;
+hSizeSpread = 0.3;
 
 greenVFinThk = 0.125;
 greenHFinThk = 0.125;
@@ -100,15 +100,21 @@ angleCount = 10;
 angles = [ for (i = [0:angleCount-1]) 
 		90 * i / (angleCount - 1) * (onlyHalf ? 1 : 2) ];
 
-minThks = fspread(count=angleCount, 
-								low=vSizeMean - vSizeOffset,
-								high=hSizeMean - hSizeOffset);
+/*minThks = fspread(count=angleCount,
+								low=vSizeMean - vSizeSpread,
+								high=hSizeMean - hSizeSpread);
 maxThks = fspread(count=angleCount, 
-								low=vSizeMean + vSizeOffset,
-								high=hSizeMean + hSizeOffset);
-								
+								low=vSizeMean + vSizeSpread,
+								high=hSizeMean + hSizeSpread);
+*/
+minThks = [1.19952861392373,1.23017747573357,1.15926066666667,0.835920716839035,0.761001696140126,0.379628666666667,0.322222666666667,0.208072656990399,0.314814,0.400068994543121];
+maxThks = [1.80303360143825,1.74410937952429,2.07037466666667,1.60852709348161,1.49398407852769,1.15740966666667,1.05555566666667,0.896958656990399,0.959262,0.74933120449398];
+
 skipThks = ones(angleCount) * -1;
 
+echo(angles=angles);
+echo(minDias=minThks);
+echo(maxDias=maxThks);
 
 
 // Derived parameters for the object
@@ -122,9 +128,9 @@ meanThk = max([ for (i=[0:len(maxThks)-1]) (minThks[i] + maxThks[i]) * 0.5]);
 optionWidths = [ for (option=[0:optionCount-1]) max([ for (i=[0:angleCount-1]) fdia(option, minThks[i], maxThks[i], optionCount) * finWidthThkRatio ]) + minGap ];
 
 coreDia = angleCount * (maxThk + minGap / 2) * 2.5 / pi * (onlyHalf ? 1 : 0.5);
-coreLen = sum(optionWidths);
+coreLen = sum(optionWidths) + 2 * minGap;
 
-optionXCenters = [ for (option=[0:optionCount-1]) -coreLen * 0.5 + sumv(optionWidths, option) - optionWidths[option] * 0.5 ];
+optionXCenters = [ for (option=[0:optionCount-1]) -coreLen * 0.5 + minGap + sumv(optionWidths, option) - optionWidths[option] * 0.5 ];
 
 symbolSize = maxThks[0] * finWidthThkRatio / 2;
 
@@ -135,10 +141,15 @@ color(normalColor)
 difference()
 {
 	core();
+
+    echo(NEGATIVE=true);
 	
 	for(i = [0:angleCount-1])
 	{
+		echo(str("SERIES=", i, "Thks"));
+
 		angle = angles[i];
+		echo(ANGLE=angle);
 		translate([0, i == 0 ? maxThks[0] * 0.33 : 0, 0])	// offset just the vertical fins so it fits better.
 		rotate([i % 2 ? angle : -angle, 0, 0])
 		translate([0, 0, fOffsetHeight(coreDia, angle)])
@@ -171,17 +182,31 @@ module core()
 					
 					last_two_xs = [elem(tip_verts, -1)[0], elem(tip_verts, -2)[0]];
 					edge_verts = [[min(last_two_xs), -minGap * 2], [max(last_two_xs), -minGap * 2]];
-					echo(elem(tip_verts, -1));
+					//echo(elem(tip_verts, -1));
 					
 					verts = concat(tip_verts, edge_verts);
 					order = concat(series(0, 2, n-1), n + 1, n, reverse(series(1, 2, n-1)));
-					echo(order);
+					//echo(order);
 					
 					translate([optionXCenters[option], 0, 0])
 					rotate([90, 0, 90])
-					linear_extrude(height=optionWidths[option] + fudge, center=true, slices=1)
-						polygon(verts, [order], convexity=optionCount);
+					{
+                        linear_extrude(height=optionWidths[option] + fudge, center=true, slices=1)
+                            polygon(verts, [order], convexity=optionCount);
+						if(option == 0)
+						{
+							translate([0, 0, -optionWidths[option] * 0.5 - minGap])
+							linear_extrude(height=minGap + fudge, center=false, slices=1)
+								polygon(verts, [order], convexity=optionCount);
+						}
+						if(option == optionCount-1)
+						{
+							translate([0, 0, optionWidths[option] * 0.5 - fudge])
+							linear_extrude(height=minGap + fudge, center=false, slices=1)
+								polygon(verts, [order], convexity=optionCount);
+						}
 					}
+                }
 					
 			}
 			
@@ -200,7 +225,7 @@ module core()
 		}
 			
 		// Add a marking to the big end in case it's hard to tell
-		translate([(coreLen + minGap) * 0.5 - fudge, 0, (coreDia + maxWidth) * 0.5])
+		translate([(coreLen + minGap) * 0.5 - fudge, 0, (coreDia + maxThks[0] * finLenThkRatio) * 0.5])
 		{
 			rotate([0, -90, 0])
 				cylinder(h=minGap, d = symbolSize, center=true, $fn=3);
@@ -210,10 +235,10 @@ module core()
 		}
 		
 		// Add a barcode
-		translate([0, coreDia > barcode_length2 ? (coreDia - barcode_length2) * 0.5 : 0, 0])		// move the barcode if the object is too big.
+		translate([0, coreDia > barcode_block_length(serialNo) ? (-coreDia + barcode_block_length(serialNo)) * 0.5  - maxThks[angleCount-1] * finLenThkRatio : 0, 0])		// move the barcode if the object is too big.
 		rotate([0, 0, 90])
 		translate([0, -coreLen * 0.5 + fudge, -minGap * 2 + greenHFinThk * 2])
-		draw_barcode(testNo, greenHFinThk * 4);
+		draw_barcode(serialNo, greenHFinThk * 4);
 	}
 }
 

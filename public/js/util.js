@@ -3,9 +3,11 @@
  */
 
 
-LAYER_HEIGHT_VAR = "layerHeight";
-NOZZLE_DIAMETER_VAR = "nozzleDiameter";
-GROUP_NAME_VAR = "group";
+var LAYER_HEIGHT_VAR = "layerHeight";
+var NOZZLE_DIAMETER_VAR = "nozzleDiameter";
+var GROUP_NAME_VAR = "group";
+
+var _parsed_params;     // contains the structure returned when parsing the json in params.json, so we don't have to do it twice.
 
 /* QueryStringToHash() - converts a query string (parameters) back into an object.
  * From user 太極者無極而生 on stackoverflow:
@@ -67,11 +69,32 @@ function smartToString(number, digits) {
         return num.toExponential(digits);
 }
 
-function parseParams(json_data) {
-    // Parses a json_data string (which comes from params.js), sorting it according to sort order
-    var out = JSON.parse(json_data);
-    out.sort(function(a,b) {return a.sortOrder - b.sortOrder});
-    return out;
+function getSuites() {
+    // Returns a structure containing information about the different suites available, as specified in params_json,
+    // which is automatically populated in params.js.
+    if (typeof _parsed_params === 'undefined') {
+        _parsed_params = JSON.parse(params_json);
+    }
+    return _parsed_params;
+}
+
+function getParams(suite_key, model_key) {
+    // Parses a params_json string (which comes from params.js), extracting parameters relevant to the selected model,
+    // and sorting it according to sort order. All of this information is available from getSuites()[suite_key][model_key][params]
+    if (typeof _parsed_params === 'undefined') {
+        _parsed_params = JSON.parse(params_json);
+    }
+    if (typeof _parsed_params[suite_key] === 'undefined') {
+        // This is an invalid model!
+        throw("Something went wrong. '" + suite_key + "' is an invalid model name!");
+    }
+    if (typeof _parsed_params[suite_key][model_key] === 'undefined') {
+        // This is an invalid model!
+        throw("Something went wrong. Suite '" + suite_key + "' does not contain model '" + model_key + "'!");
+    }
+    var data = _parsed_params[suite_key][model_key];
+    data.Params.sort(function(a,b) {return a.sortOrder - b.sortOrder});
+    return data.Params;
 }
 
 function encodeURIstring(str) {

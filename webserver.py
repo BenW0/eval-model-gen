@@ -18,11 +18,9 @@ import os
 import cherrypy
 from cherrypy.lib.static import serve_file
 from cherrypy.process import plugins
-from modelparams import ModelParams, EvalSuite
+from modelparams import ModelParams, Model, EvalSuite, EvalSuites
 import modelgen
 import datetime
-
-OUTPUT_FILENAME = 'logs/result_log.txt'
 
 
 class ModelChooserWeb(object):
@@ -41,6 +39,10 @@ class ModelChooserWeb(object):
     @cherrypy.expose
     def finish(self):
         return open('template/finish.html')
+
+    @cherrypy.expose
+    def modelchooser(self):
+        return open('template/modelchooser.html')
 
     @cherrypy.expose
     def getmodel(self, name, mask=True):
@@ -81,50 +83,18 @@ class ModelChooserEngine(object):
             fout.write("//This is a generated code file. All changes will be lost on next server load!\n")
             fout.write("params_json = '%s';\n" % EvalSuite.get_params_json().replace("\n", " "))
 
-        # Save the heading fields in the order they should be saved for writing the output file.
-        # You would think we would use a dict, but I want to preserve list ordering...
-        self.output_fields = ['printerType',
-                              'printerModel',
-                              'printerName',
-                              'groupName',
-                              'feedstockType',
-                              'feedstockColor',
-                              'notes',
-                              'feedback']
-        self.output_field_names = ['Printer Type',
-                                   'Printer Model',
-                                   'Printer Name',
-                                   'Group Name',
-                                   'Feedstock Material',
-                                   'Feedstock Vendor/Color',
-                                   'Notes',
-                                   'Feedback']
-
-        # TODO: This code is now out of date...need to update to use a database now that we have multiple models.
-        #for item in ModelParams.json_parsed:
-        #    key = str(item['varKey'])
-        #    self.output_fields.append('yellow_final' + key)
-        #    self.output_field_names.append(item['Name'] + ' Yellow Minimum')
-        #    self.output_fields.append('yellow_error' + key)
-        #    self.output_field_names.append(item['Name'] + ' Yellow Error')
-
-        #    self.output_fields.append('red_final' + key)
-        #    self.output_field_names.append(item['Name'] + ' Red Minimum')
-        #    self.output_fields.append('red_error' + key)
-        #    self.output_field_names.append(item['Name'] + ' Red Error')
-
-        # Open the results file and find the last entry
-        self.next_submit_id = 1
-        if os.path.exists(OUTPUT_FILENAME):
-            with open(OUTPUT_FILENAME, 'r') as fin:
-                last_id = 0
-                for line in fin:
-                    val = line.split('\t')[0]
-                    if ModelParams.is_numberlike(val):
-                        last_id = int(val)
-            self.next_submit_id = last_id + 1
-
-
+        # Open the results files (one for each suite-model pairing) and find the biggest entry value
+        self.next_submit_id = 0
+        for ste in EvalSuites.values():
+            for model in ste.models.values():
+                if os.path.exists(model.log_filename):
+                    with open(model.log_filename, 'r') as fin:
+                        last_line = ''
+                        for line in fin:
+                            last_line = line
+                        val = last_line.split('\t')[0]
+                        if ModelParams.is_numberlike(val) and int(val) >= self.next_submit_id:
+                            self.next_submit_id = int(val) + 1
 
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
@@ -185,30 +155,18 @@ class ModelChooserEngine(object):
 
         elif in_data["Command"].lower() == 'submit':
             in_data.pop("Command")
-            str_out = ''
-            for key in self.output_fields:
-                if key in in_data:
-                    str_out += str(in_data[key]).replace('\n', '\\n')
-                str_out += '\t'
-            try:
 
-                # If it doesn't exist, initialize the results file
-                if not os.path.exists(OUTPUT_FILENAME):
-                    with open(OUTPUT_FILENAME, 'w') as fout:
-                        fout.write('ID\tTimestamp\t' + reduce(lambda x, y: x + '\t' + y, self.output_field_names) + '\n')
-                    self.next_submit_id = 1
+            success, errtext = Model.submit_to_log(in_data, self.next_submit_id)
 
-                str_out = '%i\t%s\t%s' % (self.next_submit_id, '{:%Y-%m-%d %H:%M:%S}'.format(datetime.datetime.now()), str_out)
-                # Write out our entry
-                with open(OUTPUT_FILENAME, 'a') as fout:
-                    fout.write(str_out + '\n')
+            if success:
                 out_data["Status"] = "OK"
                 out_data["Confirm"] = self.next_submit_id
-                self.next_submit_id += 1
-            except Exception as e:
-                cherrypy.log("Submit Error: " + str(e))
+            else:
+                cherrypy.log("Submit Error: " + errtext)
                 out_data["Status"] = "Error"
-                out_data["ErrMessage"] = str(e)
+                out_data["ErrMessage"] = errtext
+
+            self.next_submit_id += 1
 
         return out_data
 

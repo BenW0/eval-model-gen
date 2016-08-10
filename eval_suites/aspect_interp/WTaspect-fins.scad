@@ -15,7 +15,7 @@
 
 include <../include/features.scad>;
 
-testNo = 8;						// test number to encode in barcode
+serialNo = 19;						// test number to encode in barcode
 
 optionCount = 6;       // number of different thicknesses to produce
 
@@ -28,9 +28,9 @@ nozzleDiameter = 0.1;   // mm
 	{
 		"Imports": {
 			"basic.yellow_final_PosFinThkV":"maxSizeMean",
-			"basic.yellow_error_PosFinThkV":"maxSizeOffset",
+			"basic.yellow_error_PosFinThkV":"maxSizeSpread",
 			"basic.yellow_final_PosPillarDiaV":"minSizeMean",
-			"basic.yellow_error_PosPillarDiaV":"minSizeOffset",
+			"basic.yellow_error_PosPillarDiaV":"minSizeSpread",
 			
 			"basic.yellow_final_PosPillarDiaH":"greenHFinThk",
 			"basic.yellow_final_PosFinThkH":"greenHFinThk",
@@ -41,10 +41,10 @@ nozzleDiameter = 0.1;   // mm
 */
 
 // Results from the main eval model needed here, to be overridden by the GUI.
-maxSizeMean = 0.41;
-maxSizeOffset = 0.41-0.33;
-minSizeMean = 0.75;
-minSizeOffset = 0.25;
+maxSizeMean = 0.4;
+maxSizeSpread = 0.3;
+minSizeMean = 0.6;
+minSizeSpread = 0.5;
 
 greenHBarDia = 0.35;
 greenHFinThk = 0.25;
@@ -91,20 +91,23 @@ ratioCount = len(aspectRatios);
 
 // Range of thicknesses. These arrays will be overridden by the front end.
 
-absMinDia = min(minSizeMean - minSizeOffset, maxSizeMean - maxSizeOffset) / 2;
+absMinDia = min(minSizeMean - minSizeSpread, maxSizeMean - maxSizeSpread) / 2;
 ref_index = 8;		// index of aspectRatios that contains the maxSizeMean datapoint.
 minDias = fspread(count=ratioCount, 
-								low=minSizeMean - minSizeOffset,
-								high=maxSizeMean - maxSizeOffset,
+								low=minSizeMean - minSizeSpread,
+								high=maxSizeMean - maxSizeSpread,
 								highIdx=ref_index,
 								minVal=absMinDia);
 maxDias = fspread(count=ratioCount, 
-								low=minSizeMean + minSizeOffset,
-								high=maxSizeMean + maxSizeOffset,
+								low=minSizeMean + minSizeSpread,
+								high=maxSizeMean + maxSizeSpread,
 								highIdx=ref_index,
 								minVal=absMinDia * 2);
 								
 skipDias = ones(ratioCount) * -1;
+
+echo(minDias=minDias);
+echo(maxDias=maxDias);
 
 // Derived variables
 maxFinWidths = [ for (i = [0 : ratioCount - 1]) maxDias[i] * aspectRatios[i] ];
@@ -120,12 +123,12 @@ coreThk = greenHFinThk * 6;
 fudge = greenHFinThk * 0.02;
 
 
-
+color(normalColor)
 union()
 {
 	core();
 	
-	echo(NEGATIVE=true);
+	echo(NEGATIVE=false);
 	
 	for(i = [0:ratioCount-1])
 	{
@@ -145,7 +148,7 @@ module core()
 		// add a barcode
 		translate([coreWidth * 0.5 - fudge, 0, 0])
 		rotate([0, 0, 90])
-			draw_barcode(testNo, coreThk);
+			draw_barcode(serialNo, coreThk);
 	}
 
 }
