@@ -2,36 +2,164 @@
   "Comment":[
     "This file contains configuration information describing the setup for the evaluation model(s) in each subdirectory.",
     "Each subdirectory to be used should have a key in the dictionary below.",
-    "In each file, special json blocks will call out the variables that should be evaluated by the user and",
-    "changed by the program. Note that there are two hard-coded special variables, 'layerHeight' and 'nozzleDiameter'"
+    "In each scad file, special json blocks will call out the variables that should be evaluated by the user and",
+    "changed by the program. Common model configuration parameters which the user can edit are specified in the",
+    "EditableConfig block below. the FixedConfig block contains variables fixed across all models and available",
+    "both to scad code and for use in JSON blocks."
   ],
 
-  "basic": {
-    "Name":"Feature Size Evaluation",
-    "Subtitle":"Most common evaluation: get information about the smallest features your printer can produce.",
-    "Rank":1,
-    "Models": {
-      "basic": {
-        "Filename": "Eval Model.scad"
-      }
-    }
+  "FixedConfig": {
+    "barLenDiaRatio": 10,
+    "finLenThkRatio": 10,
+    "finWidthThkRatio": 10,
+    "bossLenDiaRatio": 1
   },
 
-  "angle_interp": {
-    "Name": "Tilt Interpolation Evaluation",
-    "Subtitle": "Evaluates features at different angles between vertical and horizontal, creating an interpolation that can be used to supplement a Feature Size Evaluation",
-    "Rank": 2,
-    "Dependencies": [
-      "basic"
-    ],
-    "Models": {
-      "aitm-fins": {
-        "Name": "Fin Angle",
-        "Filename": "aitm-fins.scad"
-      },
-      "aitm-other": {
-        "Name": "Some other model",
-        "Filename": "other_model.scad"
+  "EditableConfig":[
+    {
+        "var": "layerHeight",
+        "Name": "Layer Height (mm)",
+        "Desc": "Layer height of the printer",
+        "Default": "0.2",
+        "Important": 1,
+        "sortOrder": 0
+    },
+    {
+        "var": "nozzleDiameter",
+        "Name": "XY Deposition/fusion diameter",
+        "Desc": "Diameter of the beam size, nozzle, deposition spot size, etc. for the printer (mm)",
+        "Default": "0.4",
+        "Important": 1,
+        "sortOrder": 1
+    },
+
+    {
+        "var": "xyPosGap",
+        "Name": "Positive XY Gap",
+        "Desc": "Minimum gap between positive features in the build plane (mm)",
+        "Default": "5 * (XY Deposition/fusion diameter)",
+        "Important": 1,
+        "sortOrder": 2
+    },
+    {
+        "var": "xyNegGap",
+        "Name": "Negative XY Gap",
+        "Desc": "Solid material between negative features in the build plane (mm)",
+        "Default": "10 * (XY Deposition/fusion diameter)",
+        "Important": 1,
+        "sortOrder": 3
+    },
+    {
+        "var": "zPosGap",
+        "Name": "Positive Z Gap",
+        "Desc": "Minimum gap between positive features in the build direction (mm)",
+        "Default": "10 * (Layer Height)",
+        "Important": 1,
+        "sortOrder": 4
+    },
+    {
+        "var": "zNegGap",
+        "Name": "Negative Z Gap",
+        "Desc": "Solid material between negative features in the build direction (mm)",
+        "Default": "10 * (Layer Height)",
+        "Important": 1,
+        "sortOrder": 5
+    },
+
+    {
+        "var": "overhangSupports",
+        "Name": "Support Overhangs (0/1)",
+        "Desc": "Include support for dangling horizontal members? (1=yes, 0=no)",
+        "Default": "1",
+        "Important": 1,
+        "sortOrder": 5.5
+    },
+
+    {
+        "var": "do_barcode",
+        "Name": "Include barcode (0/1)",
+        "Desc": "Include a barcode on all generated parts? (1=yes, 0=no)",
+        "Default": "1",
+        "sortOrder": 6
+    },
+    {
+        "var": "barcode_linewidth",
+        "Name": "Line width for barcode",
+        "Desc": "Line width to use for the barcode (mm)",
+        "Default": "0.5",
+        "sortOrder": 7
+    },
+    {
+        "var": "barcode_height",
+        "Name": "Barcode Height",
+        "Desc": "Height of the barcode (mm)",
+        "Default": "5",
+        "sortOrder": 8
+    },
+    {
+        "var": "barcode_thk",
+        "Name": "Barcode Thickness",
+        "Desc": "Thickness of the barcode and text blocks (mm)",
+        "Default": "2",
+        "sortOrder": 8
+    },
+    {
+        "var": "barcode_border",
+        "Name": "Barcode Border",
+        "Desc": "Size of border around barcode (mm)",
+        "Default": "2",
+        "sortOrder": 9
+    },
+    {
+        "var": "do_text",
+        "Name": "Include Text Label (0/1)",
+        "Desc": "Include a text identifier on all generated parts? (1=yes, 0=no)",
+        "Default": "1",
+        "sortOrder": 10
+    },
+    {
+        "var": "text_height",
+        "Name": "Text Height",
+        "Desc": "Height of text to create (mm)",
+        "Default": "6",
+        "sortOrder": 11
+    },
+    {
+        "var": "text_thk",
+        "Name": "Text Thickness",
+        "Desc": "Thickness of text to create (mm)",
+        "Default": "1.5",
+        "sortOrder": 11
+    }
+  ],
+
+  "Suites": {
+    "basic": {
+      "Name": "Feature Size Evaluation",
+      "Subtitle": "Most common evaluation: get information about the smallest features your printer can produce.",
+      "Rank": 1,
+      "Models": {
+        "basic": {
+          "Filename": "Eval Model.scad"
+        }
+      }
+    },
+    "angle_interp": {
+      "Name": "Tilt Interpolation Evaluation",
+      "Subtitle": "Evaluates features at different angles between vertical and horizontal, creating an interpolation that can be used to supplement a Feature Size Evaluation",
+      "Rank": 2,
+      "Dependencies": [
+        "basic"
+      ],
+      "Models": {
+        "aitm-fins": {
+          "Name": "Fin Angle",
+          "Filename": "aitm-fins.scad"
+        },
+        "aitm-other": {
+          "Name": "Some other model",
+          "Filename": "other_model.scad"
+        }
       }
     }
   }
