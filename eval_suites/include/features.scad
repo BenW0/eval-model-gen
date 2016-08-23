@@ -24,15 +24,15 @@ skip_chatter = true;
 $fn = 8;
 
 // Defaults for common model parameters. These are overridden by the front end!
-layerHeight = 0.2;      // mm
-nozzleDiameter = 0.4;   // mm
+layerHeight = 0.1;      // mm
+nozzleDiameter = 0.1;   // mm
 
-xyPosGap = 5 * nozzleDiameter;
-xyNegGap = 10 * nozzleDiameter;
-zPosGap = 10 * layerHeight;
-zNegGap = 10 * layerHeight;
+xyPosGap = 1;//||\\!!5 * nozzleDiameter;
+xyNegGap = 2;//||\\!!10 * nozzleDiameter;
+zPosGap = 1;//||\\!!10 * layerHeight;
+zNegGap = 2;//||\\!!10 * layerHeight;
 
-overhangSupports = true;
+overhangSupports = false;
 
 // Ratios used for determining the relative sizes of different features in the
 // test part, and the defaults used elsewhere when that parameter is not being
@@ -429,8 +429,7 @@ function fbossHeight(angle, greenHBarDia, greenVBarDia, layerHeight, nozzleDiame
 // a gap size or a total width over which the series must stretch. If both
 // gap size and total width are set, gap size is used.
 function flocateX(idx, minDia, maxDia, featureCount, gapSize=-1, totalWidth=-1) =
-        let(gap = (gapSize >= 0) ? gapSize : fgapX(minDia, maxDia, featureCount, totalWidth),
-            diaStep = fdiaStep(minDia, maxDia, featureCount))
+        let(gap = (gapSize >= 0) ? gapSize : fgapX(minDia, maxDia, featureCount, totalWidth))
         -fseriesSize(minDia, maxDia, featureCount, gap) / 2 + gap + minDia / 2 +       // pillarFirstX
             idx * 0.5 * (fdia(idx, minDia, maxDia, featureCount) + minDia) + idx * gap;
 
@@ -445,6 +444,20 @@ high = flocateXs(0.2, 1.4, 7, gapSize=2) + [ for (i=[0:7]) fdia(i, 0.2, 1.4, 7) 
 echo(low=low);
 echo(high=high);
 echo(concat(-end, low) - concat(high, end));*/
+
+// This function effectively inverts flocateX by returning a (fractional) index given an x coordinate
+// along a series.
+function fidxFromX(x, minDia, maxDia, featureCount, gapSize=-1, totalWidth=-1) =
+        let(gap = (gapSize >= 0) ? gapSize : fgapX(minDia, maxDia, featureCount, totalWidth),
+            c = -fseriesSize(minDia, maxDia, featureCount, gap) / 2 + gap + minDia / 2 - x,
+            b = minDia + gap,
+            a = fdiaStep(minDia, maxDia, featureCount) * 0.5)
+        (-b + sqrt(b * b - 4 * a * c)) / (2 * a);
+
+/*xs = flocateXs(0.2, 1.4, 7, totalWidth=5);
+echo(xs=xs);
+echo([ for (i=[0:6]) fidxFromX(xs[i], 0.2, 1.4, 7, totalWidth=5)]);
+*/
 
 // operator module that translates to the y coordinate of feature idx in
 // the series that targets constant gap widths. This is hard-coded to use

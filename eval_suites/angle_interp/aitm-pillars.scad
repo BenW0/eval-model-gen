@@ -125,7 +125,7 @@ coreLen = optionCount * meanDia + (optionCount - 1) * minGap;
 
 mountDia = coreDia * 0.5; //pow(2, round(ln(coreDia / 4 * (onlyHalf ? 1 : 2)) / ln(2)));
 
-lowestZ = -minGap + (onlyHalf ? 0 : (-coreDia * 0.5 + min([ for (i = [0:angleCount-1]) maxDias[i] * cos(angles[i]) * pillarLenDiaRatio])));
+lowestZ = -minGap + (onlyHalf ? 0 : (-coreDia * 0.5 + min([ for (i = [0:angleCount-1]) maxDias[i] * cos(angles[i]) * barLenDiaRatio])));
 wallThk = max(greenHFinThk, greenVFinThk) * 4;
 
 fudge = coreDia * 0.01;		// diameter to use for the mounting holes
@@ -149,7 +149,7 @@ difference()
 			translate([0, angle == 180 ? -maxDias[0] * 0.33 : 0, 0])	// offset just the vertical fins so it fits better.
 			rotate([i % 2 ? angle : -angle, 0, 0])
 			translate([0, 0, coreDia * 0.5 - fudge])
-			pillar_set(minDias[i], maxDias[i], pillarLenDiaRatio, coreLen, optionCount, skipDias[i], pad_len=fudge, do_echo=true);
+			pillar_set(minDias[i], maxDias[i], barLenDiaRatio, coreLen, optionCount, skipDias[i], pad_len=fudge, do_echo=true);
 		}
 	}
 	core_diff();

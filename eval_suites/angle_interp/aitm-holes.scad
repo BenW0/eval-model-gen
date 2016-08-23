@@ -116,7 +116,7 @@ echo(maxDias=maxDias);
 
 // Derived parameters for the object
 maxDia = max(maxDias);
-maxLen = maxDia * pillarLenDiaRatio;
+maxLen = maxDia * barLenDiaRatio;
 minDia = min(minDias);
 minGap = max([greenVSlotThk, greenHSlotThk, greenVFinThk, greenHFinThk]) * 2;
 meanDia = max([ for (i=[0:len(maxDias)-1]) (minDias[i] + maxDias[i]) * 0.5]);
@@ -129,7 +129,7 @@ coreLen = sum(optionWidths) + 2 * minGap;
 
 optionXCenters = [ for (option=[0:optionCount-1]) -coreLen * 0.5 + minGap + sumv(optionWidths, option) - optionWidths[option] * 0.5 ];
 
-symbolSize = maxDias[0] * pillarLenDiaRatio * 0.5;
+symbolSize = maxDias[0] * barLenDiaRatio * 0.5;
 
 fudge = minDia * 0.02;		// diameter to use for the mounting holes
 
@@ -147,7 +147,7 @@ difference()
 		translate([0, i == 0 ? maxDias[0] * 0.33 : 0, 0])	// offset just the vertical hole so it fits better.
 		rotate([i % 2 ? angle : -angle, 0, 0])
 		translate([0, 0, fOffsetHeight(coreDia, angle)])
-			pillar_set(minDias[i], maxDias[i], pillarLenDiaRatio, coreLen, optionCount, skipDias[i], pad_len=coreDia, do_echo=true, overrideXs=optionXCenters);
+			pillar_set(minDias[i], maxDias[i], barLenDiaRatio, coreLen, optionCount, skipDias[i], pad_len=coreDia, do_echo=true, overrideXs=optionXCenters);
 	}
 	
 }
@@ -170,7 +170,7 @@ module core()
 					tip_verts = [ for (i = [0:angleCount-1]) 
 								let(angle = i % 2 ? angles[i] : -angles[i],
 									r0 = fOffsetHeight(coreDia, angles[i]),
-									dr = fdia(option, minDias[i], maxDias[i], optionCount) * pillarLenDiaRatio)
+									dr = fdia(option, minDias[i], maxDias[i], optionCount) * barLenDiaRatio)
 								[-sin(angle) * (r0 + dr) + (i == 0 ? maxDias[0] * 0.33 : 0), cos(angle) * (r0 + dr)] ];
 					n = len(tip_verts);
 					
@@ -219,7 +219,7 @@ module core()
 		}
 			
 		// Add a marking to the big end in case it's hard to tell
-		translate([(coreLen + minGap) * 0.5 - fudge, 0, (coreDia + maxDias[0] * pillarLenDiaRatio) * 0.5])
+		translate([(coreLen + minGap) * 0.5 - fudge, 0, (coreDia + maxDias[0] * barLenDiaRatio) * 0.5])
 		{
 			rotate([0, -90, 0])
 				cylinder(h=minGap, d = symbolSize, center=true, $fn=3);
@@ -228,7 +228,7 @@ module core()
 				cube(size=[minGap, symbolSize / 3, symbolSize / 3], center=true);
 		}
 		// Add a barcode
-		translate([0, coreDia > barcode_block_length(serialNo) ? (-coreDia + barcode_block_length(serialNo)) * 0.5  - maxDias[angleCount-1] * pillarLenDiaRatio : 0, 0])		// move the barcode if the object is too big.
+		translate([0, coreDia > barcode_block_length(serialNo) ? (-coreDia + barcode_block_length(serialNo)) * 0.5  - maxDias[angleCount-1] * barLenDiaRatio : 0, 0])		// move the barcode if the object is too big.
 		rotate([0, 0, 90])
 		translate([0, -coreLen * 0.5 + fudge, -minGap * 2 + greenHFinThk * 2])
 		draw_barcode(serialNo, greenHFinThk * 4);
