@@ -39,3 +39,15 @@ function take(vec, n=1) = [ for (i = [0 : abs(n)-1]) n < 0 ? vec[len(vec) - i - 
 	
 // Pick a single element out of a list. This is like [k], except [-k] counts from the end. FUTURE: Support splicing by specifying k as a list.
 function elem(vec, k) = k >= 0 ? vec[k] : vec[len(vec) + k];
+
+// Count the number of elements in the list equal to, greater than, or less than the second argument
+function counteq(vec, val) = len([ for (i = [0:len(vec) - 1]) if(vec[i] == val) 1]);
+function countgt(vec, minval) = len([for (i = [0:len(vec) - 1]) if(vec[i] > minval) 1]);
+function countlt(vec, minval) = len([for (i = [0:len(vec) - 1]) if(vec[i] < minval) 1]);
+
+//echo(counteq([1, 2, 3, 4, 5, 2, 3, 2], 2));     // 3
+//echo(counteq([1, 2, 3, 4, 5, 2, 3, 2], 3));     // 2
+//echo(counteq([1, 2, 3, 4, 5, 2, 3, 2], 8));     // 0
+//echo(countgt([1, 2, 3, 4, 5, 2, 3, 2], 8));     // 0
+//echo(countgt([1, 2, 3, 4, 5, 2, 3, 2], 4));     // 1
+//echo(countgt([1, 2, 3, 4, 5, 2, 3, 2], 1));     // 7

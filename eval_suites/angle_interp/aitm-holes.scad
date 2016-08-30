@@ -15,17 +15,13 @@
  *******************************************/
 
 use <../include/vector_math.scad>;
-include <../include/features.scad>;
+include <../include/features2.scad>;
 
-serialNo = 25;						// test number to encode in barcode
+serialNo = 0;						// test number to encode in barcode
 
 optionCount = 6;       // number of different thicknesses to produce
 onlyHalf = true;
 // That parameter will need to become hard-coded here pretty quick in order to match the front end
-
-// Special variables set by front end.
-layerHeight = 0.1;      // mm
-nozzleDiameter = 0.1;   // mm
 
 
 /*
@@ -58,6 +54,11 @@ greenVSlotThk = 1.5;
 greenHSlotThk = 0.65;
 
 
+// Aspect ratios to use for this model. These need to match the values provided in the json block!
+localLenThkRatio = barLenDiaRatio;
+localWidthThkRatio = 1;
+
+
 /*
 This is an array variable declaration. It will be expanded into a set of variables
 by the backend on load and re-condensed only for communicating with openscad.
@@ -66,7 +67,8 @@ The variables min[varBase], max[varBase], and skip[varBase] will be arrays.
 Note that the angles reported are 90° from the angle variable when they are actually computed. the angle variable stores the angle away from vertical.
 <json>
     {
-        "Name": ["90° Vertical Holes", 
+        "varBase": "Thks",
+        "Name": ["90° Vertical Holes",
 								 "80° Holes",
 								 "70° Holes",
 								 "60° Holes",
@@ -77,16 +79,15 @@ Note that the angles reported are 90° from the angle variable when they are act
 								 "10° Holes",
 								 "0° Horizontal Holes"],
         "Desc": "Use the slider to indicate how many fins printed acceptably.",
-        "LowKeyword": "Lost",
-        "HighKeyword": "Printed",
-        "varBase": "Dias",
-        "minDefault": 0.075,
-        "maxDefault": 0.175,
-        "minDefaultND": "0.5 * nozzleDiameter",
-        "maxDefaultND": "5 * nozzleDiameter",
+        "RedKeyword": "Lost",
+        "GreenKeyword": "Printed",
         "cameraData": "9.57,-17.9,8.45,57.8,0,314.8,85",
         "sortOrder": 0,
-				"instanceCount": 6
+		"instanceCount": 6,
+        "coordSign": -1,
+        "coordLTaspect":"=barLenDiaRatio",
+        "coordWTaspect":1,
+        "coordAngleIncl":0
     }
 </json>
 */
@@ -95,44 +96,48 @@ Note that the angles reported are 90° from the angle variable when they are act
 angleCount = 10;
 angles = [ for (i = [0:angleCount-1]) 90 * i / (angleCount - 1) * (onlyHalf ? 1 : 2) ];
 
-/*minDias = fspread(count=angleCount, 
+/*minThks = fspread(count=angleCount, 
 								low=vSizeMean - vSizeSpread,
 								high=hSizeMean - hSizeSpread);
-maxDias = fspread(count=angleCount, 
+maxThks = fspread(count=angleCount, 
 								low=vSizeMean + vSizeSpread,
 								high=hSizeMean + hSizeSpread);
 */
 
-minDias=[4.5,2.99409098772906,2.38889,3.13279565695739,2.27778,2.62,2.583335,1.98758263989,2.57407666666667,2.28027703001625,2.3055525,2.1516809050441,2.27777666666667,2.70964067096207,1.92592333333333,1.94771372493474,1.8888875,1.47255406440453,1.25189743381003];
-maxDias=[8.5,4.91409098772906,6.16667,4.97279565695739,5.83334,3.5,4.249995,3.66758263989,4.12962666666667,3.17919975824393,3.7500025,3.06553186333568,3.61111666666667,4.14964067096207,3.14814333333333,2.47942649739809,2.9999975,2.59209743693078,3.03435463993906];
-skipDias = ones(angleCount) * -1;
+//minThks=[4.5,2.99409098772906,2.38889,3.13279565695739,2.27778,2.62,2.583335,1.98758263989,2.57407666666667,2.28027703001625,2.3055525,2.1516809050441,2.27777666666667,2.70964067096207,1.92592333333333,1.94771372493474,1.8888875,1.47255406440453,1.25189743381003];
+//maxThks=[8.5,4.91409098772906,6.16667,4.97279565695739,5.83334,3.5,4.249995,3.66758263989,4.12962666666667,3.17919975824393,3.7500025,3.06553186333568,3.61111666666667,4.14964067096207,3.14814333333333,2.47942649739809,2.9999975,2.59209743693078,3.03435463993906];
+minThks=[3.28993013796467,2.37221303359186,3.4129844478166,2.96931610168763,1.57407166666667,2.38694668183231,2.75128354375539,1.79230600887754,1.6666675,1.39816834030223];
+maxThks=[5.57283699295068,5.2952970415224,4.29680669029393,3.59073920728164,5.12963166666667,3.22293952615663,3.51354935212947,2.92279917382476,3.2222175,2.71472459543363];
+
+skipThks = ones(angleCount) * -1;
 
 echo(angles=angles);
-echo(minDias=minDias);
-echo(maxDias=maxDias);
+echo(minThks=minThks);
+echo(maxThks=maxThks);
 
 
 
 
 // Derived parameters for the object
-maxDia = max(maxDias);
-maxLen = maxDia * barLenDiaRatio;
-minDia = min(minDias);
-minGap = max([greenVSlotThk, greenHSlotThk, greenVFinThk, greenHFinThk]) * 2;
-meanDia = max([ for (i=[0:len(maxDias)-1]) (minDias[i] + maxDias[i]) * 0.5]);
+maxThk = max(maxThks);
+maxLen = maxThk * localLenThkRatio;
+maxWidth = maxThk * localWidthThkRatio;
+minThk = min(minThks);
+borderSize = max(xyNegGap, zNegGap);
+meanThk = max([ for (i=[0:len(maxThks)-1]) (minThks[i] + maxThks[i]) * 0.5]);
 
-// Tally up the biggest chunk in x for each option
-optionWidths = [ for (option=[0:optionCount-1]) max([ for (i=[0:angleCount-1]) fdia(option, minDias[i], maxDias[i], optionCount) ]) + minGap ];
+// Tally up the biggest chunk in each option
+optionWidths = [ for (option=[0:optionCount-1]) max([ for (i=[0:angleCount-1]) fdia(option, minThks[i], maxThks[i], optionCount) * localWidthThkRatio ]) + borderSize ];
 
-coreDia = angleCount * (maxDia + minGap / 2) * 2.5 / pi * (onlyHalf ? 1 : 0.5);
-coreLen = sum(optionWidths) + 2 * minGap;
+coreDia = angleCount * (maxThk + borderSize / 2) * 2.5 / pi * (onlyHalf ? 1 : 0.5);
+coreLen = sum(optionWidths) + 2 * borderSize;
+zBottom = -borderSize * 2;
 
-optionXCenters = [ for (option=[0:optionCount-1]) -coreLen * 0.5 + minGap + sumv(optionWidths, option) - optionWidths[option] * 0.5 ];
+optionXCenters = [ for (option=[0:optionCount-1]) -coreLen * 0.5 + borderSize + sumv(optionWidths, option) - optionWidths[option] * 0.5 ];
 
-symbolSize = maxDias[0] * barLenDiaRatio * 0.5;
+symbolSize = maxThks[0] * localLenThkRatio * 0.5;
 
-fudge = minDia * 0.02;		// diameter to use for the mounting holes
-
+fudge = minThk * 0.02;
 
 // Render the geometry
 color(normalColor)
@@ -140,14 +145,20 @@ difference()
 {
 	core();
 	
+    echo(SIGN=-1);
+
 	for(i = [0:angleCount-1])
 	{
+		echo(str("SERIES=", i, "Thks"));
+
 		angle = angles[i];
 		echo(ANGLE=angle);
-		translate([0, i == 0 ? maxDias[0] * 0.33 : 0, 0])	// offset just the vertical hole so it fits better.
+		translate([0, i == 0 ? maxThks[0] * 0.33 : 0, 0])	// offset just the vertical fins so it fits better.
 		rotate([i % 2 ? angle : -angle, 0, 0])
 		translate([0, 0, fOffsetHeight(coreDia, angle)])
-			pillar_set(minDias[i], maxDias[i], barLenDiaRatio, coreLen, optionCount, skipDias[i], pad_len=coreDia, do_echo=true, overrideXs=optionXCenters);
+            fin_set_neg(minThks[i], maxThks[i], optionCount, localLenThkRatio, localWidthThkRatio,
+                    total_width=coreLen, long_ways=true, skip=skipThks[i], pad_len=coreDia * 0.5, border_thk=borderSize,
+                    do_echo=true, override_xs=optionXCenters, do_outside=false);
 	}
 	
 }
@@ -160,54 +171,70 @@ module core()
 		{
 			union()
 			{
-				// Instead of using a hull, which would be saner, I've chosen to
-				// extrude the shape of each segment (one option at a time).
-				// This is really messy and I wish I had a better way. Using Hull
-				// fails if the sections midway between H and V get too short compared
-				// to the ends. 
+				for(i = [0:angleCount-1])
+                {
+                    angle = angles[i];
+                    real_angle = i % 2 ? angle : -angle;
+                    echo(optionWidths[0] + borderSize);
+                    //override_xs = optionXCenters - 0.5 * fdias(minThks[i], maxThks[i], optionCount) * localWidthThkRatio + optionWidths * 0.5;//(optionWidths[0] + borderSize) * ones(optionCount) * 0.5;
+                    translate([0, i == 0 ? maxThks[0] * 0.33 : 0, 0])	// offset just the vertical fins so it fits better.
+                    rotate([real_angle, 0, 0])
+                    translate([0, 0, fOffsetHeight(coreDia, angle) - borderSize])
+                        fin_set_neg(minThks[i], maxThks[i], optionCount, localLenThkRatio, localWidthThkRatio,
+                                total_width=coreLen, long_ways=true, skip=skipThks[i], pad_len=borderSize * 2, border_thk=borderSize,
+                                do_echo=false, override_xs=optionXCenters, do_inside=false, outer_smooth=false);
+
+                    // create some support structure on each end of each block
+                    if(angle > overhangAngle && overhangSupports)
+                    {
+                        l_start = fOffsetHeight(coreDia, angle);
+                        y_start = l_start * sin(-real_angle);
+                        z_start = zBottom;//l_start * cos(real_angle);
+                        sign = i % 2 ? -1 : 1;
+
 				for(option = [0:optionCount-1])
 				{
-					tip_verts = [ for (i = [0:angleCount-1]) 
-								let(angle = i % 2 ? angles[i] : -angles[i],
-									r0 = fOffsetHeight(coreDia, angles[i]),
-									dr = fdia(option, minDias[i], maxDias[i], optionCount) * barLenDiaRatio)
-								[-sin(angle) * (r0 + dr) + (i == 0 ? maxDias[0] * 0.33 : 0), cos(angle) * (r0 + dr)] ];
-					n = len(tip_verts);
+                            dia = fdia(option, minThks[i], maxThks[i], optionCount);
+                            x_span = dia * localWidthThkRatio + 2 * borderSize;
+                            x_center = optionXCenters[option];
+                            l_size = dia * localLenThkRatio;
+                            y_end = (l_start + l_size) * sin(-real_angle) + sign * ((borderSize + dia * 0.5) * cos(-real_angle) - fudge);
+                            z_end = (l_start + l_size) * cos(-real_angle);
+                            echo(x_center=x_center, x_span=x_span, y_start=y_start, y_end=y_end, z_start=z_start, z_end=z_end);
 					
-					last_two_xs = [elem(tip_verts, -1)[0], elem(tip_verts, -2)[0]];
-					edge_verts = [[min(last_two_xs), -minGap * 2], [max(last_two_xs), -minGap * 2]];
-					//echo(elem(tip_verts, -1));
+                            difference()
+                            {
+                                translate([x_center, 0.5 * (y_start + y_end), 0.5 * (z_start + z_end)])
+                                cube(size=[x_span, abs(y_end - y_start), abs(z_end - z_start)], center=true);
 					
-					verts = concat(tip_verts, edge_verts);
-					order = concat(series(0, 2, n-1), n + 1, n, reverse(series(1, 2, n-1)));
-					//echo(order);
+                                rotate([real_angle, 0, 0])
+                                translate([x_center, -sign * coreDia * 0.5, l_start + l_size * 0.5])
+                                cube(size=[x_span * 2, coreDia + dia + 2 * borderSize - fudge * 2, l_size * 2], center=true);
 					
-					translate([optionXCenters[option], 0, 0])
-					rotate([90, 0, 90])
-					{
-						linear_extrude(height=optionWidths[option] + fudge, center=true, slices=1)
-							polygon(verts, [order], convexity=optionCount);
-						if(option == 0)
-						{
-							translate([0, 0, -optionWidths[option] * 0.5 - minGap])
-							linear_extrude(height=minGap + fudge, center=false, slices=1)
-								polygon(verts, [order], convexity=optionCount);
+                                translate([x_center, 0.5 * (y_start + y_end), 0.5 * (z_start + z_end)])
+                                cube(size=[x_span - xyNegGap * 2, abs(y_end-y_start) * 2, abs(z_end-z_start * 2)], center=true);
 						}
-						if(option == optionCount-1)
-						{
-							translate([0, 0, optionWidths[option] * 0.5 - fudge])
-							linear_extrude(height=minGap + fudge, center=false, slices=1)
-								polygon(verts, [order], convexity=optionCount);
 						}
 					}
 				}
 					
+                // a region just above the core to make sure everything sticks together
+                rotate([45, 0, 0])
+                cube(size=[coreLen, (coreDia + 2*borderSize) * 0.7071, (coreDia + 2*borderSize) * 0.7071], center=true);
+
+			    // add a foot below the 50% point on the core to give us a big enough footprint to stick to an fdm build plate
+			    translate([0, 0, zBottom * 0.5])
+			    cube(size=[coreLen, coreDia + borderSize * 2, abs(zBottom)], center=true);
 			}
 			
 			// core hollow
 			rotate([45, 0, 0])
 			cube(size=[coreLen * 2, coreDia * 0.7071, coreDia * 0.7071], center=true);
 			
+			// core bottom
+			translate([0, 0, -coreDia + zBottom])
+			cube(size=[coreLen * 2, coreDia * 2, coreDia * 2], center=true);
+
 			// a wall at the small end to chop off unneeded extra geometry
 			translate([-(coreLen + maxLen) * 0.5, 0, 0])
 			cube(size=[maxLen, (maxLen + coreDia) * 2, (maxLen + coreDia) * 2], center=true);
@@ -219,20 +246,20 @@ module core()
 		}
 			
 		// Add a marking to the big end in case it's hard to tell
-		translate([(coreLen + minGap) * 0.5 - fudge, 0, (coreDia + maxDias[0] * barLenDiaRatio) * 0.5])
-		{
-			rotate([0, -90, 0])
-				cylinder(h=minGap, d = symbolSize, center=true, $fn=3);
-			// add the bottom of the arrow
-			translate([0, 0, -symbolSize * 0.5 * 0.71828])
-				cube(size=[minGap, symbolSize / 3, symbolSize / 3], center=true);
-		}
-		// Add a barcode
-		translate([0, coreDia > barcode_block_length(serialNo) ? (-coreDia + barcode_block_length(serialNo)) * 0.5  - maxDias[angleCount-1] * barLenDiaRatio : 0, 0])		// move the barcode if the object is too big.
-		rotate([0, 0, 90])
-		translate([0, -coreLen * 0.5 + fudge, -minGap * 2 + greenHFinThk * 2])
-		draw_barcode(serialNo, greenHFinThk * 4);
+		//translate([(coreLen + borderSize) * 0.5 - fudge, 0, (coreDia + maxThks[0] * localLenThkRatio) * 0.5])
+		//{
+		//	rotate([0, -90, 0])
+		//		cylinder(h=borderSize, d = symbolSize, center=true, $fn=3);
+		//	// add the bottom of the arrow
+		//	translate([0, 0, -symbolSize * 0.5 * 0.71828])
+		//		cube(size=[borderSize, symbolSize / 3, symbolSize / 3], center=true);
+		//}
 
+		// Add a barcode
+		//translate([0, coreDia > barcode_block_length(serialNo) ? (-coreDia + barcode_block_length(serialNo)) * 0.5  - maxThks[angleCount-1] * localLenThkRatio : 0, 0])		// move the barcode if the object is too big.
+		rotate([0, 0, 90])
+		translate([0, -coreLen * 0.5 + fudge, zBottom + barcode_thk * 0.5])
+		draw_barcode(serialNo, min_width=coreDia + 2 * borderSize);
 	}
 }
 

@@ -15,9 +15,9 @@
  *******************************************/
 
 use <../eval_suites/include/vector_math.scad>;
-include <../eval_suites/include/features.scad>;
+include <../eval_suites/include/features_old.scad>;
 
-serialNo = 32;						// test number to encode in barcode
+serialNo = 40;						// test number to encode in barcode
 
 weirdFinLenThkRatio = 3;
 weirdFinWidthThkRatio = 12;
@@ -111,7 +111,7 @@ maxThks = fspread(count=angleCount,
 								high=hSizeMean + hSizeSpread);
 */
 minThks = [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1];
-maxThks = [1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5,1.5];
+maxThks = [1.11666666666667,1.11666666666667,1.11666666666667,0.918396022587103,0.918396022587103,0.918396022587103,0.918396022587103,0.918396022587103,0.918396022587103,0.918396022587103];
 
 skipThks = ones(angleCount) * -1;
 

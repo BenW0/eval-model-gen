@@ -142,22 +142,38 @@ fudge = minThk * 0.02;
 color(normalColor)
 difference()
 {
-	core();
+	//core();
 
     echo(SIGN=-1);
+
+    loffsets = sucsum([ for (i = [0:2:angleCount-1])
+            let(dtheta = i > 1 ? angles[2] - angles[0] : angles[1] - angles[0],
+                perp_dist = maxThks[i] * 0.5 + borderSize + 0.5 * maxThks[i-1] * cos(dtheta))
+             i > 0 ? (perp_dist * cos(dtheta) / cos(angles[i-1])) : 0]);
+
+    roffsets = sucsum([ for (i = [1:2:angleCount-1])
+            let(dtheta = i > 1 ? angles[2] - angles[0] : angles[1] - angles[0],
+                perp_dist = maxThks[i] * 0.5 + borderSize + 0.5 * maxThks[i-1] * cos(dtheta))
+             i > 0 ? -min(perp_dist * cos(dtheta) / cos(angles[i-1]), sin(angles[i-1]) * maxThks[i-1] * localLenThkRatio + cos(angles[i-1]) * perp_dist) : 0]);
 
 	for(i = [0:angleCount-1])
 	{
 		echo(str("SERIES=", i, "Thks"));
 
 		angle = angles[i];
+		dir = i % 2 ? 1 : -1;
+		echo(dir=dir);
 		echo(ANGLE=angle);
-		translate([0, i == 0 ? maxThks[0] * 0.33 : 0, 0])	// offset just the vertical fins so it fits better.
-		rotate([i % 2 ? angle : -angle, 0, 0])
-		translate([0, 0, fOffsetHeight(coreDia, angle)])
+		//translate([0, i == 0 ? maxThks[0] * 0.33 : 0, 0])	// offset just the vertical fins so it fits better.
+		//translate([0, -(borderSize + maxThks[i] * 0.5) * i * dir - (i > 0 ? (borderSize + maxThks[0]) * 0.5 : 0), 0])
+
+		translate([0, dir < 0 ? loffsets[floor(i/2)] : roffsets[floor(i/2)], 0])
+		translate([0, 0, 0])
+		rotate([dir * angle, 0, 0])
+		//translate([0, 0, fOffsetHeight(coreDia, angle)])
             fin_set_neg(minThks[i], maxThks[i], optionCount, localLenThkRatio, localWidthThkRatio,
-                    total_width=coreLen, long_ways=true, skip=skipThks[i], pad_len=coreDia * 0.5, border_thk=borderSize,
-                    do_echo=true, override_xs=optionXCenters, do_outside=false);
+                    total_width=coreLen, long_ways=true, skip=skipThks[i], pad_len=coreDia * 0., border_thk=borderSize,
+                    do_echo=true, override_xs=optionXCenters, do_outside=true);
     }
 	
 }

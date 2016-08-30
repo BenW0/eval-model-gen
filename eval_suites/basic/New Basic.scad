@@ -17,11 +17,11 @@
  * performance
  *******************************************/
 
-include <../include/features.scad>;
+include <../include/features2.scad>;
 
 instanceCount = 7;       // also change this in each block of the JSON below...
 
-serialNo = 32;
+serialNo = 33;
 
 // List of features in this model, by base variable name
 // VBar
@@ -72,6 +72,9 @@ serialNo = 32;
 //  - coordLTaspect: Len/Thickness aspect for this feature
 //  - coordWTaspect: Width/Thickness aspect for this feature
 //  - coordAngleIncl: Incline angle of the primary face (0 = vertical, 90 = horizontal)
+//
+// Note that for all numeric fields, equations can be used by including them as strings prefaced with =. Valid variables
+// are those defined in the VariableConfig and FixedConfig blocks in config.json.
 
 /*
 <json>
@@ -86,7 +89,7 @@ serialNo = 32;
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": 1,
-        "coordLTaspect":"barLenDiaRatio",
+        "coordLTaspect":"=barLenDiaRatio",
         "coordWTaspect":1,
         "coordAngleIncl":0
     }
@@ -110,8 +113,8 @@ skipVBar = -1;      // skip the first <> items when building (for visualization 
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": 1,
-        "coordLTaspect":"finLenDiaRatio",
-        "coordWTaspect":"finWidthThkRatio",
+        "coordLTaspect":"=finLenThkRatio",
+        "coordWTaspect":"=finWidthThkRatio",
         "coordAngleIncl":0
     }
 </json>
@@ -134,7 +137,7 @@ skipVFin = -1;      // skip the first <> items when building (for visualization 
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": 1,
-        "coordLTaspect":"bossLenDiaRatio",
+        "coordLTaspect":"=bossLenDiaRatio",
         "coordWTaspect":1,
         "coordAngleIncl":0
     }
@@ -158,7 +161,7 @@ skipVBoss = -1;      // skip the first <> items when building (for visualization
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": 1,
-        "coordLTaspect":"bossLenDiaRatio",
+        "coordLTaspect":"=bossLenDiaRatio",
         "coordWTaspect":1,
         "coordAngleIncl":0
     }
@@ -185,7 +188,7 @@ skipVLine = -1;      // skip the first <> items when building (for visualization
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": 1,
-        "coordLTaspect":"barLenDiaRatio",
+        "coordLTaspect":"=barLenDiaRatio",
         "coordWTaspect":1,
         "coordAngleIncl":90
     }
@@ -209,8 +212,8 @@ skipHBar = -1;      // skip the first <> items when building (for visualization 
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": 1,
-        "coordLTaspect":"finLenDiaRatio",
-        "coordWTaspect":"finWidthThkRatio",
+        "coordLTaspect":"=finLenThkRatio",
+        "coordWTaspect":"=finWidthThkRatio",
         "coordAngleIncl":90
     }
 </json>
@@ -233,7 +236,7 @@ skipHFin = -1;      // skip the first <> items when building (for visualization 
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": 1,
-        "coordLTaspect":"bossLenDiaRatio",
+        "coordLTaspect":"=bossLenDiaRatio",
         "coordWTaspect":1,
         "coordAngleIncl":90
     }
@@ -257,7 +260,7 @@ skipHBoss = -1;      // skip the first <> items when building (for visualization
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": 1,
-        "coordLTaspect":"bossLenDiaRatio",
+        "coordLTaspect":"=bossLenDiaRatio",
         "coordWTaspect":1,
         "coordAngleIncl":90
     }
@@ -283,7 +286,7 @@ skipHLine = -1;      // skip the first <> items when building (for visualization
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": -1,
-        "coordLTaspect":"barLenDiaRatio",
+        "coordLTaspect":"=barLenDiaRatio",
         "coordWTaspect":1,
         "coordAngleIncl":0
     }
@@ -306,8 +309,8 @@ skipVHole = -1;      // skip the first <> items when building (for visualization
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": -1,
-        "coordLTaspect":"finLenDiaRatio",
-        "coordWTaspect":"finWidthThkRatio",
+        "coordLTaspect":"=finLenThkRatio",
+        "coordWTaspect":"=finWidthThkRatio",
         "coordAngleIncl":0
     }
 </json>
@@ -329,7 +332,7 @@ skipVSlot = -1;      // skip the first <> items when building (for visualization
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": -1,
-        "coordLTaspect":"bossLenDiaRatio",
+        "coordLTaspect":"=bossLenDiaRatio",
         "coordWTaspect":1,
         "coordAngleIncl":0
     }
@@ -352,7 +355,7 @@ skipVPunch = -1;      // skip the first <> items when building (for visualizatio
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": -1,
-        "coordLTaspect":"bossLenDiaRatio",
+        "coordLTaspect":"=bossLenDiaRatio",
         "coordWTaspect":1,
         "coordAngleIncl":0
     }
@@ -378,7 +381,7 @@ skipVSlit = -1;      // skip the first <> items when building (for visualization
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": -1,
-        "coordLTaspect":"barLenDiaRatio",
+        "coordLTaspect":"=barLenDiaRatio",
         "coordWTaspect":1,
         "coordAngleIncl":90
     }
@@ -401,8 +404,8 @@ skipHHole = -1;      // skip the first <> items when building (for visualization
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": -1,
-        "coordLTaspect":"finLenDiaRatio",
-        "coordWTaspect":"finWidthThkRatio",
+        "coordLTaspect":"=finLenThkRatio",
+        "coordWTaspect":"=finWidthThkRatio",
         "coordAngleIncl":90
     }
 </json>
@@ -424,7 +427,7 @@ skipHSlot = -1;      // skip the first <> items when building (for visualization
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": -1,
-        "coordLTaspect":"bossLenDiaRatio",
+        "coordLTaspect":"=bossLenDiaRatio",
         "coordWTaspect":1,
         "coordAngleIncl":90
     }
@@ -447,7 +450,7 @@ skipHPunch = -1;      // skip the first <> items when building (for visualizatio
         "sortOrder": 0,
         "instanceCount": 7,
         "coordSign": -1,
-        "coordLTaspect":"bossLenDiaRatio",
+        "coordLTaspect":"=bossLenDiaRatio",
         "coordWTaspect":1,
         "coordAngleIncl":90
     }
@@ -472,6 +475,7 @@ vpos_heights = [max(fseriesSize(minVBar, maxVBar, instanceCount, xyPosGap),
 vpos_total_height = sum(vpos_heights);
 vpos_widths = [maxVBoss, maxVLine * finWidthThkRatio, maxVBar, maxVFin * finWidthThkRatio];
 vpos_total_width = xyPosGap * (3) + max(vpos_widths[0] + vpos_widths[1], vpos_widths[2] + vpos_widths[3]);
+vcore_thk = zNegGap * 1.5;
 
 vneg_gap = xyNegGap * 1.5;
 vneg_heights = [fseriesSize(minVSlot, maxVSlot, instanceCount, vneg_gap),
@@ -542,7 +546,7 @@ union()
 // Draws the vertical positive features in a block.
 module VPosBlock()
 {
-    vpos_start_z = zNegGap * 2;
+    vpos_start_z = vcore_thk;
 
     translate([0, 0, vpos_start_z])
     union()

@@ -74,6 +74,14 @@
         "Important": 1,
         "sortOrder": 5.5
     },
+    {
+        "var": "overhangAngle",
+        "Name": "Overhang Angle to Support",
+        "Desc": "Angle above which to support overhangs (0° = vertical)",
+        "Default": "45",
+        "Important": 1,
+        "sortOrder": 5.6
+    },
 
     {
         "var": "do_barcode",
