@@ -2,6 +2,8 @@
 ### Iterative, Guided 3D Printer Qualificatio
 Ben Weiss at the University of Washington, (c) 2016
 
+This is an OLD and NOT FULLY FUNCTIONAL application for characterizing 3D printers. A simpler and more capable one is forthcoming. It is NOT the tool used in my dissertation.
+
 This web application (server and client) work to evaluate a suite of minimum feature sizes produceable on a given printer. The main benefits of this approach are
 * Low time/material cost - wasted printed features are minimized by iteratively printing several parts which only produce features likely to be near failure
 * Flexibility - this part is designed to work across the spectrum of the addtive manufacturing landscape, on everything from electron beam sintering printers to low-cost extrusion machines
